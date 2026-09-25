@@ -42,11 +42,14 @@ jobs:
 
       - name: Accept SDK licenses and install NDK (using runner's pre-installed SDK)
         run: |
+          CMDLINE_TOOLS_BIN=$(dirname "$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager -type f | head -n 1)")
+          echo "$CMDLINE_TOOLS_BIN" >> "$GITHUB_PATH"
+          export PATH="$CMDLINE_TOOLS_BIN:$PATH"
           yes | sdkmanager --licenses > /dev/null || true
           sdkmanager --install "ndk;${NDK_VERSION}"
 
       - name: Export NDK path
-        run: echo "ANDROID_NDK_ROOT=${ANDROID_SDK_ROOT}/ndk/${NDK_VERSION}" >> "$GITHUB_ENV"
+        run: echo "ANDROID_NDK_ROOT=${ANDROID_HOME}/ndk/${NDK_VERSION}" >> "$GITHUB_ENV"
 
       - name: Fetch OpenSSL sources
         run: |
@@ -63,7 +66,7 @@ jobs:
       - name: Configure local.properties
         run: |
           cat > src/frontends/android/local.properties <<EOF
-          sdk.dir=${ANDROID_SDK_ROOT}
+          sdk.dir=${ANDROID_HOME}
           ndk.dir=${ANDROID_NDK_ROOT}
           EOF
 
