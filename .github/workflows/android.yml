@@ -72,6 +72,13 @@ jobs:
       - name: Decode keystore
         if: startsWith(github.ref, 'refs/tags/')
         run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > ${{ github.workspace }}/release.keystore
+      - name: Verify keystore
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          keytool -list -v \
+            -keystore ${{ github.workspace }}/release.keystore \
+            -storepass "${{ secrets.KEYSTORE_PASSWORD }}" \
+            -alias "${{ secrets.KEY_ALIAS }}"
       - name: Build signed release APK
         if: startsWith(github.ref, 'refs/tags/')
         working-directory: src/frontends/android
