@@ -143,22 +143,12 @@ public class FreeServersActivity extends AppCompatActivity
 			profile.setPassword(local.optString("shared_secret", null));
 		}
           JSONObject split = obj.optJSONObject("split-tunneling");
-if (split != null)
-{
-    int st = 0;
-    if (split.optBoolean("block-ipv4", false))
-    {
-        st |= VpnProfile.SPLIT_TUNNELING_BLOCK_IPV4;
-    }
-    if (split.optBoolean("block-ipv6", false))
-    {
-        st |= VpnProfile.SPLIT_TUNNELING_BLOCK_IPV6;
-    }
-    if (st != 0)
-    {
-        profile.setSplitTunneling(st);
-    }
-}
+         if (split != null) {
+        int st = 0;
+        if (split.optBoolean("block-ipv4", false)) st |= VpnProfile.SPLIT_TUNNELING_BLOCK_IPV4;
+        if (split.optBoolean("block-ipv6", false)) st |= VpnProfile.SPLIT_TUNNELING_BLOCK_IPV6;
+        if (st != 0) profile.setSplitTunneling(st);
+         }
 		String certB64 = remote.optString("cert", null);
 		if (certB64 != null && !certB64.isEmpty())
 		{
