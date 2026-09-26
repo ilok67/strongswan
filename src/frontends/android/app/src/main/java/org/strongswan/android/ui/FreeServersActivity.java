@@ -217,61 +217,75 @@ public class FreeServersActivity extends AppCompatActivity
 	}
 
     private Registration doRegister() throws Exception
+{
+	String deviceId = md5(makeId());
+	String rawUsername = "suvpn_" + md5(deviceId);
+	String secret = makeSecret(rawUsername, deviceId);
+	String sign = calculateSign();
+
+	StringBuilder body = new StringBuilder();
+	appendParam(body, "username", rawUsername);
+	appendParam(body, "platform", "a");
+	appendParam(body, "channel", FIXED_CHANNEL);
+	appendParam(body, "alias", FIXED_ALIAS);
+	appendParam(body, "deviceId", deviceId);
+	appendParam(body, "manufacturer", "Google");
+	appendParam(body, "model", "Pixel 8");
+	appendParam(body, "display", "UP1A.231005.007");
+	appendParam(body, "imsi", deviceId);
+	appendParam(body, "serial", "unknown");
+	appendParam(body, "appVersionCode", APP_VERSION_CODE);
+	appendParam(body, "appVersion", APP_VERSION);
+	appendParam(body, "androidVersion", "34");
+	appendParam(body, "secret", secret);
+	appendParam(body, "package", PACKAGE);
+	appendParam(body, "sign", sign);
+	appendParam(body, "localGeo", FIXED_GEO);
+
+	JSONObject resp = apiRequest("/api/register.json", body.toString());
+	if (resp.optInt("status", -1) != 0)
 	{
-		String deviceId = md5(makeId());
-		String rawUsername = "suvpn_" + md5(deviceId);
-		String secret = makeSecret(rawUsername, deviceId);
-		String sign = calculateSign();
+		throw new Exception("register failed: " + resp);
+	}
 
-		StringBuilder body = new StringBuilder();
-		appendParam(body, "username", rawUsername);
-		appendParam(body, "platform", "a");
-		appendParam(body, "channel", FIXED_CHANNEL);
-		appendParam(body, "alias", FIXED_ALIAS);
-		appendParam(body, "deviceId", deviceId);
-		appendParam(body, "manufacturer", "Google");
-		appendParam(body, "model", "Pixel 8");
-		appendParam(body, "display", "UP1A.231005.007");
-		appendParam(body, "imsi", deviceId);
-		appendParam(body, "serial", "unknown");
-		appendParam(body, "appVersionCode", APP_VERSION_CODE);
-		appendParam(body, "appVersion", APP_VERSION);
-		appendParam(body, "androidVersion", "34");
-		appendParam(body, "secret", secret);
-		appendParam(body, "package", PACKAGE);
-		appendParam(body, "sign", sign);
-		appendParam(body, "localGeo", FIXED_GEO);
+	JSONObject user = resp.getJSONObject("data").getJSONObject("user");
 
-		JSONObject resp = apiRequest("/api/register.json", body.toString());
-		if (resp.optInt("status", -1) != 0)
-		{
-			throw new Exception("register failed: " + resp);
-		}
+	Registration reg = new Registration();
+	reg.username = user.getString("username");
+	reg.password = user.getString("password");
+	reg.deviceId = deviceId;
+	reg.sign     = sign;
+	return reg;
+}
 
-		JSONObject user = resp.getJSONObject("data").getJSONObject("user");
+private JSONObject doAcquire(Registration reg, String location) throws Exception
+{
+	StringBuilder body = new StringBuilder();
+	appendParam(body, "username", reg.username);
+	appendParam(body, "password", reg.password);
+	appendParam(body, "signInUsername", "");
+	appendParam(body, "signInPassword", "");
+	appendParam(body, "loginType", "0");
+	appendParam(body, "platform", "a");
+	appendParam(body, "location", location != null ? location : "auto");
+	appendParam(body, "alias", FIXED_ALIAS);
+	appendParam(body, "channel", FIXED_CHANNEL);
+	appendParam(body, "appVersionCode", APP_VERSION_CODE);
+	appendParam(body, "deviceId", reg.deviceId);
+	appendParam(body, "imsi", reg.deviceId);
+	appendParam(body, "package", PACKAGE);
+	appendParam(body, "sign", reg.sign);
+	appendParam(body, "localGeo", FIXED_GEO);
+	appendParam(body, "tcp", "false");
+	appendParam(body, "hy2", "false");
+	appendParam(body, "tcpOnly", "false");
+	appendParam(body, "configVersion", "0");
 
-		Registration reg = new Registration();
-		reg.username = user.getString("username");
-		reg.password = user.getString("password");
-		reg.deviceId = deviceId;
- private JSONObject doAcquire(Registration reg, String location) throws Exception
-	{
-		StringBuilder body = new StringBuilder();
-		appendParam(body, "username", reg.username);
-		appendParam(body, "password", reg.password);
-		appendParam(body, "signInUsername", "");
-		appendParam(body, "signInPassword", "");
-		appendParam(body, "loginType", "0");
-		appendParam(body, "platform", "a");
-		appendParam(body, "location", location != null ? location : "auto");
-		appendParam(body, "alias", FIXED_ALIAS);
-		appendParam(body, "channel", FIXED_CHANNEL);
-		appendParam(body, "appVersionCode", APP_VERSION_CODE);
-		appendParam(body, "deviceId", reg.deviceId);
-		appendParam(body, "imsi", reg.deviceId);
-		appendParam(body, "package", PACKAGE);
-		appendParam(body, "sign", reg.sign);
-		appendParam(body, "localGeo", FIXED_GEO);
+	JSONObject resp = apiRequest("/api/acquire.json", body.toString());
+	return resp.optJSONObject("data") != null
+		? resp.getJSONObject("data")
+		: new JSONObject();
+}
 private JSONObject apiRequest(String path, String formBody) throws Exception
 	{
 		String lastError = null;
