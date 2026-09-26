@@ -63,6 +63,12 @@ jobs:
       - uses: ./.github/actions/default
         env:
           ANDROID_NDK_ROOT: ${{ steps.ndk-install.outputs.ANDROID_NDK_ROOT }}
+      - name: Upload APK
+        uses: actions/upload-artifact@v6
+        with:
+          name: strongswan-android-apk
+          path: src/frontends/android/app/build/outputs/apk/**/*.apk
+          if-no-files-found: warn
       - run: ccache -sv
       - uses: actions/upload-artifact@v6
         with:
