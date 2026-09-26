@@ -32,10 +32,11 @@ android {
             options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
     }
 
-    signingConfigs {
-        release {
-            def keystorePath = System.getenv("KEYSTORE_PATH")
-            if (keystorePath != null) {
+    def keystorePath = System.getenv("KEYSTORE_PATH")
+
+    if (keystorePath != null) {
+        signingConfigs {
+            release {
                 storeFile file(keystorePath)
                 storePassword System.getenv("KEYSTORE_PASSWORD")
                 keyAlias System.getenv("KEY_ALIAS")
@@ -48,7 +49,9 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
-            signingConfig signingConfigs.release
+            if (keystorePath != null) {
+                signingConfig signingConfigs.release
+            }
         }
     }
     compileOptions {
