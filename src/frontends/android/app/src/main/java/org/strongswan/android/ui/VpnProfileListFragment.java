@@ -252,6 +252,11 @@ public class VpnProfileListFragment extends Fragment implements MenuProvider
 			startActivity(connectionIntent);
 			return true;
 		}
+		if (menuItem.getItemId() == R.id.fetch_servers)
+{
+    startActivity(new Intent(getActivity(), FreeServersActivity.class));
+    return true;
+}
 		return false;
 	}
 
