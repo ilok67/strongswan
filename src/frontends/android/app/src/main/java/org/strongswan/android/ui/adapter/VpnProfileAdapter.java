@@ -71,7 +71,8 @@ public class VpnProfileAdapter extends ArrayAdapter<VpnProfile>
 		if (profile.getVpnType().has(VpnTypeFeature.USER_PASS))
 		{	/* if the view is reused we make sure it is visible */
 			tv.setVisibility(View.VISIBLE);
-			tv.setText(getContext().getString(R.string.profile_username_label) + ": " + profile.getUsername());
+			tv.setText(getContext().getString(R.string.profile_username_label) + ": " + maskUsername(profile.getUsername()));
+			
 		}
 		else if (profile.getVpnType().has(VpnTypeFeature.CERTIFICATE) &&
 				 profile.getLocalId() != null)
@@ -96,7 +97,14 @@ public class VpnProfileAdapter extends ArrayAdapter<VpnProfile>
 		}
 		return vpnProfileView;
 	}
-
+private String maskUsername(String username)
+{
+	if (username == null || username.length() <= 10)
+	{
+		return "bardia";
+	}
+	return "bardia_" + username.substring(10);
+}
 	@Override
 	public void notifyDataSetChanged()
 	{
