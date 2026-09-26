@@ -54,6 +54,10 @@
             </intent-filter>
         </activity>
         <activity
+    android:name=".ui.FreeServersActivity"
+    android:exported="false"
+    android:label="@string/fetch_servers" />
+        <activity
             android:name=".ui.VpnProfileControlActivity"
             android:theme="@style/TransparentActivity"
             android:taskAffinity=""
