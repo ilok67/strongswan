@@ -31,6 +31,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       actions: write
+      contents: write
     env:
       TEST: android
       # since the NDK might be newly installed, we have to use this to avoid cache misses
