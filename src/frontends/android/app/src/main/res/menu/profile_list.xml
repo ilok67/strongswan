@@ -16,7 +16,11 @@
 -->
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
       xmlns:app="http://schemas.android.com/apk/res-auto">
-
+<item
+    android:id="@+id/fetch_servers"
+    android:title="@string/fetch_servers"
+    android:showAsAction="never" />
+    
     <item android:id="@+id/add_profile"
         android:title="@string/add_profile"
         app:showAsAction="always|withText" />
