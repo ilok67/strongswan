@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="vpn_types">
+        <item>IKEv2 EAP (نام کاربری/رمز)</item>
+        <item>IKEv2 گواهی</item>
+        <item>IKEv2 گواهی + EAP (نام کاربری/رمز)</item>
+        <item>IKEv2 EAP-TLS (گواهی)</item>
+        <item>IKEv2 EAP-TNC (نام کاربری/رمز)</item>
+    </string-array>
+
+    <string-array name="apps_handling">
+        <item>همه برنامه‌ها از وی‌پی‌ان استفاده کنند</item>
+        <item>برنامه‌های انتخاب‌شده از وی‌پی‌ان مستثنی شوند</item>
+        <item>فقط برنامه‌های انتخاب‌شده از وی‌پی‌ان استفاده کنند</item>
+    </string-array>
+</resources>
