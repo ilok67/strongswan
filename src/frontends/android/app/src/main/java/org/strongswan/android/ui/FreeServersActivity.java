@@ -4,7 +4,7 @@ import android.os.Bundle;
 import android.util.Base64;
 import android.util.Log;
 import android.widget.Toast;
-
+import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
@@ -62,35 +62,38 @@ public class FreeServersActivity extends AppCompatActivity
 	private static final int CONNECT_TIMEOUT = 20000;
 	private static final int READ_TIMEOUT    = 30000;
 
-	@Override
-	protected void onCreate(Bundle savedInstanceState)
-	{
-		super.onCreate(savedInstanceState);
-		Toast.makeText(this, R.string.fetch_servers_loading, Toast.LENGTH_SHORT).show();
+@Override
+protected void onCreate(Bundle savedInstanceState)
+{
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_free_servers);
 
-		Executors.newSingleThreadExecutor().execute(() -> {
-			try
-			{
-				int count = importProfiles();
-				runOnUiThread(() -> {
-					Toast.makeText(this,
-						getString(R.string.fetch_servers_done, count),
-						Toast.LENGTH_LONG).show();
-					finish();
-				});
-			}
-			catch (Exception e)
-			{
-				Log.e(TAG, "import failed", e);
-				runOnUiThread(() -> {
-					Toast.makeText(this,
-						getString(R.string.fetch_servers_failed, e.getMessage()),
-						Toast.LENGTH_LONG).show();
-					finish();
-				});
-			}
-		});
-	}
+    TextView status = findViewById(R.id.fetch_status);
+
+    Executors.newSingleThreadExecutor().execute(() -> {
+        try
+        {
+            runOnUiThread(() -> status.setText(R.string.fetch_servers_loading));
+            int count = importProfiles();
+            runOnUiThread(() -> {
+                Toast.makeText(this,
+                    getString(R.string.fetch_servers_done, count),
+                    Toast.LENGTH_LONG).show();
+                finish();
+            });
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            runOnUiThread(() -> {
+                status.setText(getString(R.string.fetch_servers_failed, e.getMessage()));
+                Toast.makeText(this,
+                    getString(R.string.fetch_servers_failed, e.getMessage()),
+                    Toast.LENGTH_LONG).show();
+            });
+        }
+    });
+}
 
 	private int importProfiles() throws Exception
 	{
