@@ -46,4 +46,11 @@
     <color
         name="pressed">#5a5a5a</color>
 
+<color name="accent">#4ADE80</color>
+<color name="primary">#0F172A</color>
+<color name="primary_dark">#020617</color>
+<color name="card_bg">#1E293B</color>
+<color name="card_stroke">#334155</color>
+<color name="card_selected">#163A2A</color>
+<color name="card_selected_stroke">#4ADE80</color>
 </resources>
