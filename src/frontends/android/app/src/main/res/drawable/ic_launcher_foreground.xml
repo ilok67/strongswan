@@ -5,55 +5,68 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
+    <!-- Whole emblem + text bars scaled down and re-centered inside the 66dp safe zone -->
     <group
-        android:scaleX="0.7"
-        android:scaleY="0.7"
-        android:translateX="16.2"
-        android:translateY="16.2">
+        android:pivotX="54"
+        android:pivotY="54"
+        android:scaleX="0.62"
+        android:scaleY="0.62"
+        android:translateX="-2"
+        android:translateY="-1">
 
+        <!-- Shield -->
         <path
             android:fillColor="#071B4D"
             android:strokeColor="#12CFF3"
             android:strokeWidth="3"
             android:pathData="M54,13 L83,25 L81,58 Q78,78 54,92 Q30,78 27,58 L25,25 Z"/>
 
+        <!-- Globe -->
         <path
             android:fillColor="#0A57B8"
             android:strokeColor="#27D7F4"
             android:strokeWidth="2"
             android:pathData="M54,27 A25,25 0,1 0,54,77 A25,25 0,1 0,54,27 Z"/>
 
+        <!-- Globe latitude/longitude -->
         <path
-            android:fillColor="@android:color/transparent"
+            android:fillColor="#00000000"
             android:strokeColor="#1DBEF2"
             android:strokeWidth="1.2"
             android:pathData="M30,52 L78,52 M34,40 Q54,50 74,40 M34,64 Q54,54 74,64 M54,28 Q42,52 54,76 M54,28 Q66,52 54,76"/>
 
+        <!-- Orbit -->
         <path
-            android:fillColor="@android:color/transparent"
+            android:fillColor="#00000000"
             android:strokeColor="#18D4F4"
             android:strokeWidth="2.5"
             android:pathData="M20,65 C34,76 72,76 88,46 C92,39 94,35 96,34"/>
 
+        <!-- Lock body -->
         <path
             android:fillColor="#F7FCFF"
             android:pathData="M43,48 L65,48 Q68,48 68,51 L68,66 Q68,69 65,69 L43,69 Q40,69 40,66 L40,51 Q40,48 43,48 Z"/>
 
+        <!-- Lock shackle -->
         <path
-            android:fillColor="@android:color/transparent"
+            android:fillColor="#00000000"
             android:strokeColor="#F7FCFF"
             android:strokeWidth="5"
             android:pathData="M46,49 L46,43 Q46,35 54,35 Q62,35 62,43 L62,49"/>
 
+        <!-- Keyhole -->
         <path
             android:fillColor="#0A2C69"
             android:pathData="M54,54 A3,3 0,1 0,54,60 A3,3 0,1 0,54,54 M52.5,58 L55.5,58 L56,64 L52,64 Z"/>
 
-        <path android:fillColor="#FFFFFF"
+        <!-- BARDIA / VPN mark as geometric bars -->
+        <path
+            android:fillColor="#FFFFFF"
             android:pathData="M17,84 L17,96 L21,96 L21,84 Z M23,84 L23,96 L27,96 L27,84 Z M29,84 L29,96 L33,96 L33,84 Z
             M38,84 L38,96 L42,96 L42,84 Z M44,84 L44,96 L48,96 L48,84 Z M50,84 L50,96 L54,96 L54,84 Z
             M56,84 L56,96 L60,96 L60,84 Z M62,84 L62,96 L66,96 L66,84 Z M68,84 L68,96 L72,96 L72,84 Z
             M78,84 L78,96 L82,96 L82,84 Z M84,84 L84,96 L88,96 L88,84 Z"/>
 
     </group>
+
 </vector>
