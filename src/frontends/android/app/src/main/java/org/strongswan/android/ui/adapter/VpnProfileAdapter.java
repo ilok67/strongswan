@@ -1,21 +1,3 @@
-/*
- * Copyright (C) 2012 Tobias Brunner
- * Copyright (C) 2012 Giuliano Grassi
- * Copyright (C) 2012 Ralf Sager
- *
- * Copyright (C) secunet Security Networks AG
- *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
- *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * for more details.
- */
-
 package org.strongswan.android.ui.adapter;
 
 import android.content.Context;
@@ -27,7 +9,6 @@ import android.widget.TextView;
 
 import org.strongswan.android.R;
 import org.strongswan.android.data.VpnProfile;
-import org.strongswan.android.data.VpnType.VpnTypeFeature;
 
 import java.util.Collections;
 import java.util.Comparator;
@@ -38,8 +19,7 @@ public class VpnProfileAdapter extends ArrayAdapter<VpnProfile>
 	private final int resource;
 	private final List<VpnProfile> items;
 
-	public VpnProfileAdapter(Context context, int resource,
-							 List<VpnProfile> items)
+	public VpnProfileAdapter(Context context, int resource, List<VpnProfile> items)
 	{
 		super(context, resource, items);
 		this.resource = resource;
@@ -58,53 +38,35 @@ public class VpnProfileAdapter extends ArrayAdapter<VpnProfile>
 		else
 		{
 			LayoutInflater inflater = LayoutInflater.from(getContext());
-			vpnProfileView = inflater.inflate(resource, null);
+			vpnProfileView = inflater.inflate(resource, parent, false);
 		}
+
 		VpnProfile profile = getItem(position);
+
 		TextView tv = vpnProfileView.findViewById(R.id.profile_item_name);
 		tv.setText(profile.getName());
+
 		tv = vpnProfileView.findViewById(R.id.profile_item_managed);
 		tv.setVisibility(profile.isReadOnly() ? View.VISIBLE : View.GONE);
+
 		tv = vpnProfileView.findViewById(R.id.profile_item_gateway);
-		tv.setText(getContext().getString(R.string.profile_gateway_label) + ": " + profile.getGateway());
+		Integer port = profile.getPort();
+		String endpoint = profile.getGateway();
+		if (port != null && port > 0)
+		{
+			endpoint = endpoint + ":" + port;
+		}
+		tv.setText(endpoint);
+
 		tv = vpnProfileView.findViewById(R.id.profile_item_username);
-		if (profile.getVpnType().has(VpnTypeFeature.USER_PASS))
-		{	/* if the view is reused we make sure it is visible */
-			tv.setVisibility(View.VISIBLE);
-			tv.setText(getContext().getString(R.string.profile_username_label) + ": " + maskUsername(profile.getUsername()));
-			
-		}
-		else if (profile.getVpnType().has(VpnTypeFeature.CERTIFICATE) &&
-				 profile.getLocalId() != null)
-		{
-			tv.setVisibility(View.VISIBLE);
-			tv.setText(getContext().getString(R.string.profile_local_id_label) + ": " + profile.getLocalId());
-		}
-		else
-		{
-			tv.setVisibility(View.GONE);
-		}
+		tv.setVisibility(View.GONE);
+
 		tv = vpnProfileView.findViewById(R.id.profile_item_certificate);
-		if (profile.getVpnType().has(VpnTypeFeature.CERTIFICATE))
-		{
-			String alias = profile.getUserCertificateAlias();
-			tv.setText(getContext().getString(R.string.profile_user_certificate_label) + ": " + (alias != null ? alias : ""));
-			tv.setVisibility(View.VISIBLE);
-		}
-		else
-		{
-			tv.setVisibility(View.GONE);
-		}
+		tv.setVisibility(View.GONE);
+
 		return vpnProfileView;
 	}
-private String maskUsername(String username)
-{
-	if (username == null || username.length() <= 10)
-	{
-		return "bardia";
-	}
-	return "bardia_" + username.substring(10);
-}
+
 	@Override
 	public void notifyDataSetChanged()
 	{
