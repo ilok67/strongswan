@@ -1,21 +1,4 @@
-/*
- * Copyright (C) 2023 Relution GmbH
- * Copyright (C) 2012-2019 Tobias Brunner
- * Copyright (C) 2012 Giuliano Grassi
- * Copyright (C) 2012 Ralf Sager
- *
- * Copyright (C) secunet Security Networks AG
- *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
- *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * for more details.
- */
+
 
 package org.strongswan.android.ui;
 
@@ -147,8 +130,14 @@ public class VpnProfileListFragment extends Fragment implements MenuProvider
 		mListView = view.findViewById(R.id.profile_list);
 		mListView.setAdapter(mListAdapter);
 		mListView.setEmptyView(view.findViewById(R.id.profile_list_empty));
-		mListView.setOnItemClickListener(mVpnProfileClicked);
+        mListView.setOnItemClickListener(mVpnProfileClicked);
 
+       View emptyBtn = view.findViewById(R.id.empty_fetch_servers);
+       if (emptyBtn != null)
+       {
+        emptyBtn.setOnClickListener(v ->
+        startActivity(new Intent(getActivity(), FreeServersActivity.class)));
+         }
 		Utils.applyWindowInsetsAsPaddingForLists(mListView);
 
 		if (!mReadOnly)
