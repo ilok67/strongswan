@@ -4,7 +4,7 @@ android {
     namespace = 'org.strongswan.android'
 
     defaultConfig {
-        applicationId "org.strongswan.android"
+        applicationId "com.bardia.vpn"
         compileSdk = 36
         minSdkVersion 21
         targetSdkVersion 36
