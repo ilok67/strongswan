@@ -242,23 +242,16 @@ public class VpnProfileListFragment extends Fragment implements MenuProvider
 		}
 	}
 
-	@Override
-	public boolean onMenuItemSelected(@NonNull MenuItem menuItem)
-	{
-		if (menuItem.getItemId() == R.id.add_profile)
-		{
-			Intent connectionIntent = new Intent(getActivity(),
-												 VpnProfileDetailActivity.class);
-			startActivity(connectionIntent);
-			return true;
-		}
-		if (menuItem.getItemId() == R.id.fetch_servers)
+@Override
+public boolean onMenuItemSelected(@NonNull MenuItem menuItem)
 {
-    startActivity(new Intent(getActivity(), FreeServersActivity.class));
-    return true;
+    if (menuItem.getItemId() == R.id.fetch_servers)
+    {
+        startActivity(new Intent(getActivity(), FreeServersActivity.class));
+        return true;
+    }
+    return false;
 }
-		return false;
-	}
 
 	private final OnItemClickListener mVpnProfileClicked = new OnItemClickListener()
 	{
