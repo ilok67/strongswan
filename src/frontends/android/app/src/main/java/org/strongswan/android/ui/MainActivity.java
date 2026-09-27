@@ -74,8 +74,7 @@ public class MainActivity extends AppCompatActivity implements OnVpnProfileSelec
 		ActionBar bar = getSupportActionBar();
 		bar.setDisplayShowHomeEnabled(true);
 		bar.setDisplayShowTitleEnabled(false);
-		bar.setIcon(R.mipmap.ic_app);
-
+		bar.setIcon(R.mipmap.ic_launcher);
 		/* load CA certificates in a background thread */
 		((StrongSwanApplication)getApplication()).getExecutor().execute(() -> {
 			TrustedCertificateManager.getInstance().load();
