@@ -181,11 +181,9 @@ protected void onCreate(Bundle savedInstanceState)
 
 		String ip = g.optString("ip", "");
 		int port = g.optInt("port", 500);
-
-		String loc = serverLoc(g, "auto");
-		String flag = flagFor(loc);
-
-		profile.setName(flag + " " + ip + ":" + port);
+        String loc = serverLoc(g, selectedLocation);
+        String flag = flagFor(loc);
+        profile.setName(flag + " " + countryName(loc));
 		profile.setVpnType(VpnType.fromIdentifier("ikev2-eap"));
 		profile.setGateway(ip);
 		if (port >= 1 && port <= 65535)
@@ -443,7 +441,28 @@ private JSONObject apiRequest(String path, String formBody) throws Exception
 			default:     return "🏳️";
 		}
 	}
-
+private static String countryName(String code)
+{
+    if (code == null) return "Auto";
+    switch (code.toLowerCase())
+    {
+        case "auto": return "Auto";
+        case "nl":   return "Netherlands";
+        case "de":   return "Germany";
+        case "fr":   return "France";
+        case "uk":   return "United Kingdom";
+        case "us":   return "United States";
+        case "ca":   return "Canada";
+        case "pl":   return "Poland";
+        case "sgp":  return "Singapore";
+        case "jp":   return "Japan";
+        case "in":   return "India";
+        case "es":   return "Spain";
+		case "it":   return "Italia";
+		case "cz":   return "Czech Republic";
+        default:     return code.toUpperCase();
+    }
+}
 	private static String serverLoc(JSONObject g, String fallback)
 	{
 		String loc = g.optString("location", "").toLowerCase();
