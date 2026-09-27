@@ -1,76 +1,54 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-    Copyright (C) 2012 Tobias Brunner
-    Copyright (C) 2012 Giuliano Grassi
-    Copyright (C) 2012 Ralf Sager
-
-    Copyright (C) secunet Security Networks AG
-
-    This program is free software; you can redistribute it and/or modify it
-    under the terms of the GNU General Public License as published by the
-    Free Software Foundation; either version 2 of the License, or (at your
-    option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
-
-    This program is distributed in the hope that it will be useful, but
-    WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-    or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-    for more details.
--->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/profile_list_item"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="?android:attr/activatedBackgroundIndicator"
+    android:layout_marginStart="12dp"
+    android:layout_marginEnd="12dp"
+    android:layout_marginTop="6dp"
+    android:layout_marginBottom="6dp"
+    android:background="@drawable/profile_card"
     android:orientation="vertical"
-    android:paddingBottom="6dip"
-    android:paddingTop="4dip">
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp"
+    android:paddingTop="14dp"
+    android:paddingBottom="14dp">
 
     <TextView
         android:id="@+id/profile_item_name"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="15dp"
         android:textAppearance="?android:attr/textAppearanceMedium"
-        tools:text="Profile name" />
+        android:textStyle="bold"
+        tools:text="🇫🇷 1.2.3.4:1234" />
 
     <TextView
         android:id="@+id/profile_item_managed"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="15dp"
         android:text="@string/profile_managed"
         android:textAppearance="?android:attr/textAppearanceSmall"
-        android:textColor="@color/success_text"
-        android:visibility="gone"
-        tools:visibility="visible" />
+        android:visibility="gone" />
 
     <TextView
         android:id="@+id/profile_item_gateway"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="15dp"
+        android:layout_marginTop="4dp"
         android:textAppearance="?android:attr/textAppearanceSmall"
         android:textColor="?android:textColorSecondary"
-        tools:text="Server: vpn.example.com" />
+        tools:text="1.2.3.4:1234" />
 
     <TextView
         android:id="@+id/profile_item_username"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="15dp"
-        android:textAppearance="?android:attr/textAppearanceSmall"
-        android:textColor="?android:textColorSecondary"
-        tools:text="Username" />
+        android:visibility="gone" />
 
     <TextView
         android:id="@+id/profile_item_certificate"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="15dp"
-        android:ellipsize="end"
-        android:singleLine="true"
-        android:textAppearance="?android:attr/textAppearanceSmall"
-        android:textColor="?android:textColorSecondary"
-        tools:text="Certificate" />
-
+        android:visibility="gone" />
 </LinearLayout>
