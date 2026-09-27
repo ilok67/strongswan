@@ -13,4 +13,36 @@
         <item>برنامه‌های انتخاب‌شده از وی‌پی‌ان مستثنی شوند</item>
         <item>فقط برنامه‌های انتخاب‌شده از وی‌پی‌ان استفاده کنند</item>
     </string-array>
+    <string-array name="vpn_location_codes">
+    <item>auto</item>
+    <item>nl</item>
+    <item>de</item>
+    <item>fr</item>
+    <item>uk</item>
+    <item>us</item>
+    <item>ca</item>
+    <item>pl</item>
+    <item>sgp</item>
+    <item>jp</item>
+    <item>in</item>
+    <item>es</item>
+    <item>it</item>
+    <item>cz</item>
+</string-array>
+<string-array name="vpn_location_names">
+    <item>🌐 خودکار</item>
+    <item>🇳🇱 هلند</item>
+    <item>🇩🇪 آلمان</item>
+    <item>🇫🇷 فرانسه</item>
+    <item>🇬🇧 انگلستان</item>
+    <item>🇺🇸 آمریکا</item>
+    <item>🇨🇦 کانادا</item>
+    <item>🇵🇱 لهستان</item>
+    <item>🇸🇬 سنگاپور</item>
+    <item>🇯🇵 ژاپن</item>
+    <item>🇮🇳 هند</item>
+    <item>🇪🇸 اسپانیا</item>
+    <item>🇮🇹 ایتالیا</item>
+    <item>🇨🇿 جمهوری چک</item>
+</string-array>
 </resources>
