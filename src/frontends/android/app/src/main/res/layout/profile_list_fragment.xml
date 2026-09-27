@@ -6,6 +6,7 @@
 
     <ListView
         android:id="@+id/profile_list"
+        android:listSelector="@android:color/transparent"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:clipToPadding="false"
