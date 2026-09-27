@@ -222,13 +222,7 @@ public class VpnProfileListFragment extends Fragment implements MenuProvider
 	@Override
 	public void onPrepareMenu(@NonNull Menu menu)
 	{
-		final MenuItem addProfile = menu.findItem(R.id.add_profile);
-		if (addProfile != null)
-		{
-			final ManagedConfiguration managedConfiguration = mManagedConfigurationService.getManagedConfiguration();
-			addProfile.setVisible(managedConfiguration.isAllowProfileCreation());
-			addProfile.setEnabled(managedConfiguration.isAllowProfileCreation());
-		}
+		
 	}
 
 @Override
