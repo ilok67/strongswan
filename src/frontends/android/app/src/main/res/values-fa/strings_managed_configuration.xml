@@ -1,14 +1,107 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+
+    <!-- Managed configuration -->
     <string name="managed_config_allow_profile_creation_title">اجازه ساخت پروفایل</string>
-    <string name="managed_config_allow_profile_creation_summary">اگر غیرفعال باشد، کاربران نمی‌توانند پروفایل‌های وی‌پی‌ان جدید بسازند</string>
-
+    <string name="managed_config_allow_profile_creation_description">مشخص می‌کند که آیا کاربران مجاز به افزودن پروفایل‌های خودشان هستند یا خیر</string>
     <string name="managed_config_allow_profile_import_title">اجازه ورود پروفایل</string>
-    <string name="managed_config_allow_profile_import_summary">اگر غیرفعال باشد، کاربران نمی‌توانند پروفایل‌های وی‌پی‌ان وارد کنند</string>
-
+    <string name="managed_config_allow_profile_import_description">مشخص می‌کند که آیا کاربران مجاز به وارد کردن پروفایل‌های خودشان هستند یا خیر</string>
+    <string name="managed_config_allow_existing_profiles_title">نمایش پروفایل‌های موجود</string>
+    <string name="managed_config_allow_existing_profiles_description">مشخص می‌کند که آیا کاربران می‌توانند پروفایل‌های قبلی خود را ببینند و استفاده کنند یا خیر</string>
     <string name="managed_config_allow_certificate_import_title">اجازه ورود گواهی</string>
-    <string name="managed_config_allow_certificate_import_summary">اگر غیرفعال باشد، کاربران نمی‌توانند گواهی وارد کنند</string>
+    <string name="managed_config_allow_certificate_import_description">مشخص می‌کند که آیا کاربران مجاز به وارد کردن گواهی هستند یا خیر</string>
+    <string name="managed_config_allow_settings_access_title">اجازه تغییر تنظیمات</string>
+    <string name="managed_config_allow_settings_access_description">مشخص می‌کند که آیا کاربران مجاز به تغییر تنظیمات کلی برنامه هستند یا خیر</string>
+    <string name="managed_config_default_vpn_profile_title">@string/pref_default_vpn_profile</string>
+    <string name="managed_config_default_vpn_profile_description">شناسه یکتای پروفایل وی‌پی‌ان برای استفاده پیش‌فرض؛ برای آخرین پروفایل استفاده‌شده مقدار «mru» را بگذارید</string>
+    <string name="managed_config_ignore_battery_optimizations_title">@string/pref_power_whitelist_title</string>
+    <string name="managed_config_ignore_battery_optimizations_description">@string/pref_power_whitelist_summary</string>
+    <string name="managed_config_profiles_array_title">پروفایل‌های وی‌پی‌ان</string>
+    <string name="managed_config_profiles_array_description">مجموعه پروفایل‌های مدیریت‌شده وی‌پی‌ان</string>
+    <string name="managed_config_profile_bundle_title">پروفایل وی‌پی‌ان</string>
+    <string name="managed_config_profile_bundle_description">یک پروفایل وی‌پی‌ان مدیریت‌شده</string>
 
-    <string name="managed_config_allow_log_title">اجازه مشاهده لاگ</string>
-    <string name="managed_config_allow_log_summary">اگر غیرفعال باشد، کاربران نمی‌توانند لاگ وی‌پی‌ان را ببینند</string>
+    <!-- Managed configuration, VPN profile -->
+    <string name="managed_config_uuid_title">شناسه یکتا</string>
+    <string name="managed_config_uuid_description">شناسه یکتای پروفایل وی‌پی‌ان. استفاده از UUID نسخه ۴ (تولید تصادفی) توصیه می‌شود</string>
+    <string name="managed_config_name_title">@string/profile_name_label_simple</string>
+    <string name="managed_config_name_description">@string/profile_name_hint</string>
+    <string name="managed_config_vpn_type_title">@string/profile_vpn_type_label</string>
+    <string name="managed_config_vpn_type_description">نوع احراز هویت کلاینت که توسط پروفایل وی‌پی‌ان استفاده می‌شود</string>
+    <string name="managed_config_included_package_names_title">برنامه‌های مجاز به استفاده از وی‌پی‌ان (اختیاری)</string>
+    <string name="managed_config_included_package_names_description">لیست نام بسته‌ها که با فاصله جدا می‌شوند؛ سایر برنامه‌ها وی‌پی‌ان را نمی‌بینند و از آن استفاده نمی‌کنند</string>
+    <string name="managed_config_excluded_package_names_title">برنامه‌های مستثنی از استفاده از وی‌پی‌ان (اختیاری)</string>
+    <string name="managed_config_excluded_package_names_description">لیست نام بسته‌های مستثنی که با فاصله جدا می‌شوند؛ فقط زمانی استفاده می‌شود که لیست مجاز خالی باشد</string>
+    <string name="managed_config_ike_proposal_title">@string/profile_proposals_ike_label</string>
+    <string name="managed_config_ike_proposal_description">@string/profile_proposals_ike_hint</string>
+    <string name="managed_config_esp_proposal_title">@string/profile_proposals_esp_label</string>
+    <string name="managed_config_esp_proposal_description">@string/profile_proposals_esp_hint</string>
+    <string name="managed_config_mtu_title">@string/profile_mtu_label</string>
+    <string name="managed_config_mtu_description">@string/profile_mtu_hint</string>
+    <string name="managed_config_nat_keepalive_title">@string/profile_nat_keepalive_label</string>
+    <string name="managed_config_nat_keepalive_description">@string/profile_nat_keepalive_hint</string>
+    <string name="managed_config_dns_server_host_names_title">@string/profile_dns_servers_label</string>
+    <string name="managed_config_dns_server_host_names_description">@string/profile_dns_servers_hint</string>
+    <string name="managed_config_ipv6_transport_title">@string/profile_ipv6_transport_label</string>
+    <string name="managed_config_ipv6_transport_description">@string/profile_ipv6_transport_hint</string>
+
+    <!-- Managed configuration, VPN profile, remote -->
+    <string name="managed_config_remote_bundle_title">سرور</string>
+    <string name="managed_config_remote_bundle_description">اطلاعات مربوط به سرور را مشخص می‌کند</string>
+    <string name="managed_config_remote_addr_title">@string/profile_gateway_label</string>
+    <string name="managed_config_remote_addr_description">@string/profile_gateway_hint</string>
+    <string name="managed_config_remote_port_title">@string/profile_port_label</string>
+    <string name="managed_config_remote_port_description">@string/profile_port_hint</string>
+    <string name="managed_config_remote_id_title">@string/profile_remote_id_label</string>
+    <string name="managed_config_remote_id_description">@string/profile_remote_id_hint</string>
+    <string name="managed_config_remote_cert_title">گواهی CA یا سرور (اختیاری)</string>
+    <string name="managed_config_remote_cert_description">گواهی CA یا سرور به‌صورت Base64. در خود برنامه وارد می‌شود، نه در مخزن کلید سیستم. اگر تنظیم نشود، انتخاب خودکار گواهی CA فعال می‌شود</string>
+    <string name="managed_config_remote_certreq_title">ارسال درخواست گواهی</string>
+    <string name="managed_config_remote_certreq_description">مشخص می‌کند که آیا درخواست گواهی برای همه گواهی‌های CA نصب‌شده یا انتخاب‌شده ارسال شود یا خیر. غیرفعال کردن این گزینه ممکن است اندازه پیام IKE_AUTH را کاهش دهد اگر سرور از قطعه‌بندی پشتیبانی نکند. اما فقط زمانی کار می‌کند که سرور برای ارسال گواهی خود نیازی به درخواست گواهی نداشته باشد</string>
+    <string name="managed_config_remote_revocation_ocsp_title">@string/profile_use_ocsp_label</string>
+    <string name="managed_config_remote_revocation_ocsp_description">@string/profile_use_ocsp_hint</string>
+    <string name="managed_config_remote_revocation_crl_title">@string/profile_use_crl_label</string>
+    <string name="managed_config_remote_revocation_crl_description">@string/profile_use_crl_hint</string>
+    <string name="managed_config_remote_revocation_strict_title">@string/profile_strict_revocation_label</string>
+    <string name="managed_config_remote_revocation_strict_description">@string/profile_strict_revocation_hint</string>
+
+    <!-- Managed configuration, VPN profile, local -->
+    <string name="managed_config_local_bundle_title">کلاینت</string>
+    <string name="managed_config_local_bundle_description">اطلاعات مربوط به کلاینت را مشخص می‌کند</string>
+    <string name="managed_config_local_eap_id_title">هویت/نام کاربری برای احراز هویت EAP (اختیاری)</string>
+    <string name="managed_config_local_eap_id_description">اگر این مورد لازم باشد (برای احراز هویت EAP مبتنی بر نام کاربری/رمز) اما اینجا تنظیم نشده باشد، از کاربر پرسیده می‌شود. اگر تنظیم شود، کاربر نمی‌تواند آن را تغییر دهد. در هر دو حالت کاربر می‌تواند به‌صورت اختیاری رمز عبور را وارد کند</string>
+    <string name="managed_config_local_eap_password_title">رمز عبور برای احراز هویت EAP (اختیاری)</string>
+    <string name="managed_config_local_eap_password_description">اگر این مورد لازم باشد (برای احراز هویت EAP مبتنی بر نام کاربری/رمز) اما اینجا تنظیم نشده باشد، از کاربر پرسیده می‌شود و می‌تواند آن را به‌صورت محلی ذخیره کند</string>
+    <string name="managed_config_local_id_title">@string/profile_local_id_label</string>
+    <string name="managed_config_local_id_description">@string/profile_local_id_hint_user</string>
+    <string name="managed_config_local_p12_title">@string/profile_user_certificate_label</string>
+    <string name="managed_config_local_p12_description">محفظه PKCS#12 به‌صورت Base64 همراه با گواهی کلاینت و کلید خصوصی و زنجیره گواهی اختیاری (مورد آخر ممکن است در نسخه‌های قدیمی‌تر اندروید هشدار ایجاد کند، برای جزئیات به پیکربندی کلاینت وی‌پی‌ان اندروید مراجعه کنید). برای احراز هویت EAP مبتنی بر نام کاربری/رمز یا اگر کاربر از قبل گواهی/کلید را نصب کرده باشد لازم نیست، چون ممکن است هنگام ورود پروفایل انتخاب شود</string>
+    <string name="managed_config_local_p12_password_title">رمز عبور گواهی کاربر (اختیاری)</string>
+    <string name="managed_config_local_p12_password_description">رمز عبور موردنیاز برای استخراج کلید خصوصی محفظه PKCS#12 جهت نصب</string>
+    <string name="managed_config_local_user_certificate_alias_title">نام مستعار گواهی کاربر (اختیاری)</string>
+    <string name="managed_config_local_user_certificate_alias_description">نام مستعار یک گواهی/کلید کاربر که از قبل روی دستگاه نصب شده است. برنامه باید توسط MDM به آن دسترسی داشته باشد. فقط زمانی استفاده می‌شود که گواهی همراه پیکربندی توزیع نشده باشد. اگر گواهی لازم باشد و این تنظیم نشده باشد، کاربر می‌تواند به‌صورت دستی یک گواهی محلی انتخاب کند</string>
+    <string name="managed_config_local_rsa_pss_title">@string/profile_rsa_pss_label</string>
+    <string name="managed_config_local_rsa_pss_description">@string/profile_rsa_pss_hint</string>
+
+    <!-- Managed configuration, VPN profile, split-tunneling -->
+    <string name="managed_config_split_tunneling_bundle_title">@string/profile_split_tunneling_label</string>
+    <string name="managed_config_split_tunneling_bundle_description">@string/profile_split_tunneling_intro</string>
+    <string name="managed_config_split_tunneling_subnets_title">@string/profile_included_subnets_label</string>
+    <string name="managed_config_split_tunneling_subnets_description">@string/profile_included_subnets_hint</string>
+    <string name="managed_config_split_tunneling_excluded_title">@string/profile_excluded_subnets_label</string>
+    <string name="managed_config_split_tunneling_excluded_description">@string/profile_excluded_subnets_hint</string>
+    <string name="managed_config_split_tunneling_block_ipv4_title">@string/profile_split_tunnelingv4_title</string>
+    <string name="managed_config_split_tunneling_block_ipv4_description">مشخص می‌کند که آیا ترافیک IPv4 که مقصدش وی‌پی‌ان نیست مسدود شود یا خیر. همه ترافیک IPv4 را از وی‌پی‌ان عبور می‌دهد (ترافیکی که با انتخابگر ترافیک مذاکره‌شده مطابقت نداشته باشد حذف می‌شود). بنابراین این عملاً معادل افزودن 0.0.0.0/0 به زیرشبکه‌ها است</string>
+    <string name="managed_config_split_tunneling_block_ipv6_title">@string/profile_split_tunnelingv6_title</string>
+    <string name="managed_config_split_tunneling_block_ipv6_description">مشخص می‌کند که آیا ترافیک IPv6 که مقصدش وی‌پی‌ان نیست مسدود شود یا خیر. همه ترافیک IPv6 را از وی‌پی‌ان عبور می‌دهد (ترافیکی که با انتخابگر ترافیک مذاکره‌شده مطابقت نداشته باشد حذف می‌شود). بنابراین این عملاً معادل افزودن ::/0 به زیرشبکه‌ها است</string>
+
+    <!-- Managed configuration, VPN profile, proxy server -->
+    <string name="managed_config_proxy_server_bundle_title">@string/profile_proxy_server_label</string>
+    <string name="managed_config_proxy_server_bundle_description">@string/profile_proxy_server_intro</string>
+    <string name="managed_config_proxy_host_title">@string/profile_proxy_host_label</string>
+    <string name="managed_config_proxy_host_description">@string/profile_proxy_host_hint</string>
+    <string name="managed_config_proxy_port_title">@string/profile_proxy_port_label</string>
+    <string name="managed_config_proxy_port_description">@string/profile_proxy_port_hint</string>
+    <string name="managed_config_proxy_exclusions_title">@string/profile_proxy_exclusions_label</string>
+    <string name="managed_config_proxy_exclusions_description">@string/profile_proxy_exclusions_hint</string>
 </resources>
