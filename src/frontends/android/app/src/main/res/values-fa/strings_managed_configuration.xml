@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="managed_config_allow_profile_creation_title">اجازه ساخت پروفایل</string>
+    <string name="managed_config_allow_profile_creation_summary">اگر غیرفعال باشد، کاربران نمی‌توانند پروفایل‌های وی‌پی‌ان جدید بسازند</string>
+
+    <string name="managed_config_allow_profile_import_title">اجازه ورود پروفایل</string>
+    <string name="managed_config_allow_profile_import_summary">اگر غیرفعال باشد، کاربران نمی‌توانند پروفایل‌های وی‌پی‌ان وارد کنند</string>
+
+    <string name="managed_config_allow_certificate_import_title">اجازه ورود گواهی</string>
+    <string name="managed_config_allow_certificate_import_summary">اگر غیرفعال باشد، کاربران نمی‌توانند گواهی وارد کنند</string>
+
+    <string name="managed_config_allow_log_title">اجازه مشاهده لاگ</string>
+    <string name="managed_config_allow_log_summary">اگر غیرفعال باشد، کاربران نمی‌توانند لاگ وی‌پی‌ان را ببینند</string>
+</resources>
