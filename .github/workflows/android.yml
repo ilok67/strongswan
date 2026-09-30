@@ -38,6 +38,9 @@ jobs:
       CCACHE_COMPILERCHECK: content
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          fetch-tags: true
       # make sure the NDK we reference is installed and exported so we can use it to build OpenSSL
       - name: Install NDK
         id: ndk-install
