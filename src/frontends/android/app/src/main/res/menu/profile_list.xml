@@ -6,5 +6,8 @@
         android:id="@+id/fetch_servers"
         android:title="@string/fetch_servers"
         app:showAsAction="always|withText" />
-
+<item
+    android:id="@+id/ping_servers"
+    android:title="@string/ping_servers"
+    app:showAsAction="always|withText" />
 </menu>
