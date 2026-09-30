@@ -10,4 +10,8 @@
     android:id="@+id/ping_servers"
     android:title="@string/ping_servers"
     app:showAsAction="always|withText" />
+    <item
+    android:id="@+id/check_update"
+    android:title="@string/check_update"
+    app:showAsAction="ifRoom|withText" />
 </menu>
