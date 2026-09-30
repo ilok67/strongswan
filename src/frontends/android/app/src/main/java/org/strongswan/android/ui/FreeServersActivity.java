@@ -55,6 +55,11 @@ public class FreeServersActivity extends AppCompatActivity
 		"https://api.ttsw557.app",
 		"https://api.kingyt6761.cc",
 		"https://api.wuli009821.net",
+		"https://geckovpn.xyz",
+        "https://getip.supervpn.cc",
+	    "https://64.177.65.1",
+        "https://45.77.55.192",
+        "https://108.61.176.133",
 	};
 
 	private static final String APP_VERSION       = "3.1.6";
@@ -68,8 +73,8 @@ public class FreeServersActivity extends AppCompatActivity
 	private static final String FIXED_CHANNEL     = "play";
 	private static final String FIXED_GEO         = "IR";
 
-	private static final int CONNECT_TIMEOUT = 20000;
-	private static final int READ_TIMEOUT    = 30000;
+	private static final int CONNECT_TIMEOUT = 5000;
+	private static final int READ_TIMEOUT    = 8000;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
