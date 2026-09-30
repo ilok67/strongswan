@@ -233,9 +233,44 @@ public boolean onMenuItemSelected(@NonNull MenuItem menuItem)
         startActivity(new Intent(getActivity(), FreeServersActivity.class));
         return true;
     }
+	if (menuItem.getItemId() == R.id.ping_servers)
+    {
+        pingAll();
+        return true;
+     }
     return false;
 }
+private void pingAll()
+{
+	if (mVpnProfiles == null || mVpnProfiles.isEmpty())
+	{
+		return;
+	}
+	mListAdapter.clearPings();
+	for (VpnProfile profile : mVpnProfiles)
+	{
+		mListAdapter.setPing(profile.getUUID().toString(), getString(R.string.ping_running));
+	}
 
+	final java.util.List<VpnProfile> copy = new java.util.ArrayList<>(mVpnProfiles);
+	java.util.concurrent.Executors.newSingleThreadExecutor().execute(() -> {
+		for (VpnProfile profile : copy)
+		{
+			String result = HostPing.ping(profile.getGateway(), profile.getPort());
+			if ("timeout".equals(result))
+			{
+				result = getString(R.string.ping_timeout);
+			}
+			final String uuid = profile.getUUID().toString();
+			final String text = result;
+			if (getActivity() == null)
+			{
+				return;
+			}
+			getActivity().runOnUiThread(() -> mListAdapter.setPing(uuid, text));
+		}
+	});
+}
 	private final OnItemClickListener mVpnProfileClicked = new OnItemClickListener()
 	{
 		@Override
