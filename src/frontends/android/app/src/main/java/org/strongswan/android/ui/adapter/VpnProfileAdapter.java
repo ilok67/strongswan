@@ -18,6 +18,7 @@ public class VpnProfileAdapter extends ArrayAdapter<VpnProfile>
 {
 	private final int resource;
 	private final List<VpnProfile> items;
+    private final java.util.Map<String, String> pings = new java.util.HashMap<>();
 
 	public VpnProfileAdapter(Context context, int resource, List<VpnProfile> items)
 	{
@@ -27,6 +28,17 @@ public class VpnProfileAdapter extends ArrayAdapter<VpnProfile>
 		sortItems();
 	}
 
+    public void setPing(String uuid, String value)
+    {
+	     pings.put(uuid, value);
+	     notifyDataSetChanged();
+    }
+
+   public void clearPings()
+   {
+    	pings.clear();
+    	notifyDataSetChanged();
+    }
 	@Override
 	public View getView(int position, View convertView, ViewGroup parent)
 	{
@@ -57,7 +69,12 @@ public class VpnProfileAdapter extends ArrayAdapter<VpnProfile>
 			endpoint = endpoint + ":" + port;
 		}
 		tv.setText(endpoint);
-
+         TextView pingView = vpnProfileView.findViewById(R.id.profile_item_ping);
+       if (pingView != null)
+       {
+        	String ping = pings.get(profile.getUUID().toString());
+          	pingView.setText(ping != null ? ping : "—");
+         }
 		tv = vpnProfileView.findViewById(R.id.profile_item_username);
 		tv.setVisibility(View.GONE);
 
