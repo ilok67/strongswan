@@ -17,7 +17,9 @@
     <string name="fetch_servers_loading">در حال دریافت سرورها…</string>
     <string name="fetch_servers_done">%d پروفایل اضافه شد</string>
     <string name="fetch_servers_failed">خطا: %s</string>
-
+    <string name="ping_servers">پینگ</string>
+    <string name="ping_running">در حال پینگ…</string>
+    <string name="ping_timeout">تایم‌اوت</string>
     <string name="pref_title">تنظیمات</string>
     <string name="pref_default_vpn_profile">پروفایل پیش‌فرض</string>
     <string name="pref_default_vpn_profile_mru">اتصال به آخرین پروفایل استفاده‌شده</string>
