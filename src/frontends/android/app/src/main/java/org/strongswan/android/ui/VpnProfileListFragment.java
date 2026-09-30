@@ -246,13 +246,14 @@ private void pingAll()
 	{
 		return;
 	}
+
+	final java.util.List<VpnProfile> copy = new java.util.ArrayList<>(mVpnProfiles);
 	mListAdapter.clearPings();
-	for (VpnProfile profile : mVpnProfiles)
+	for (VpnProfile profile : copy)
 	{
 		mListAdapter.setPing(profile.getUUID().toString(), getString(R.string.ping_running));
 	}
 
-	final java.util.List<VpnProfile> copy = new java.util.ArrayList<>(mVpnProfiles);
 	java.util.concurrent.Executors.newSingleThreadExecutor().execute(() -> {
 		for (VpnProfile profile : copy)
 		{
