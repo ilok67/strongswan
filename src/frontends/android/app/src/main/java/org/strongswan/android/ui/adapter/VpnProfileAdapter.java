@@ -70,11 +70,25 @@ public class VpnProfileAdapter extends ArrayAdapter<VpnProfile>
 		}
 		tv.setText(endpoint);
          TextView pingView = vpnProfileView.findViewById(R.id.profile_item_ping);
-       if (pingView != null)
-       {
-        	String ping = pings.get(profile.getUUID().toString());
-          	pingView.setText(ping != null ? ping : "—");
-         }
+if (pingView != null)
+{
+	String ping = pings.get(profile.getUUID().toString());
+	if (ping == null)
+	{
+		pingView.setText("—");
+		pingView.setTextColor(0x99FFFFFF);
+	}
+	else if (ping.endsWith("ms"))
+	{
+		pingView.setText(ping);
+		pingView.setTextColor(0xFF4ADE80);
+	}
+	else
+	{
+		pingView.setText(ping);
+		pingView.setTextColor(0xFFEF4444);
+	}
+}
 		tv = vpnProfileView.findViewById(R.id.profile_item_username);
 		tv.setVisibility(View.GONE);
 
