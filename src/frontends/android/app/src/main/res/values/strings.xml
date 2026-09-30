@@ -39,6 +39,11 @@
     <string name="ping_servers">Ping</string>
     <string name="ping_running">Pinging…</string>
     <string name="ping_timeout">timeout</string>
+    <string name="check_update">Update</string>
+<string name="update_checking">Checking for updates…</string>
+<string name="update_latest">You have the latest version</string>
+<string name="update_available">New version: %1$s</string>
+<string name="update_download">Download</string>
     <!-- Settings -->
     <string name="pref_title">Settings</string>
     <string name="pref_default_vpn_profile">Default VPN profile</string>
