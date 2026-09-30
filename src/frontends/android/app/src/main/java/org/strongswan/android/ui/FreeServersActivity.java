@@ -39,6 +39,11 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.UUID;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 public class FreeServersActivity extends AppCompatActivity
 {
@@ -115,14 +120,48 @@ public class FreeServersActivity extends AppCompatActivity
 		});
 	}
 
-	private int importProfiles(String location) throws Exception
-	{
-		Registration reg = doRegister();
-		JSONObject data = doAcquire(reg, location);
+private int importProfiles(String location) throws Exception
+{
+	Registration reg = doRegister();
+	JSONObject data = doAcquire(reg, location);
 
-		ArrayList<JSONObject> gateways = new ArrayList<>();
-		collectGateways(data.optJSONArray("gateways"), gateways);
-		collectGateways(data.optJSONArray("relayGateways"), gateways);
+	ArrayList<JSONObject> gateways = new ArrayList<>();
+	collectGateways(data.optJSONArray("gateways"), gateways);
+	collectGateways(data.optJSONArray("relayGateways"), gateways);
+
+	ArrayList<VpnProfile> profiles = new ArrayList<>();
+	for (JSONObject g : gateways)
+	{
+		VpnProfile profile = buildProfile(g, reg, location);
+		if (profile != null)
+		{
+			profiles.add(profile);
+		}
+	}
+
+	ExecutorService executor =
+		Executors.newFixedThreadPool(Math.min(16, Math.max(1, profiles.size())));
+	ArrayList<Future<String>> futures = new ArrayList<>();
+	try
+	{
+		for (final VpnProfile p : profiles)
+		{
+			futures.add(executor.submit(new Callable<String>()
+			{
+				@Override
+				public String call()
+				{
+					try
+					{
+						return HostPing.ping(p.getGateway(), p.getPort());
+					}
+					catch (Exception e)
+					{
+						return "timeout";
+					}
+				}
+			}));
+		}
 
 		VpnProfileDataSource dataSource = new VpnProfileSource(this);
 		dataSource.open();
@@ -130,13 +169,24 @@ public class FreeServersActivity extends AppCompatActivity
 		ArrayList<String> uuids = new ArrayList<>();
 		try
 		{
-			for (JSONObject g : gateways)
+			for (int i = 0; i < profiles.size(); i++)
 			{
-				VpnProfile profile = buildProfile(g, reg, location);
-				if (profile == null)
+				String ping;
+				try
+				{
+					ping = futures.get(i).get(8, TimeUnit.SECONDS);
+				}
+				catch (Exception e)
 				{
 					continue;
 				}
+
+				if ("timeout".equals(ping))
+				{
+					continue;
+				}
+
+				VpnProfile profile = profiles.get(i);
 				VpnProfile existing = dataSource.getVpnProfile(profile.getUUID());
 				if (existing != null)
 				{
@@ -165,6 +215,12 @@ public class FreeServersActivity extends AppCompatActivity
 		}
 		return uuids.size();
 	}
+	finally
+	{
+		executor.shutdownNow();
+	}
+}
+		
 
 	private void collectGateways(JSONArray arr, ArrayList<JSONObject> out)
 	{
