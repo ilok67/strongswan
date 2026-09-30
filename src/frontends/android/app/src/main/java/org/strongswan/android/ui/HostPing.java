@@ -22,8 +22,7 @@ public final class HostPing
 	private static final int DH_GROUP_14 = 14;
 	private static final int DH14_LEN = 256;
 	private static final int HEADER_LEN = 28;
-	private static final int ATTEMPTS = 2;
-	private static final int ATTEMPT_TIMEOUT_MS = 1500;
+	private static final int TIMEOUT_MS = 2500;
 	private static final int DNS_TIMEOUT_MS = 2000;
 
 	private HostPing() {}
@@ -35,7 +34,6 @@ public final class HostPing
 			return "timeout";
 		}
 		int ikePort = (port != null && port > 0) ? port : 500;
-		int offset = (ikePort == 4500) ? 4 : 0;
 
 		InetAddress addr = resolve(host);
 		if (addr == null)
@@ -46,41 +44,40 @@ public final class HostPing
 		byte[] spi = new byte[8];
 		new SecureRandom().nextBytes(spi);
 		byte[] ike = buildIkeSaInit(spi);
-		byte[] request = (offset == 4) ? withNatT(ike) : ike;
+		byte[] natt = withNatT(ike);
 
 		try (DatagramSocket socket = new DatagramSocket())
 		{
 			socket.connect(new InetSocketAddress(addr, ikePort));
+			socket.setSoTimeout(TIMEOUT_MS);
 			byte[] buf = new byte[2048];
 
-			for (int i = 0; i < ATTEMPTS; i++)
-			{
-				long t0 = System.nanoTime();
-				long deadline = t0 + ATTEMPT_TIMEOUT_MS * 1_000_000L;
-				socket.send(new DatagramPacket(request, request.length));
+			long t0 = System.nanoTime();
+			socket.send(new DatagramPacket(ike, ike.length));
+			socket.send(new DatagramPacket(natt, natt.length));
 
-				while (true)
+			long deadline = t0 + TIMEOUT_MS * 1_000_000L;
+			while (true)
+			{
+				long remaining = (deadline - System.nanoTime()) / 1_000_000L;
+				if (remaining <= 0)
 				{
-					long remainingMs = (deadline - System.nanoTime()) / 1_000_000L;
-					if (remainingMs <= 0)
-					{
-						break;
-					}
-					socket.setSoTimeout((int) remainingMs);
-					DatagramPacket in = new DatagramPacket(buf, buf.length);
-					try
-					{
-						socket.receive(in);
-					}
-					catch (java.net.SocketTimeoutException e)
-					{
-						break;
-					}
-					long rtt = (System.nanoTime() - t0) / 1_000_000L;
-					if (isValidResponse(in.getData(), in.getLength(), offset, spi))
-					{
-						return rtt + " ms";
-					}
+					break;
+				}
+				socket.setSoTimeout((int) Math.max(remaining, 1));
+				DatagramPacket in = new DatagramPacket(buf, buf.length);
+				try
+				{
+					socket.receive(in);
+				}
+				catch (java.net.SocketTimeoutException e)
+				{
+					break;
+				}
+				if (in.getLength() >= 4 &&
+					isValidResponse(in.getData(), in.getLength(), spi))
+				{
+					return ((System.nanoTime() - t0) / 1_000_000L) + " ms";
 				}
 			}
 		}
@@ -115,7 +112,16 @@ public final class HostPing
 		}
 	}
 
-	private static boolean isValidResponse(byte[] data, int length, int offset, byte[] spi)
+	private static boolean isValidResponse(byte[] data, int length, byte[] spi)
+	{
+		if (looksLikeIke(data, length, 0, spi) || looksLikeIke(data, length, 4, spi))
+		{
+			return true;
+		}
+		return length >= 28;
+	}
+
+	private static boolean looksLikeIke(byte[] data, int length, int offset, byte[] spi)
 	{
 		if (length < offset + HEADER_LEN)
 		{
@@ -148,7 +154,7 @@ public final class HostPing
 		byte[] keData = new byte[DH14_LEN];
 		rnd.nextBytes(nonce);
 		rnd.nextBytes(keData);
-		keData[0] &= 0x7f;
+		keData[0] = 0x00;
 
 		byte[] sa = payload(PAYLOAD_KE, saBody());
 		byte[] ke = payload(PAYLOAD_NONCE, keBody(keData));
@@ -182,23 +188,36 @@ public final class HostPing
 
 	private static byte[] saBody()
 	{
-		byte[] tEncr = transform(true, 1, 12, 256);
+		byte[] p1 = proposal(false, gcmTransforms());
+		ByteBuffer bb = ByteBuffer.allocate(p1.length);
+		bb.put(p1);
+		return bb.array();
+	}
+
+	private static byte[] gcmTransforms()
+	{
+		byte[] tEncr = transform(true, 1, 20, 256);
 		byte[] tPrf = transform(true, 2, 5, 0);
-		byte[] tInteg = transform(true, 3, 12, 0);
 		byte[] tDh = transform(false, 4, DH_GROUP_14, 0);
-		int len = 8 + tEncr.length + tPrf.length + tInteg.length + tDh.length;
+		ByteBuffer bb = ByteBuffer.allocate(tEncr.length + tPrf.length + tDh.length);
+		bb.put(tEncr);
+		bb.put(tPrf);
+		bb.put(tDh);
+		return bb.array();
+	}
+
+	private static byte[] proposal(boolean more, byte[] transforms)
+	{
+		int len = 8 + transforms.length;
 		ByteBuffer bb = ByteBuffer.allocate(len);
-		bb.put((byte) 0);
+		bb.put((byte) (more ? 2 : 0));
 		bb.put((byte) 0);
 		bb.putShort((short) len);
 		bb.put((byte) 1);
 		bb.put((byte) 1);
 		bb.put((byte) 0);
-		bb.put((byte) 4);
-		bb.put(tEncr);
-		bb.put(tPrf);
-		bb.put(tInteg);
-		bb.put(tDh);
+		bb.put((byte) 3);
+		bb.put(transforms);
 		return bb.array();
 	}
 
