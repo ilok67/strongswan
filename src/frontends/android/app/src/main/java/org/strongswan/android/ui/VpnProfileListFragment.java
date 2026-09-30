@@ -253,7 +253,10 @@ public boolean onMenuItemSelected(@NonNull MenuItem menuItem)
 		try
 		{
 			UpdateChecker.Result latest = UpdateChecker.latest();
-			String current = org.strongswan.android.BuildConfig.VERSION_NAME;
+			String current = requireContext()
+             .getPackageManager()
+             .getPackageInfo(requireContext().getPackageName(), 0)
+             .versionName;
 			if (getActivity() == null)
 			{
 				return;
