@@ -238,7 +238,54 @@ public boolean onMenuItemSelected(@NonNull MenuItem menuItem)
         pingAll();
         return true;
      }
+	if (menuItem.getItemId() == R.id.check_update)
+       {
+	checkUpdate();
+	return true;
+      }  
     return false;
+}
+
+	     private void checkUpdate()
+{
+	Toast.makeText(getActivity(), R.string.update_checking, Toast.LENGTH_SHORT).show();
+	java.util.concurrent.Executors.newSingleThreadExecutor().execute(() -> {
+		try
+		{
+			UpdateChecker.Result latest = UpdateChecker.latest();
+			String current = org.strongswan.android.BuildConfig.VERSION_NAME;
+			if (getActivity() == null)
+			{
+				return;
+			}
+			getActivity().runOnUiThread(() -> {
+				if (current.equals(latest.tag))
+				{
+					Toast.makeText(getActivity(), R.string.update_latest, Toast.LENGTH_LONG).show();
+					return;
+				}
+				new androidx.appcompat.app.AlertDialog.Builder(requireActivity())
+					.setTitle(R.string.check_update)
+					.setMessage(getString(R.string.update_available, latest.tag))
+					.setPositiveButton(R.string.update_download, (d, w) -> {
+						android.content.Intent i = new android.content.Intent(
+							android.content.Intent.ACTION_VIEW,
+							android.net.Uri.parse(latest.apkUrl));
+						startActivity(i);
+					})
+					.setNegativeButton(android.R.string.cancel, null)
+					.show();
+			});
+		}
+		catch (Exception e)
+		{
+			if (getActivity() != null)
+			{
+				getActivity().runOnUiThread(() ->
+					Toast.makeText(getActivity(), e.getMessage(), Toast.LENGTH_LONG).show());
+			}
+		}
+	});
 }
 private void pingAll()
 {
