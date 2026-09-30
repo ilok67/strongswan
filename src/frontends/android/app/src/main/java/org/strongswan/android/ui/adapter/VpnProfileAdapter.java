@@ -106,14 +106,40 @@ if (pingView != null)
 	}
 
 	private void sortItems()
+{
+	Collections.sort(this.items, new Comparator<VpnProfile>()
 	{
-		Collections.sort(this.items, new Comparator<VpnProfile>()
+		@Override
+		public int compare(VpnProfile lhs, VpnProfile rhs)
 		{
-			@Override
-			public int compare(VpnProfile lhs, VpnProfile rhs)
+			int c = Integer.compare(pingScore(lhs), pingScore(rhs));
+			if (c != 0)
 			{
-				return lhs.getName().compareToIgnoreCase(rhs.getName());
+				return c;
 			}
-		});
+			return lhs.getName().compareToIgnoreCase(rhs.getName());
+		}
+	});
+}
+
+private int pingScore(VpnProfile profile)
+{
+	String ping = pings.get(profile.getUUID().toString());
+	if (ping == null)
+	{
+		return Integer.MAX_VALUE - 1;
 	}
+	if (ping.endsWith("ms"))
+	{
+		try
+		{
+			return Integer.parseInt(ping.replace(" ms", "").trim());
+		}
+		catch (NumberFormatException e)
+		{
+			return Integer.MAX_VALUE;
+		}
+	}
+	return Integer.MAX_VALUE;
+}
 }
