@@ -129,97 +129,48 @@ private int importProfiles(String location) throws Exception
 	collectGateways(data.optJSONArray("gateways"), gateways);
 	collectGateways(data.optJSONArray("relayGateways"), gateways);
 
-	ArrayList<VpnProfile> profiles = new ArrayList<>();
-	for (JSONObject g : gateways)
-	{
-		VpnProfile profile = buildProfile(g, reg, location);
-		if (profile != null)
-		{
-			profiles.add(profile);
-		}
-	}
+	VpnProfileDataSource dataSource = new VpnProfileSource(this);
+	dataSource.open();
 
-	ExecutorService executor =
-		Executors.newFixedThreadPool(Math.min(16, Math.max(1, profiles.size())));
-	ArrayList<Future<String>> futures = new ArrayList<>();
+	ArrayList<String> uuids = new ArrayList<>();
 	try
 	{
-		for (final VpnProfile p : profiles)
+		for (JSONObject g : gateways)
 		{
-			futures.add(executor.submit(new Callable<String>()
+			VpnProfile profile = buildProfile(g, reg, location);
+			if (profile == null)
 			{
-				@Override
-				public String call()
-				{
-					try
-					{
-						return HostPing.ping(p.getGateway(), p.getPort());
-					}
-					catch (Exception e)
-					{
-						return "timeout";
-					}
-				}
-			}));
-		}
-
-		VpnProfileDataSource dataSource = new VpnProfileSource(this);
-		dataSource.open();
-
-		ArrayList<String> uuids = new ArrayList<>();
-		try
-		{
-			for (int i = 0; i < profiles.size(); i++)
-			{
-				String ping;
-				try
-				{
-					ping = futures.get(i).get(8, TimeUnit.SECONDS);
-				}
-				catch (Exception e)
-				{
-					continue;
-				}
-
-				if ("timeout".equals(ping))
-				{
-					continue;
-				}
-
-				VpnProfile profile = profiles.get(i);
-				VpnProfile existing = dataSource.getVpnProfile(profile.getUUID());
-				if (existing != null)
-				{
-					profile.setDataSource(existing.getDataSource());
-					dataSource.updateVpnProfile(profile);
-				}
-				else
-				{
-					dataSource.insertProfile(profile);
-				}
-				uuids.add(profile.getUUID().toString());
+				continue;
 			}
+			VpnProfile existing = dataSource.getVpnProfile(profile.getUUID());
+			if (existing != null)
+			{
+				profile.setDataSource(existing.getDataSource());
+				dataSource.updateVpnProfile(profile);
+			}
+			else
+			{
+				dataSource.insertProfile(profile);
+			}
+			uuids.add(profile.getUUID().toString());
 		}
-		finally
-		{
-			dataSource.close();
-		}
-
-		if (!uuids.isEmpty())
-		{
-			android.content.Intent intent =
-				new android.content.Intent(Constants.VPN_PROFILES_CHANGED);
-			intent.putExtra(Constants.VPN_PROFILES_MULTIPLE,
-				uuids.toArray(new String[0]));
-			LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
-		}
-		return uuids.size();
 	}
 	finally
 	{
-		executor.shutdownNow();
+		dataSource.close();
 	}
+
+	if (!uuids.isEmpty())
+	{
+		android.content.Intent intent =
+			new android.content.Intent(Constants.VPN_PROFILES_CHANGED);
+		intent.putExtra(Constants.VPN_PROFILES_MULTIPLE,
+			uuids.toArray(new String[0]));
+		LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+	}
+	return uuids.size();
 }
+
 		
 
 	private void collectGateways(JSONArray arr, ArrayList<JSONObject> out)
