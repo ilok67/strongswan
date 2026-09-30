@@ -305,20 +305,54 @@ private void pingAll()
 	}
 
 	java.util.concurrent.Executors.newSingleThreadExecutor().execute(() -> {
-		for (VpnProfile profile : copy)
+		java.util.concurrent.ExecutorService pool =
+			java.util.concurrent.Executors.newFixedThreadPool(
+				Math.min(16, Math.max(1, copy.size())));
+		java.util.ArrayList<java.util.concurrent.Future<String>> futures =
+			new java.util.ArrayList<>();
+		try
 		{
-			String result = HostPing.ping(profile.getGateway(), profile.getPort());
-			if ("timeout".equals(result))
+			for (final VpnProfile p : copy)
 			{
-				result = getString(R.string.ping_timeout);
+				futures.add(pool.submit(() -> {
+					try
+					{
+						return HostPing.ping(p.getGateway(), p.getPort());
+					}
+					catch (Exception e)
+					{
+						return "timeout";
+					}
+				}));
 			}
-			final String uuid = profile.getUUID().toString();
-			final String text = result;
-			if (getActivity() == null)
+
+			for (int i = 0; i < copy.size(); i++)
 			{
-				return;
+				String result;
+				try
+				{
+					result = futures.get(i).get(8, java.util.concurrent.TimeUnit.SECONDS);
+				}
+				catch (Exception e)
+				{
+					result = "timeout";
+				}
+				if ("timeout".equals(result))
+				{
+					result = getString(R.string.ping_timeout);
+				}
+				final String uuid = copy.get(i).getUUID().toString();
+				final String text = result;
+				if (getActivity() == null)
+				{
+					return;
+				}
+				getActivity().runOnUiThread(() -> mListAdapter.setPing(uuid, text));
 			}
-			getActivity().runOnUiThread(() -> mListAdapter.setPing(uuid, text));
+		}
+		finally
+		{
+			pool.shutdownNow();
 		}
 	});
 }
