@@ -146,6 +146,7 @@ public class VpnProfileListFragment extends Fragment implements MenuProvider
 			mListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
 			mListView.setMultiChoiceModeListener(mVpnProfileSelected);
 		}
+		view.post(() -> checkUpdate(true));
 		return view;
 	}
 
@@ -248,48 +249,85 @@ public boolean onMenuItemSelected(@NonNull MenuItem menuItem)
 
 	     private void checkUpdate()
 {
-	Toast.makeText(getActivity(), R.string.update_checking, Toast.LENGTH_SHORT).show();
+	checkUpdate(false);
+}
+
+private void checkUpdate(boolean silent)
+{
+	final android.app.Activity activity = getActivity();
+	if (activity == null)
+	{
+		return;
+	}
+
+	android.content.SharedPreferences prefs =
+		activity.getSharedPreferences("update", android.content.Context.MODE_PRIVATE);
+	long now = System.currentTimeMillis();
+	if (silent && now - prefs.getLong("last_check", 0) < 24L * 60 * 60 * 1000)
+	{
+		return;
+	}
+
+	if (!silent)
+	{
+		Toast.makeText(activity, R.string.update_checking, Toast.LENGTH_SHORT).show();
+	}
+
+	final String current;
+	try
+	{
+		current = activity.getPackageManager()
+			.getPackageInfo(activity.getPackageName(), 0).versionName;
+	}
+	catch (Exception e)
+	{
+		return;
+	}
+
 	java.util.concurrent.Executors.newSingleThreadExecutor().execute(() -> {
 		try
 		{
 			UpdateChecker.Result latest = UpdateChecker.latest();
-			String current = requireContext()
-             .getPackageManager()
-             .getPackageInfo(requireContext().getPackageName(), 0)
-             .versionName;
-			if (getActivity() == null)
-			{
-				return;
-			}
-			getActivity().runOnUiThread(() -> {
-				if (current.equals(latest.tag))
+			boolean newer = UpdateChecker.isNewer(latest.tag, current);
+			prefs.edit().putLong("last_check", System.currentTimeMillis()).apply();
+
+			activity.runOnUiThread(() -> {
+				if (!isAdded() || activity.isFinishing())
 				{
-					Toast.makeText(getActivity(), R.string.update_latest, Toast.LENGTH_LONG).show();
 					return;
 				}
-				new androidx.appcompat.app.AlertDialog.Builder(requireActivity())
+				if (!newer)
+				{
+					if (!silent)
+					{
+						Toast.makeText(activity, R.string.update_latest, Toast.LENGTH_LONG).show();
+					}
+					return;
+				}
+				new androidx.appcompat.app.AlertDialog.Builder(activity)
 					.setTitle(R.string.check_update)
 					.setMessage(getString(R.string.update_available, latest.tag))
-					.setPositiveButton(R.string.update_download, (d, w) -> {
-						android.content.Intent i = new android.content.Intent(
+					.setPositiveButton(R.string.update_download, (d, w) ->
+						startActivity(new android.content.Intent(
 							android.content.Intent.ACTION_VIEW,
-							android.net.Uri.parse(latest.apkUrl));
-						startActivity(i);
-					})
+							android.net.Uri.parse(latest.apkUrl))))
 					.setNegativeButton(android.R.string.cancel, null)
 					.show();
 			});
 		}
 		catch (Exception e)
 		{
-			if (getActivity() != null)
+			if (!silent)
 			{
-				getActivity().runOnUiThread(() ->
-					Toast.makeText(getActivity(), e.getMessage(), Toast.LENGTH_LONG).show());
+				activity.runOnUiThread(() -> {
+					String msg = e.getMessage() != null ? e.getMessage() : e.toString();
+					Toast.makeText(activity, msg, Toast.LENGTH_LONG).show();
+				});
 			}
 		}
 	});
 }
+		
 private void pingAll()
 {
 	if (mVpnProfiles == null || mVpnProfiles.isEmpty())
