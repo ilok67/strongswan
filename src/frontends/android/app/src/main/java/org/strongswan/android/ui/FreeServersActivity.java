@@ -250,15 +250,36 @@ private int importProfiles(String location) throws Exception
 		String secret = makeSecret(rawUsername, deviceId);
 		String sign = calculateSign();
 
+String[][] devices = {
+    {"Google",  "Pixel 8",     "UP1A.231005.007"},
+    {"Google",  "Pixel 8 Pro", "UP1A.231005.007"},
+    {"Google",  "Pixel 7",     "TQ3A.230901.001"},
+    {"Google",  "Pixel 6a",    "TQ3A.230805.001"},
+    {"Samsung", "SM-S918B",    "UP1A.231005.007"},
+    {"Samsung", "SM-S911B",    "UP1A.231005.007"},
+    {"Samsung", "SM-A546B",    "UP1A.231005.007"},
+    {"Samsung", "SM-A346B",    "UP1A.231005.007"},
+    {"Xiaomi",  "22111317G",   "TKQ1.221114.001"},
+    {"Xiaomi",  "2201123G",    "TKQ1.221114.001"},
+    {"Xiaomi",  "23021RAAEG",  "UKQ1.230804.001"},
+    {"Huawei",  "FOA-LX9",     "HUAWEIFOA-LX9"},
+    {"Huawei",  "ELS-NX9",     "HUAWEIELS-NX9"}, 
+    {"OnePlus", "CPH2449",     "TP1A.220905.001"},
+    {"Oppo",    "CPH2525",     "TP1A.220905.001"},
+    {"Vivo",    "V2230",       "TP1A.220905.001"}, 
+    {"Realme",  "RMX3630",     "TP1A.220905.001"},
+};
+
+String[] div = devices[new java.util.Random().nextInt(devices.length)];
 		StringBuilder body = new StringBuilder();
 		appendParam(body, "username", rawUsername);
 		appendParam(body, "platform", "a");
 		appendParam(body, "channel", FIXED_CHANNEL);
 		appendParam(body, "alias", FIXED_ALIAS);
 		appendParam(body, "deviceId", deviceId);
-		appendParam(body, "manufacturer", "Google");
-		appendParam(body, "model", "Pixel 8");
-		appendParam(body, "display", "UP1A.231005.007");
+		appendParam(body, "manufacturer", div[0]);
+		appendParam(body, "model", div[1]);
+		appendParam(body, "display", div[2]);
 		appendParam(body, "imsi", deviceId);
 		appendParam(body, "serial", "unknown");
 		appendParam(body, "appVersionCode", APP_VERSION_CODE);
