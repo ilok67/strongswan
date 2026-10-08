@@ -44,6 +44,12 @@
 <string name="update_latest">You have the latest version</string>
 <string name="update_available">New version: %1$s</string>
 <string name="update_download">Download</string>
+    <string name="backup_title">Backup</string>
+<string name="backup_export">Save backup</string>
+<string name="backup_import">Restore backup</string>
+<string name="backup_done">Saved %d profiles</string>
+<string name="restore_done">Restored %d profiles</string>
+<string name="backup_failed">Backup failed: %s</string>
     <!-- Settings -->
     <string name="pref_title">Settings</string>
     <string name="pref_default_vpn_profile">Default VPN profile</string>
