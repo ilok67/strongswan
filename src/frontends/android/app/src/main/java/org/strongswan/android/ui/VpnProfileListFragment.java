@@ -59,7 +59,57 @@ public class VpnProfileListFragment extends Fragment implements MenuProvider
 	private boolean mReadOnly;
 
 	private ManagedConfigurationService mManagedConfigurationService;
+private final androidx.activity.result.ActivityResultLauncher<String> mExportLauncher =
+	registerForActivityResult(
+		new androidx.activity.result.contract.ActivityResultContracts.CreateDocument("application/octet-stream")
+		uri -> {
+			if (uri == null) return;
+			java.util.concurrent.Executors.newSingleThreadExecutor().execute(() -> {
+				try
+				{
+					int n = ProfileBackup.export(requireContext(), uri);
+					if (getActivity() != null)
+					{
+						getActivity().runOnUiThread(() ->
+							Toast.makeText(getActivity(), getString(R.string.backup_done, n), Toast.LENGTH_LONG).show());
+					}
+				}
+				catch (Exception e)
+				{
+					if (getActivity() != null)
+					{
+						getActivity().runOnUiThread(() ->
+							Toast.makeText(getActivity(), getString(R.string.backup_failed, e.getMessage()), Toast.LENGTH_LONG).show());
+					}
+				}
+			});
+		});
 
+private final androidx.activity.result.ActivityResultLauncher<String[]> mImportLauncher =
+	registerForActivityResult(
+		new androidx.activity.result.contract.ActivityResultContracts.OpenDocument(),
+		uri -> {
+			if (uri == null) return;
+			java.util.concurrent.Executors.newSingleThreadExecutor().execute(() -> {
+				try
+				{
+					int n = ProfileBackup.restore(requireContext(), uri);
+					if (getActivity() != null)
+					{
+						getActivity().runOnUiThread(() ->
+							Toast.makeText(getActivity(), getString(R.string.restore_done, n), Toast.LENGTH_LONG).show());
+					}
+				}
+				catch (Exception e)
+				{
+					if (getActivity() != null)
+					{
+						getActivity().runOnUiThread(() ->
+							Toast.makeText(getActivity(), getString(R.string.backup_failed, e.getMessage()), Toast.LENGTH_LONG).show());
+					}
+				}
+			});
+		});
 	private final BroadcastReceiver mProfilesChanged = new BroadcastReceiver()
 	{
 		@Override
@@ -244,6 +294,26 @@ public boolean onMenuItemSelected(@NonNull MenuItem menuItem)
 	checkUpdate();
 	return true;
       }  
+	if (menuItem.getItemId() == R.id.backup_profiles)
+{
+	new androidx.appcompat.app.AlertDialog.Builder(requireActivity())
+		.setTitle(R.string.backup_title)
+		.setItems(new CharSequence[]{
+			getString(R.string.backup_export),
+			getString(R.string.backup_import)
+		}, (d, which) -> {
+			if (which == 0)
+			{
+				mExportLauncher.launch("bardia-vpn-backup.bv");
+			}
+			else
+			{
+				mImportLauncher.launch(new String[]{"application/octet-stream", "*/*"});
+			}
+		})
+		.show();
+	return true;
+}
     return false;
 }
 
