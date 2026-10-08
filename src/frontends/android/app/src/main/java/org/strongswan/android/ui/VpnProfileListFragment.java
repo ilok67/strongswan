@@ -61,7 +61,7 @@ public class VpnProfileListFragment extends Fragment implements MenuProvider
 	private ManagedConfigurationService mManagedConfigurationService;
 private final androidx.activity.result.ActivityResultLauncher<String> mExportLauncher =
 	registerForActivityResult(
-		new androidx.activity.result.contract.ActivityResultContracts.CreateDocument("application/octet-stream")
+		new androidx.activity.result.contract.ActivityResultContracts.CreateDocument("application/octet-stream"),
 		uri -> {
 			if (uri == null) return;
 			java.util.concurrent.Executors.newSingleThreadExecutor().execute(() -> {
