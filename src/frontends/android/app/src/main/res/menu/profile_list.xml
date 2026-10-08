@@ -6,10 +6,14 @@
         android:id="@+id/fetch_servers"
         android:title="@string/fetch_servers"
         app:showAsAction="always|withText" />
-<item
+    <item
     android:id="@+id/ping_servers"
     android:title="@string/ping_servers"
     app:showAsAction="always|withText" />
+    <item
+    android:id="@+id/backup_profiles"
+    android:title="@string/backup_title"
+    app:showAsAction="ifRoom|withText" />
     <item
     android:id="@+id/check_update"
     android:title="@string/check_update"
