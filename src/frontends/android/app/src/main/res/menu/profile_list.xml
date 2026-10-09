@@ -11,6 +11,10 @@
     android:title="@string/ping_servers"
     app:showAsAction="always|withText" />
     <item
+    android:id="@+id/app_filter"
+    android:title="@string/app_filter"
+    app:showAsAction="ifRoom|withText" />
+    <item
     android:id="@+id/backup_profiles"
     android:title="@string/backup_title"
     app:showAsAction="ifRoom|withText" />
