@@ -44,7 +44,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-
+//.....
 public class FreeServersActivity extends AppCompatActivity
 {
 	private static final String TAG = "FreeServersActivity";
@@ -75,7 +75,7 @@ public class FreeServersActivity extends AppCompatActivity
 
 	private static final int CONNECT_TIMEOUT = 5000;
 	private static final int READ_TIMEOUT    = 8000;
-
+    private static final int alaki = 0;
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
 	{
