@@ -32,7 +32,9 @@
     <string name="strongswan_shortcut">Bardia shortcut</string>
     <string name="permanent_notification_name">VPN connection state</string>
     <string name="permanent_notification_description">Provides information about the VPN connection state and serves as permanent notification to keep the VPN service running in the background.</string>
+    <string name="vpn_stats_line">Time %1$s\nDown %2$s  ·  %3$s\nUp %4$s  ·  %5$s</string>
     <string name="fetch_servers">Get free servers</string>
+    
     <string name="fetch_servers_loading">Fetching servers…</string>
     <string name="fetch_servers_done">Added %d profiles</string>
     <string name="fetch_servers_failed">Failed: %s</string>
