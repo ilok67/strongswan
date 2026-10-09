@@ -5,6 +5,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.net.TrafficStats;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.view.LayoutInflater;
@@ -50,6 +51,8 @@ public class VpnStateFragment extends Fragment implements VpnStateListener
 	private final android.os.Handler mStatsHandler = new android.os.Handler(android.os.Looper.getMainLooper());
 	private static long sStartElapsed;
 	private static long sStatsConnId = -1;
+	private static long sBaseRx = -1;
+	private static long sBaseTx = -1;
 	private long mPrevRx = -1;
 	private long mPrevTx = -1;
 	private long mPrevAt;
@@ -76,8 +79,10 @@ public class VpnStateFragment extends Fragment implements VpnStateListener
 				sStartElapsed = now;
 				mPrevRx = -1;
 				mPrevTx = -1;
+				sBaseRx = -1;
+				sBaseTx = -1;
 			}
-			long[] io = readTun();
+			long[] io = readTraffic();
 			String downSpeed = "—";
 			String upSpeed = "—";
 			String downTotal = "—";
@@ -89,8 +94,8 @@ public class VpnStateFragment extends Fragment implements VpnStateListener
 				if (mPrevRx >= 0)
 				{
 					double sec = Math.max(0.2, (now - mPrevAt) / 1000.0);
-					downSpeed = formatBytes((long) ((io[0] - mPrevRx) / sec)) + "/s";
-					upSpeed = formatBytes((long) ((io[1] - mPrevTx) / sec)) + "/s";
+					downSpeed = formatBytes((long) (Math.max(0, io[0] - mPrevRx) / sec)) + "/s";
+					upSpeed = formatBytes((long) (Math.max(0, io[1] - mPrevTx) / sec)) + "/s";
 				}
 				mPrevRx = io[0];
 				mPrevTx = io[1];
@@ -335,6 +340,29 @@ public class VpnStateFragment extends Fragment implements VpnStateListener
 		mActionButton.setVisibility(text != null ? View.VISIBLE : View.GONE);
 	}
 
+	
+	private static long[] readTraffic()
+	{
+		long[] io = readTun();
+		if (io != null)
+		{
+			return io;
+		}
+		int uid = android.os.Process.myUid();
+		long rx = TrafficStats.getUidRxBytes(uid);
+		long tx = TrafficStats.getUidTxBytes(uid);
+		if (rx == TrafficStats.UNSUPPORTED || tx == TrafficStats.UNSUPPORTED)
+		{
+			return null;
+		}
+		if (sBaseRx < 0 || sBaseTx < 0 || rx < sBaseRx || tx < sBaseTx)
+		{
+			sBaseRx = rx;
+			sBaseTx = tx;
+		}
+		return new long[]{rx - sBaseRx, tx - sBaseTx};
+	}
+
 	private static long[] readTun()
 	{
 		File[] list = new File("/sys/class/net").listFiles();
@@ -387,7 +415,7 @@ public class VpnStateFragment extends Fragment implements VpnStateListener
 			return n + " B";
 		}
 		double v = n;
-		String[] u = {"KB", "MB", "GB"};
+		String[] u = {"KB", "MB", "GB", "TB"};
 		int i = -1;
 		while (v >= 1024 && i < u.length - 1)
 		{
