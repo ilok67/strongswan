@@ -129,7 +129,16 @@
                 android:visibility="gone" >
             </TextView>
         </GridLayout>
-
+<TextView
+    android:id="@+id/vpn_stats"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="20dp"
+    android:layout_marginEnd="20dp"
+    android:layout_marginBottom="8dp"
+    android:textSize="14sp"
+    android:textColor="?android:textColorSecondary"
+    android:visibility="gone" />
         <ProgressBar
             android:id="@+id/progress"
             android:layout_width="match_parent"
