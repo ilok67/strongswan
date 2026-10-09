@@ -41,7 +41,11 @@
     <string name="send_log">ارسال فایل لاگ</string>
     <string name="empty_log">فایل لاگ خالی است</string>
     <string name="log_mail_subject">لاگ بردیا %1$s</string>
-
+<string name="app_filter">فیلتر برنامه‌ها</string>
+<string name="app_filter_exclude">برنامه‌های انتخاب‌شده از وی‌پی‌ان خارج شوند</string>
+<string name="app_filter_only">فقط برنامه‌های انتخاب‌شده از وی‌پی‌ان استفاده کنند</string>
+<string name="app_filter_off">همه برنامه‌ها از وی‌پی‌ان استفاده کنند</string>
+<string name="app_filter_saved">ذخیره شد. برای اعمال دوباره وصل شو</string>
     <string name="no_profiles">پروفایلی وجود ندارد.</string>
     <string name="add_profile">افزودن پروفایل</string>
     <string name="edit_profile">ویرایش</string>
