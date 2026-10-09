@@ -1153,6 +1153,36 @@ public class CharonVpnService extends VpnService implements Runnable, VpnStateSe
 					mSelectedApps.remove(getPackageName());
 					break;
 			}
+			android.content.SharedPreferences filter =
+	getSharedPreferences("app_filter", MODE_PRIVATE);
+String filterMode = filter.getString("mode", "off");
+java.util.Set<String> global = filter.getStringSet("packages", java.util.Collections.emptySet());
+if (global != null && !global.isEmpty() && !"off".equals(filterMode))
+{
+	if ("only".equals(filterMode))
+	{
+		appHandling = org.strongswan.android.data.VpnProfile.SelectedAppsHandling.SELECTED_APPS_ONLY;
+		mSelectedApps.clear();
+		mSelectedApps.addAll(global);
+		mSelectedApps.remove(getPackageName());
+	}
+	else
+	{
+		if (appHandling != org.strongswan.android.data.VpnProfile.SelectedAppsHandling.SELECTED_APPS_ONLY)
+		{
+			appHandling = org.strongswan.android.data.VpnProfile.SelectedAppsHandling.SELECTED_APPS_EXCLUDE;
+		}
+		if (appHandling == org.strongswan.android.data.VpnProfile.SelectedAppsHandling.SELECTED_APPS_ONLY)
+		{
+			mSelectedApps.removeAll(global);
+		}
+		else
+		{
+			mSelectedApps.addAll(global);
+			mSelectedApps.add(getPackageName());
+		}
+	}
+}
 			mAppHandling = appHandling;
 
 			if (profile.getDnsServers() != null)
