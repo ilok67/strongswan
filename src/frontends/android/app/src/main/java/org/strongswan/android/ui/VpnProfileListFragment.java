@@ -110,6 +110,27 @@ private final androidx.activity.result.ActivityResultLauncher<String[]> mImportL
 				}
 			});
 		});
+	private final androidx.activity.result.ActivityResultLauncher<android.content.Intent> mAppFilterLauncher =
+	registerForActivityResult(
+		new androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult(),
+		result -> {
+			if (result.getResultCode() != android.app.Activity.RESULT_OK || result.getData() == null)
+			{
+				return;
+			}
+			java.util.ArrayList<String> list = result.getData().getStringArrayListExtra(
+				org.strongswan.android.data.VpnProfileDataSource.KEY_SELECTED_APPS_LIST);
+			java.util.HashSet<String> set = new java.util.HashSet<>();
+			if (list != null)
+			{
+				set.addAll(list);
+			}
+			requireContext().getSharedPreferences("app_filter", android.content.Context.MODE_PRIVATE)
+				.edit()
+				.putStringSet("packages", set)
+				.apply();
+			Toast.makeText(getActivity(), R.string.app_filter_saved, Toast.LENGTH_LONG).show();
+		});
 	private final BroadcastReceiver mProfilesChanged = new BroadcastReceiver()
 	{
 		@Override
@@ -310,6 +331,45 @@ public boolean onMenuItemSelected(@NonNull MenuItem menuItem)
 			{
 				mImportLauncher.launch(new String[]{"application/octet-stream", "*/*"});
 			}
+		})
+		.show();
+	return true;
+}
+	if (menuItem.getItemId() == R.id.app_filter)
+{
+	final android.content.SharedPreferences prefs =
+		requireContext().getSharedPreferences("app_filter", android.content.Context.MODE_PRIVATE);
+	final String[] modes = {"exclude", "only", "off"};
+	int checked = 0;
+	String current = prefs.getString("mode", "exclude");
+	for (int i = 0; i < modes.length; i++)
+	{
+		if (modes[i].equals(current))
+		{
+			checked = i;
+		}
+	}
+	new androidx.appcompat.app.AlertDialog.Builder(requireActivity())
+		.setTitle(R.string.app_filter)
+		.setSingleChoiceItems(new CharSequence[]{
+			getString(R.string.app_filter_exclude),
+			getString(R.string.app_filter_only),
+			getString(R.string.app_filter_off)
+		}, checked, (dialog, which) -> {
+			prefs.edit().putString("mode", modes[which]).apply();
+			dialog.dismiss();
+			if ("off".equals(modes[which]))
+			{
+				Toast.makeText(getActivity(), R.string.app_filter_saved, Toast.LENGTH_LONG).show();
+				return;
+			}
+			java.util.ArrayList<String> list = new java.util.ArrayList<>(
+				prefs.getStringSet("packages", java.util.Collections.emptySet()));
+			android.content.Intent intent = new android.content.Intent(
+				getActivity(), SelectedApplicationsActivity.class);
+			intent.putStringArrayListExtra(
+				org.strongswan.android.data.VpnProfileDataSource.KEY_SELECTED_APPS_LIST, list);
+			mAppFilterLauncher.launch(intent);
 		})
 		.show();
 	return true;
