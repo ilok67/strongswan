@@ -46,7 +46,9 @@
     <string name="ping_running">Pinging…</string>
     <string name="ping_timeout">timeout</string>
     <string name="check_update">Update</string>
-<string name="update_checking">Checking for updates…</string>
+<string name="about">About</string>
+<string name="about_text">Bardia VPN\nVersion %1$s\n\nA free and open-source VPN client.\nUse at your own responsibility.\n\nContact me on Telegram:\nhttps://t.me/falconer1367</string>
+    <string name="update_checking">Checking for updates…</string>
 <string name="update_latest">You have the latest version</string>
 <string name="update_available">New version: %1$s</string>
 <string name="update_download">Download</string>
