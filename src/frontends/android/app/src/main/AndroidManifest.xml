@@ -90,6 +90,10 @@
             android:name=".ui.LogActivity"
             android:label="@string/log_title" >
         </activity>
+         <activity
+            android:name=".ui.AboutActivity"
+            android:label="@string/about" >
+             </activity>
 		<activity
             android:name=".ui.SettingsActivity"
             android:label="@string/pref_title">
