@@ -5,7 +5,7 @@
     <item
         android:id="@+id/fetch_servers"
         android:title="@string/fetch_servers"
-        app:showAsAction="always|withText" />
+        app:showAsAction="ifRoom|withText" />
     <item
     android:id="@+id/ping_servers"
     android:title="@string/ping_servers"
@@ -21,5 +21,9 @@
     <item
     android:id="@+id/check_update"
     android:title="@string/check_update"
+    app:showAsAction="ifRoom|withText" />
+    <item
+    android:id="@+id/about"
+    android:title="@string/about"
     app:showAsAction="ifRoom|withText" />
 </menu>
