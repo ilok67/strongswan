@@ -373,6 +373,11 @@ public boolean onMenuItemSelected(@NonNull MenuItem menuItem)
 		})
 		.show();
 	return true;
+} 
+	if (menuItem.getItemId() == R.id.about)
+{
+	startActivity(new android.content.Intent(getActivity(), AboutActivity.class));
+	return true;
 }
     return false;
 }
