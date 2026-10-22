@@ -25,7 +25,7 @@ import java.util.Collections;
 import java.util.List;
 
 import io.nekohasekai.libbox.BoxService;
-import io.nekohasekai.libbox.ConnectionOwner;
+import io.nekohasekai.libbox.SetupOptions;
 import io.nekohasekai.libbox.InterfaceUpdateListener;
 import io.nekohasekai.libbox.Libbox;
 import io.nekohasekai.libbox.NetworkInterfaceIterator;
@@ -175,7 +175,12 @@ public class SingBoxVpnService extends VpnService implements PlatformInterface
 		}
 		File work = new File(getFilesDir(), "singbox");
 		work.mkdirs();
-		Libbox.setup(getFilesDir().getPath(), work.getPath(), getCacheDir().getPath(), false);
+		SetupOptions options = new SetupOptions();
+		options.setBasePath(getFilesDir().getPath());
+		options.setWorkingPath(work.getPath());
+		options.setTempPath(getCacheDir().getPath());
+		Libbox.setup(options);
+		Log.i(TAG, "libbox " + Libbox.version());
 		libboxReady = true;
 	}
 
@@ -303,9 +308,13 @@ public class SingBoxVpnService extends VpnService implements PlatformInterface
 		return Build.VERSION.SDK_INT < Build.VERSION_CODES.Q;
 	}
 
-	public ConnectionOwner findConnectionOwner(int ipProtocol, String sourceAddress, int sourcePort, String destinationAddress, int destinationPort) throws Exception
+	public int findConnectionOwner(int ipProtocol, String sourceAddress, int sourcePort, String destinationAddress, int destinationPort) throws Exception
 	{
 		throw new Exception("not supported");
+	}
+
+	public void sendNotification(io.nekohasekai.libbox.Notification notification) throws Exception
+	{
 	}
 
 	public String packageNameByUid(int uid) throws Exception
