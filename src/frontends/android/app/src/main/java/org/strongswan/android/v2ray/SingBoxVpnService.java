@@ -389,13 +389,16 @@ public class SingBoxVpnService extends VpnService implements PlatformInterface
 			}
 		};
 		if (Build.VERSION.SDK_INT >= 31)
-		{
-			cm.registerBestMatchingNetworkCallback(request, networkCallback, null);
-		}
-		else
-		{
-			cm.requestNetwork(request, networkCallback);
-		}
+{
+	cm.registerBestMatchingNetworkCallback(
+		request,
+		networkCallback,
+		new android.os.Handler(android.os.Looper.getMainLooper()));
+}
+else
+{
+	cm.requestNetwork(request, networkCallback);
+}
 	}
 
 	public void closeDefaultInterfaceMonitor(InterfaceUpdateListener listener) throws Exception
