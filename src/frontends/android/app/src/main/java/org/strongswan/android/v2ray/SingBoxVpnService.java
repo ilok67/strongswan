@@ -329,7 +329,7 @@ public class SingBoxVpnService extends VpnService implements PlatformInterface
 
 	public int uidByPackageName(String packageName) throws Exception
 	{
-		return getPackageManager().getPackageUid(packageName, 0);
+		return getPackageManager().getApplicationInfo(packageName, 0).uid;
 	}
 
 	public boolean includeAllNetworks()
@@ -354,7 +354,7 @@ public class SingBoxVpnService extends VpnService implements PlatformInterface
 
 	public void startDefaultInterfaceMonitor(final InterfaceUpdateListener listener) throws Exception
 	{
-		final ConnectivityManager cm = getSystemService(ConnectivityManager.class);
+		final ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
 		NetworkRequest request = new NetworkRequest.Builder()
 				.addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
 				.addCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN)
@@ -393,7 +393,7 @@ public class SingBoxVpnService extends VpnService implements PlatformInterface
 	{
 		if (networkCallback != null)
 		{
-			ConnectivityManager cm = getSystemService(ConnectivityManager.class);
+			ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
 			cm.unregisterNetworkCallback(networkCallback);
 			networkCallback = null;
 		}
