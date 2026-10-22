@@ -25,7 +25,7 @@
     </string-array>
 
    <string-array name="vpn_location_codes">
-    <item>auto</item>
+    <item>special</item>
     <item>nl</item>
     <item>de</item>
     <item>fr</item>
@@ -41,7 +41,7 @@
     <item>cz</item>
 </string-array>
 <string-array name="vpn_location_names">
-    <item>🌐 Auto</item>
+    <item>💣Bomb💣</item>
     <item>🇳🇱 Netherlands</item>
     <item>🇩🇪 Germany</item>
     <item>🇫🇷 France</item>
