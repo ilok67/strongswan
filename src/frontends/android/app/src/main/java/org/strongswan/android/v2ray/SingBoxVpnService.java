@@ -149,7 +149,7 @@ public class SingBoxVpnService extends VpnService implements PlatformInterface
 					return;
 				}
 				setupLibbox();
-				String config = V2RayConfigBuilder.build(link);
+				String config = V2RayConfigBuilder.build(link, Libbox.version());
 				BoxService service = Libbox.newService(config, this);
 				service.start();
 				box = service;
@@ -161,7 +161,16 @@ public class SingBoxVpnService extends VpnService implements PlatformInterface
 		{
 			Log.e(TAG, "start failed", t);
 			stopBox();
-			broadcastState(false, String.valueOf(t.getMessage()));
+			String version;
+			try
+			{
+				version = " [libbox " + Libbox.version() + "]";
+			}
+			catch (Throwable ignored)
+			{
+				version = "";
+			}
+			broadcastState(false, t.getMessage() + version);
 			stopForeground(true);
 			stopSelf();
 		}
