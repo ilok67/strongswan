@@ -1,0 +1,15 @@
+name: print-libbox-api
+
+on:
+  workflow_dispatch:
+
+jobs:
+  api:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Print API
+        run: |
+          mkdir api
+          unzip -o src/frontends/android/app/libs/libbox.aar classes.jar -d api
+          javap -cp api/classes.jar io.nekohasekai.libbox.PlatformInterface io.nekohasekai.libbox.SetupOptions io.nekohasekai.libbox.TunOptions io.nekohasekai.libbox.InterfaceUpdateListener io.nekohasekai.libbox.NetworkInterface io.nekohasekai.libbox.Libbox | grep -E "class|interface|public" | head -200
