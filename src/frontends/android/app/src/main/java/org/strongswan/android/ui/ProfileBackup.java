@@ -14,6 +14,7 @@ import org.strongswan.android.security.LocalCertificateStore;
 import org.strongswan.android.utils.Constants;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
@@ -48,6 +49,11 @@ public final class ProfileBackup
 				o.put("username", p.getUsername());
 				o.put("password", p.getPassword());
 				if (p.getSplitTunneling() != null) o.put("split", p.getSplitTunneling());
+				String remoteId = p.getRemoteId();
+				if (remoteId != null && !remoteId.isEmpty())
+				{
+					o.put("remote_id", remoteId);
+				}
 				String alias = p.getCertificateAlias();
 				if (alias != null)
 				{
@@ -79,15 +85,14 @@ public final class ProfileBackup
 		String json;
 		try (InputStream in = context.getContentResolver().openInputStream(uri))
 		{
-			byte[] buf = new byte[in.available()];
-			int n = 0;
-			while (n < buf.length)
+			ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+			byte[] buf = new byte[8192];
+			int n;
+			while ((n = in.read(buf)) != -1)
 			{
-				int r = in.read(buf, n, buf.length - n);
-				if (r < 0) break;
-				n += r;
+				buffer.write(buf, 0, n);
 			}
-			json = new String(buf, 0, n, StandardCharsets.UTF_8);
+			json = new String(buffer.toByteArray(), StandardCharsets.UTF_8);
 		}
 		JSONArray arr = new JSONObject(json).getJSONArray("profiles");
 		VpnProfileDataSource db = new VpnProfileSource(context);
@@ -99,34 +104,47 @@ public final class ProfileBackup
 		{
 			for (int i = 0; i < arr.length(); i++)
 			{
-				JSONObject o = arr.getJSONObject(i);
-				VpnProfile p = new VpnProfile();
-				p.setUUID(UUID.fromString(o.getString("uuid")));
-				p.setName(o.optString("name", ""));
-				p.setGateway(o.optString("gateway", ""));
-				if (o.has("port")) p.setPort(o.getInt("port"));
-				p.setVpnType(VpnType.fromIdentifier(o.optString("vpn_type", "ikev2-eap")));
-				p.setUsername(o.optString("username", null));
-				p.setPassword(o.optString("password", null));
-				if (o.has("split")) p.setSplitTunneling(o.getInt("split"));
-				if (o.has("cert"))
+				try
 				{
-					byte[] der = Base64.decode(o.getString("cert"), Base64.DEFAULT);
-					X509Certificate cert = (X509Certificate) cf.generateCertificate(new ByteArrayInputStream(der));
-					certs.addCertificate(cert);
-					p.setCertificateAlias(certs.getCertificateAlias(cert));
+					JSONObject o = arr.getJSONObject(i);
+					VpnProfile p = new VpnProfile();
+					String uuidStr = o.optString("uuid", "");
+					p.setUUID(uuidStr.isEmpty() ? UUID.randomUUID() : UUID.fromString(uuidStr));
+					p.setName(o.optString("name", ""));
+					p.setGateway(o.optString("gateway", ""));
+					if (o.has("port")) p.setPort(o.getInt("port"));
+					p.setVpnType(VpnType.fromIdentifier(o.optString("vpn_type", "ikev2-eap")));
+					p.setUsername(o.optString("username", null));
+					p.setPassword(o.optString("password", null));
+					if (o.has("split")) p.setSplitTunneling(o.getInt("split"));
+					String remoteId = o.optString("remote_id", "");
+					if (!remoteId.isEmpty())
+					{
+						p.setRemoteId(remoteId);
+					}
+					if (o.has("cert"))
+					{
+						byte[] der = Base64.decode(o.getString("cert"), Base64.DEFAULT);
+						X509Certificate cert = (X509Certificate) cf.generateCertificate(new ByteArrayInputStream(der));
+						certs.addCertificate(cert);
+						p.setCertificateAlias(certs.getCertificateAlias(cert));
+					}
+					VpnProfile existing = db.getVpnProfile(p.getUUID());
+					if (existing != null)
+					{
+						p.setDataSource(existing.getDataSource());
+						db.updateVpnProfile(p);
+					}
+					else
+					{
+						db.insertProfile(p);
+					}
+					uuids.add(p.getUUID().toString());
 				}
-				VpnProfile existing = db.getVpnProfile(p.getUUID());
-				if (existing != null)
+				catch (Exception e)
 				{
-					p.setDataSource(existing.getDataSource());
-					db.updateVpnProfile(p);
+					android.util.Log.w("ProfileBackup", "skipped profile " + i + ": " + e.getMessage());
 				}
-				else
-				{
-					db.insertProfile(p);
-				}
-				uuids.add(p.getUUID().toString());
 			}
 		}
 		finally
