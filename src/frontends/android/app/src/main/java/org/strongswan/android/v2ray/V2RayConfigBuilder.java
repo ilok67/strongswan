@@ -14,10 +14,62 @@ public final class V2RayConfigBuilder
 	{
 	}
 
-	public static String build(String link) throws Exception
+	public static String build(String link, String version) throws Exception
 	{
 		JSONObject proxy = outbound(link.trim());
+		return isModern(version) ? modern(proxy) : legacy(proxy);
+	}
 
+	private static boolean isModern(String version)
+	{
+		java.util.regex.Matcher m = java.util.regex.Pattern.compile("(\\d+)\\.(\\d+)").matcher(version == null ? "" : version);
+		if (!m.find())
+		{
+			return true;
+		}
+		return Integer.parseInt(m.group(1)) * 100 + Integer.parseInt(m.group(2)) >= 112;
+	}
+
+	private static String modern(JSONObject proxy) throws Exception
+	{
+		JSONObject root = new JSONObject();
+		root.put("log", new JSONObject().put("level", "warn"));
+
+		JSONObject dns = new JSONObject();
+		dns.put("servers", new JSONArray()
+				.put(new JSONObject().put("type", "https").put("tag", "remote").put("server", "1.1.1.1").put("detour", "proxy"))
+				.put(new JSONObject().put("type", "udp").put("tag", "bootstrap").put("server", "1.1.1.1")));
+		dns.put("strategy", "ipv4_only");
+		root.put("dns", dns);
+
+		JSONObject tun = new JSONObject();
+		tun.put("type", "tun");
+		tun.put("tag", "tun-in");
+		tun.put("address", new JSONArray().put("172.19.0.1/30"));
+		tun.put("mtu", 9000);
+		tun.put("auto_route", true);
+		tun.put("strict_route", false);
+		root.put("inbounds", new JSONArray().put(tun));
+
+		root.put("outbounds", new JSONArray()
+				.put(proxy)
+				.put(new JSONObject().put("type", "direct").put("tag", "direct")));
+
+		JSONObject route = new JSONObject();
+		route.put("auto_detect_interface", true);
+		route.put("default_domain_resolver", "bootstrap");
+		route.put("rules", new JSONArray()
+				.put(new JSONObject().put("action", "sniff"))
+				.put(new JSONObject().put("protocol", "dns").put("action", "hijack-dns"))
+				.put(new JSONObject().put("ip_is_private", true).put("outbound", "direct")));
+		route.put("final", "proxy");
+		root.put("route", route);
+
+		return root.toString();
+	}
+
+	private static String legacy(JSONObject proxy) throws Exception
+	{
 		JSONObject root = new JSONObject();
 		root.put("log", new JSONObject().put("level", "warn"));
 
