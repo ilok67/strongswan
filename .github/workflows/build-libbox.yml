@@ -11,14 +11,21 @@ on:
     paths:
       - .github/workflows/build-libbox.yml
 
+permissions:
+  contents: write
+
 jobs:
   libbox:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
+          path: own
+      - uses: actions/checkout@v4
+        with:
           repository: SagerNet/sing-box
           ref: ${{ inputs.version || 'v1.10.7' }}
+          path: sing-box
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -32,14 +39,23 @@ jobs:
           ndk-version: r26d
           add-to-path: false
       - name: Build
+        working-directory: sing-box
         env:
           ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
         run: |
           export PATH="$PATH:$(go env GOPATH)/bin"
           make lib_install
           make lib_android
-      - uses: actions/upload-artifact@v4
-        with:
-          name: libbox
-          path: libbox.aar
-          if-no-files-found: error
+      - name: Strip x86
+        working-directory: sing-box
+        run: zip -d libbox.aar 'jni/x86/*' 'jni/x86_64/*'
+      - name: Commit
+        working-directory: own
+        run: |
+          mkdir -p src/frontends/android/app/libs
+          cp ../sing-box/libbox.aar src/frontends/android/app/libs/libbox.aar
+          git config user.name github-actions
+          git config user.email github-actions@users.noreply.github.com
+          git add -f src/frontends/android/app/libs/libbox.aar
+          git commit -m "Add libbox.aar [skip ci]" || exit 0
+          git push
