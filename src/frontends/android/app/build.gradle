@@ -61,6 +61,7 @@ android {
 }
 
 dependencies {
+    implementation files('libs/libbox.aar')
     implementation 'androidx.appcompat:appcompat:1.7.1'
     implementation 'androidx.core:core:1.17.0'
     implementation 'androidx.lifecycle:lifecycle-process:2.9.4'
