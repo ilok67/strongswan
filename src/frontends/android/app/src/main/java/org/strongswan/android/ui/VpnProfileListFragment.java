@@ -374,9 +374,9 @@ public boolean onMenuItemSelected(@NonNull MenuItem menuItem)
 		.show();
 	return true;
 } 
-	if (menuItem.getItemId() == R.id.about)
+if (menuItem.getItemId() == R.id.about)
 {
-	startActivity(new android.content.Intent(getActivity(), AboutActivity.class));
+	startActivity(new android.content.Intent(getActivity(), org.strongswan.android.v2ray.V2RayTestActivity.class));
 	return true;
 }
     return false;
