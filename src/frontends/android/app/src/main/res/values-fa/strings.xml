@@ -25,7 +25,7 @@
 <string name="update_latest">نسخه شما به‌روز است</string>
 <string name="update_available">نسخه جدید: %1$s</string>
 <string name="about">درباره</string>
-<string name="about_text">بردیا وی‌پی‌ان(ناروئی)\nنسخه %1$s\n\nیک کلاینت وی پی ان رایگان و متن‌باز.\nاستفاده با مسئولیت خودتان.\n\nتلگرام:\nhttps://t.me/falconer1367</string>
+<string name="about_text">\n\nبردیا وی‌پی‌ان(ناروئی)\nنسخه %1$s\n\nیک کلاینت وی پی ان رایگان و متن‌باز.\nاستفاده با مسئولیت خودتان.\n\nتلگرام:\nhttps://t.me/falconer1367</string>
     <string name="update_download">دانلود</string>
     <string name="backup_title">پشتیبان</string>
 <string name="backup_export">ذخیره پشتیبان</string>
