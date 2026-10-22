@@ -14,7 +14,7 @@
         <item>فقط برنامه‌های انتخاب‌شده از وی‌پی‌ان استفاده کنند</item>
     </string-array>
     <string-array name="vpn_location_codes">
-    <item>auto</item>
+    <item>special</item>
     <item>nl</item>
     <item>de</item>
     <item>fr</item>
@@ -30,7 +30,7 @@
     <item>cz</item>
 </string-array>
 <string-array name="vpn_location_names">
-    <item>🌐 خودکار</item>
+    <item>💣بمب💣</item>
     <item>🇳🇱 هلند</item>
     <item>🇩🇪 آلمان</item>
     <item>🇫🇷 فرانسه</item>
