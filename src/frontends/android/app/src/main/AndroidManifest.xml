@@ -23,6 +23,7 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SYSTEM_EXEMPTED"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
@@ -30,7 +31,14 @@
     <!-- necessary to allow users to select ex-/included apps and EAP-TNC -->
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"
         tools:ignore="QueryAllPackagesPermission" />
-
+<service android:name=".v2ray.SingBoxVpnService"
+    android:exported="false"
+    android:foregroundServiceType="systemExempted"
+    android:permission="android.permission.BIND_VPN_SERVICE">
+    <intent-filter>
+        <action android:name="android.net.VpnService"/>
+    </intent-filter>
+</service>
 <application
         android:name=".logic.StrongSwanApplication"
         android:icon="@mipmap/ic_launcher"
@@ -158,6 +166,10 @@
                 <data android:pathPattern=".*\\..*\\..*\\.sswan" />
                 <data android:pathPattern=".*\\..*\\.sswan" />
                 <data android:pathPattern=".*\\.sswan" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\.bv" />
+                <data android:pathPattern=".*\\..*\\..*\\.bv" />
+                <data android:pathPattern=".*\\..*\\.bv" />
+                <data android:pathPattern=".*\\.bv" />
             </intent-filter>
         </activity>
         <activity
@@ -174,7 +186,7 @@
                 <data android:mimeType="application/pkix-cert" />
             </intent-filter>
         </activity>
-
+       <activity android:name=".v2ray.V2RayTestActivity" android:exported="true"/>
         <!--
             Managed configuration, called app restrictions for historical reasons
             https://developer.android.com/work/managed-configurations
