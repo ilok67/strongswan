@@ -305,11 +305,7 @@ public boolean onMenuItemSelected(@NonNull MenuItem menuItem)
         startActivity(new Intent(getActivity(), FreeServersActivity.class));
         return true;
     }
-	if (menuItem.getItemId() == R.id.ping_servers)
-    {
-        pingAll();
-        return true;
-     }
+	
 	if (menuItem.getItemId() == R.id.check_update)
        {
 	checkUpdate();
