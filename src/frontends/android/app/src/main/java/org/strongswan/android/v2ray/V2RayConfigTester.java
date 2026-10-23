@@ -19,7 +19,6 @@ import java.net.URLEncoder;
 import io.nekohasekai.libbox.BoxService;
 import io.nekohasekai.libbox.Libbox;
 
-
 public final class V2RayConfigTester
 {
     private static final String TAG = "V2RayConfigTester";
@@ -205,6 +204,12 @@ public final class V2RayConfigTester
     private static final class NoopPlatform
             implements io.nekohasekai.libbox.PlatformInterface
     {
+        @Override
+        public int openTun(io.nekohasekai.libbox.TunOptions options) throws Exception
+        {
+            return -1;
+        }
+
         public void autoDetectInterfaceControl(int fd)
         {
         }
