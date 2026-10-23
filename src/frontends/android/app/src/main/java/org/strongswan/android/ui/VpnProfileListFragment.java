@@ -462,7 +462,10 @@ private void checkUpdate(boolean silent)
 		}
 	});
 }
-		
+public void pingAllPublic()
+{
+    pingAll();
+}		
 private void pingAll()
 {
 	if (mVpnProfiles == null || mVpnProfiles.isEmpty())
