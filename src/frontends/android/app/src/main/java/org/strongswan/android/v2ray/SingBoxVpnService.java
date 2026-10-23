@@ -71,6 +71,7 @@ public class SingBoxVpnService extends VpnService implements PlatformInterface
 	private static volatile boolean running;
 	private static volatile String sLink;
 	private static boolean libboxReady;
+	private static final java.util.ArrayDeque<String> logLines = new java.util.ArrayDeque<String>();
 
 	private final Object lock = new Object();
 	private final Object stateLock = new Object();
@@ -555,6 +556,14 @@ public class SingBoxVpnService extends VpnService implements PlatformInterface
 					Log.w(TAG, "package not found: " + app);
 				}
 			}
+			try
+			{
+				builder.addAllowedApplication(self);
+			}
+			catch (PackageManager.NameNotFoundException e)
+			{
+				Log.w(TAG, "own package not found");
+			}
 			return;
 		}
 		if ("exclude".equals(mode))
@@ -574,14 +583,6 @@ public class SingBoxVpnService extends VpnService implements PlatformInterface
 					Log.w(TAG, "package not found: " + app);
 				}
 			}
-		}
-		try
-		{
-			builder.addDisallowedApplication(self);
-		}
-		catch (PackageManager.NameNotFoundException e)
-		{
-			Log.w(TAG, "own package not found");
 		}
 	}
 
@@ -612,6 +613,27 @@ public class SingBoxVpnService extends VpnService implements PlatformInterface
 	public void writeLog(String message)
 	{
 		Log.d(TAG, message);
+		synchronized (logLines)
+		{
+			logLines.addLast(message);
+			while (logLines.size() > 200)
+			{
+				logLines.removeFirst();
+			}
+		}
+	}
+
+	public static String recentLog()
+	{
+		StringBuilder sb = new StringBuilder();
+		synchronized (logLines)
+		{
+			for (String line : logLines)
+			{
+				sb.append(line).append('\n');
+			}
+		}
+		return sb.toString();
 	}
 
 	public boolean useProcFS()
@@ -691,16 +713,13 @@ public class SingBoxVpnService extends VpnService implements PlatformInterface
 			}
 		};
 		if (Build.VERSION.SDK_INT >= 31)
-{
-	cm.registerBestMatchingNetworkCallback(
-		request,
-		networkCallback,
-		new android.os.Handler(android.os.Looper.getMainLooper()));
-}
-else
-{
-	cm.requestNetwork(request, networkCallback);
-}
+		{
+			cm.registerBestMatchingNetworkCallback(request, networkCallback, new Handler(Looper.getMainLooper()));
+		}
+		else
+		{
+			cm.requestNetwork(request, networkCallback);
+		}
 	}
 
 	public void closeDefaultInterfaceMonitor(InterfaceUpdateListener listener) throws Exception
