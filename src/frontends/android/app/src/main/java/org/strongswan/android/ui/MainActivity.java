@@ -123,11 +123,13 @@ showTab(start);
 	}
 
 	@Override
-	public boolean onCreateOptionsMenu(Menu menu)
-	{
+public boolean onCreateOptionsMenu(Menu menu)
+{
+    MenuItem ping = menu.add(Menu.NONE, 9999, 0, "Ping");
+    ping.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
 
-		return true;
-	}
+    return super.onCreateOptionsMenu(menu);
+}
 
 	@Override
 	public boolean onPrepareOptionsMenu(Menu menu)
@@ -145,6 +147,29 @@ showTab(start);
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item)
 	{
+    if (item.getItemId() == 9999)
+    {
+        if (mTab == 1)
+        {
+            Fragment f = getSupportFragmentManager()
+                    .findFragmentById(R.id.v2ray_container);
+            if (f instanceof V2RayProfileListFragment)
+            {
+                ((V2RayProfileListFragment) f).pingAllPublic();
+            }
+        }
+        else
+        {
+            Fragment f = getSupportFragmentManager()
+                    .findFragmentById(R.id.profile_list_frag);
+            if (f instanceof VpnProfileListFragment)
+            {
+                ((VpnProfileListFragment) f).pingAllPublic();
+            }
+        }
+        return true;
+    }
+    
 		switch (item.getItemId())
 		{
 			case R.id.menu_import_profile:
