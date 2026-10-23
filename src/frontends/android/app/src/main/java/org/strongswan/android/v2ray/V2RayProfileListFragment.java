@@ -29,7 +29,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
-
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import org.strongswan.android.R;
 
 import java.util.ArrayList;
@@ -79,7 +79,20 @@ public class V2RayProfileListFragment extends Fragment
             }
         }
     };
-
+   private final BroadcastReceiver profilesChangedReceiver = new BroadcastReceiver()
+{
+    @Override
+    public void onReceive(Context context, Intent intent)
+    {
+        if (adapter == null)
+        {
+            return;
+        }
+        links.clear();
+        links.addAll(store.load());
+        adapter.notifyDataSetChanged();
+    }
+};
     @Override
     public View onCreateView(
             LayoutInflater inflater,
@@ -100,15 +113,35 @@ public class V2RayProfileListFragment extends Fragment
         profileList.setDivider(null);
         profileList.setDividerHeight(0);
         profileList.setClipToPadding(false);
-
+         
         adapter = new V2RayProfileAdapter(context, links);
         profileList.setAdapter(adapter);
 
-        TextView empty = new TextView(context);
-        empty.setText(
-                "No V2Ray profiles. Copy a vless:// vmess:// trojan:// "
-                        + "ss:// or hy2:// link and tap Paste."
-        );
+        LinearLayout emptyView = new LinearLayout(context);
+emptyView.setOrientation(LinearLayout.VERTICAL);
+emptyView.setGravity(android.view.Gravity.CENTER);
+int pad = (int) (24 * getResources().getDisplayMetrics().density);
+emptyView.setPadding(pad, pad, pad, pad);
+
+TextView hint = new TextView(context);
+hint.setText("No sing-box profiles");
+hint.setGravity(android.view.Gravity.CENTER);
+emptyView.addView(hint);
+
+Button getFree = new Button(context);
+getFree.setText("Get free servers");
+getFree.setOnClickListener(v -> {
+    startActivity(new Intent(requireContext(), FreeServersActivity.class));
+});
+LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+        ViewGroup.LayoutParams.WRAP_CONTENT,
+        ViewGroup.LayoutParams.WRAP_CONTENT);
+lp.topMargin = pad;
+emptyView.addView(getFree, lp);
+
+profileList.setEmptyView(emptyView);
+root.addView(emptyView);
+        
 
         int pad = (int) (
                 24 * getResources().getDisplayMetrics().density
@@ -117,10 +150,7 @@ public class V2RayProfileListFragment extends Fragment
         empty.setPadding(pad, pad, pad, pad);
         profileList.setEmptyView(empty);
 
-        /*
-         * Normal tap:
-         * Connect to the selected profile, or disconnect if it is active.
-         */
+        
         profileList.setOnItemClickListener(
                 new AdapterView.OnItemClickListener()
                 {
@@ -151,10 +181,7 @@ public class V2RayProfileListFragment extends Fragment
                 }
         );
 
-        /*
-         * Long press enables multiple selection.
-         * The Edit, Copy and Delete actions appear in the action bar.
-         */
+        
         profileList.setChoiceMode(
                 ListView.CHOICE_MODE_MULTIPLE_MODAL
         );
@@ -333,11 +360,7 @@ public class V2RayProfileListFragment extends Fragment
                             return true;
                         }
 
-                        /*
-                         * COPY
-                         * Copy the original profile link(s) to clipboard.
-                         * Do not create any new profile.
-                         */
+                        
                         if (itemId == MENU_COPY)
                         {
                             StringBuilder clipboardText =
@@ -380,10 +403,7 @@ public class V2RayProfileListFragment extends Fragment
                             return true;
                         }
 
-                        /*
-                         * DELETE
-                         * Ask for confirmation before removing profiles.
-                         */
+                        
                         if (itemId == MENU_DELETE)
                         {
                             mode.finish();
@@ -462,77 +482,25 @@ public class V2RayProfileListFragment extends Fragment
         );
 
         root.addView(empty);
-
-        LinearLayout row = new LinearLayout(context);
-        row.setOrientation(LinearLayout.HORIZONTAL);
-
-        row.addView(
-                button(
-                        context,
-                        "Paste link",
-                        v -> addFromClipboard()
-                ),
-                new LinearLayout.LayoutParams(
-                        0,
-                        ViewGroup.LayoutParams.WRAP_CONTENT,
-                        1f
-                )
-        );
-
-        row.addView(
-                button(
-                        context,
-                        "Ping",
-                        v -> pingAll()
-                ),
-                new LinearLayout.LayoutParams(
-                        0,
-                        ViewGroup.LayoutParams.WRAP_CONTENT,
-                        1f
-                )
-        );
-
-        row.addView(
-                button(
-                        context,
-                        "Log",
-                        v -> showLog()
-                ),
-                new LinearLayout.LayoutParams(
-                        0,
-                        ViewGroup.LayoutParams.WRAP_CONTENT,
-                        1f
-                )
-        );
-
-        root.addView(row);
-
         return root;
     }
 
-    private Button button(
-            Context context,
-            String text,
-            View.OnClickListener listener)
-    {
-        Button button = new Button(context);
-        button.setText(text);
-        button.setOnClickListener(listener);
-        return button;
-    }
+    
 
     @Override
     public void onStart()
     {
         super.onStart();
-
+         
         ContextCompat.registerReceiver(
                 requireContext(),
                 receiver,
                 new IntentFilter(SingBoxVpnService.ACTION_STATE),
                 ContextCompat.RECEIVER_NOT_EXPORTED
         );
-
+        LocalBroadcastManager.getInstance(requireContext()).registerReceiver(
+        profilesChangedReceiver,
+        new IntentFilter("org.strongswan.android.V2RAY_PROFILES_CHANGED"));
         if (adapter != null)
         {
             adapter.notifyDataSetChanged();
@@ -542,7 +510,15 @@ public class V2RayProfileListFragment extends Fragment
     @Override
     public void onStop()
     {
-        try
+       try
+{
+    LocalBroadcastManager.getInstance(requireContext())
+            .unregisterReceiver(profilesChangedReceiver);
+}
+catch (IllegalArgumentException ignored)
+{
+}
+		try
         {
             requireContext().unregisterReceiver(receiver);
         }
@@ -554,77 +530,7 @@ public class V2RayProfileListFragment extends Fragment
         super.onStop();
     }
 
-    private void addFromClipboard()
-    {
-        ClipboardManager clipboard =
-                (ClipboardManager) requireContext().getSystemService(
-                        Context.CLIPBOARD_SERVICE
-                );
 
-        if (clipboard == null || !clipboard.hasPrimaryClip())
-        {
-            Toast.makeText(
-                    getActivity(),
-                    "clipboard is empty",
-                    Toast.LENGTH_SHORT
-            ).show();
-
-            return;
-        }
-
-        ClipData data = clipboard.getPrimaryClip();
-
-        if (data == null || data.getItemCount() == 0)
-        {
-            Toast.makeText(
-                    getActivity(),
-                    "clipboard is empty",
-                    Toast.LENGTH_SHORT
-            ).show();
-
-            return;
-        }
-
-        String text = data.getItemAt(0)
-                .coerceToText(requireContext())
-                .toString();
-
-        int added = 0;
-
-        for (String line : text.split("\\r?\\n"))
-        {
-            String link = line.trim();
-
-            if (link.isEmpty() || links.contains(link))
-            {
-                continue;
-            }
-
-            try
-            {
-                V2RayConfigBuilder.build(link, "1.10.0");
-
-                links.add(link);
-                added++;
-            }
-            catch (Exception ignored)
-            {
-                // Ignore lines that are not valid profile links.
-            }
-        }
-
-        if (added > 0)
-        {
-            store.save(links);
-            adapter.notifyDataSetChanged();
-        }
-
-        Toast.makeText(
-                getActivity(),
-                added + " added",
-                Toast.LENGTH_SHORT
-        ).show();
-    }
 
     private void confirmDelete(final String link)
     {
@@ -742,31 +648,7 @@ public class V2RayProfileListFragment extends Fragment
         });
     }
 
-    private void showLog()
-    {
-        String text = SingBoxVpnService.recentLog();
 
-        TextView view = new TextView(requireContext());
-
-        view.setText(text.isEmpty() ? "empty" : text);
-        view.setTextIsSelectable(true);
-        view.setTextSize(11f);
-
-        int pad = (int) (
-                12 * getResources().getDisplayMetrics().density
-        );
-
-        view.setPadding(pad, pad, pad, pad);
-
-        ScrollView scroll = new ScrollView(requireContext());
-        scroll.addView(view);
-
-        new AlertDialog.Builder(requireActivity())
-                .setTitle("sing-box log")
-                .setView(scroll)
-                .setPositiveButton(android.R.string.ok, null)
-                .show();
-    }
 
     private void connect(String link)
     {
