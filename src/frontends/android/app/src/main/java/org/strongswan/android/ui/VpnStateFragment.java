@@ -22,7 +22,7 @@ import org.strongswan.android.logic.VpnStateService;
 import org.strongswan.android.logic.VpnStateService.ErrorState;
 import org.strongswan.android.logic.VpnStateService.State;
 import org.strongswan.android.logic.VpnStateService.VpnStateListener;
-
+import org.strongswan.android.v2ray.SingBoxVpnService;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -151,11 +151,15 @@ public class VpnStateFragment extends Fragment implements VpnStateListener
 
 		mActionButton = (Button) view.findViewById(R.id.action);
 		mActionButton.setOnClickListener(v -> {
-			if (mService != null)
-			{
-				mService.disconnect();
-			}
-		});
+	    if (SingBoxVpnService.hasSession())
+	    {
+		SingBoxVpnService.stop(requireContext());
+	    }
+	    if (mService != null)
+     	{
+	    	mService.disconnect();
+     	}
+        });
 		enableActionButton(null);
 
 		mErrorView = view.findViewById(R.id.vpn_error);
@@ -170,11 +174,17 @@ public class VpnStateFragment extends Fragment implements VpnStateListener
 		mStatsView = view.findViewById(R.id.vpn_stats);
 
 		mErrorRetry.setOnClickListener(v -> {
-			if (mService != null)
-			{
-				mService.reconnect();
-			}
-		});
+	   String link = SingBoxVpnService.getLink();
+    	if (link != null)
+        	{
+	      	SingBoxVpnService.start(requireContext(), link);
+	    	return;
+         	}
+      	if (mService != null)
+     	{
+	    	mService.reconnect();
+    	}
+       });
 		mShowLog.setOnClickListener(v ->
 			startActivity(new Intent(getActivity(), LogActivity.class)));
 
