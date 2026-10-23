@@ -107,6 +107,52 @@ public final class V2RayConfigBuilder
 		return root.toString();
 	}
 
+	public static final class Info
+	{
+		public final String name;
+		public final String host;
+		public final int port;
+		public final String summary;
+
+		Info(String name, String host, int port, String summary)
+		{
+			this.name = name;
+			this.host = host;
+			this.port = port;
+			this.summary = summary;
+		}
+	}
+
+	public static Info info(String link)
+	{
+		String name = name(link);
+		try
+		{
+			JSONObject o = outbound(link.trim());
+			String type = o.optString("type");
+			StringBuilder s = new StringBuilder(type.toUpperCase(java.util.Locale.US));
+			JSONObject t = o.optJSONObject("transport");
+			if (t != null)
+			{
+				s.append(" \u00B7 ").append(t.optString("type"));
+			}
+			else if (type.equals("vless") || type.equals("vmess") || type.equals("trojan"))
+			{
+				s.append(" \u00B7 tcp");
+			}
+			JSONObject tls = o.optJSONObject("tls");
+			if (tls != null)
+			{
+				s.append(" \u00B7 ").append(tls.has("reality") ? "reality" : "tls");
+			}
+			return new Info(name, o.optString("server"), o.optInt("server_port"), s.toString());
+		}
+		catch (Exception e)
+		{
+			return new Info(name, "", 0, "");
+		}
+	}
+
 	public static String name(String link)
 	{
 		try
