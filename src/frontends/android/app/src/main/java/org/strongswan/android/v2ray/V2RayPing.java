@@ -30,3 +30,39 @@ public final class V2RayPing
 			{
 				network.bindSocket(socket);
 			}
+			long start = SystemClock.elapsedRealtime();
+			socket.connect(address, 3000);
+			return (SystemClock.elapsedRealtime() - start) + " ms";
+		}
+		catch (Exception e)
+		{
+			return "timeout";
+		}
+		finally
+		{
+			try
+			{
+				socket.close();
+			}
+			catch (Exception ignored)
+			{
+			}
+		}
+	}
+
+	@SuppressWarnings("deprecation")
+	private static Network underlying(Context context)
+	{
+		ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+		for (Network n : cm.getAllNetworks())
+		{
+			NetworkCapabilities nc = cm.getNetworkCapabilities(n);
+			if (nc != null && nc.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+					&& !nc.hasTransport(NetworkCapabilities.TRANSPORT_VPN))
+			{
+				return n;
+			}
+		}
+		return null;
+	}
+}
