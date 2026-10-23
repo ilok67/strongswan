@@ -22,6 +22,8 @@ import org.strongswan.android.data.VpnProfileSource;
 import org.strongswan.android.data.VpnType;
 import org.strongswan.android.logic.TrustedCertificateManager;
 import org.strongswan.android.utils.Constants;
+import org.strongswan.android.v2ray.V2RayProfileStore;
+import org.strongswan.android.v2ray.V2RaySecondaryBuilder;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -44,7 +46,8 @@ import java.util.HashSet;
 import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.zip.Inflater;
-
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import java.util.List;
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
@@ -89,7 +92,7 @@ public class FreeServersActivity extends AppCompatActivity
 	private static final String SECONDARY_USER      = "myvpn";
 	private static final String SECONDARY_REMOTE_ID = "node.mobilejump.mobi";
 	private static final String SECONDARY_REGION    = "IR";
-	private static final int SECONDARY_MAX_PROFILES = 4000;
+	private static final int SECONDARY_MAX_PROFILES = 100;
 	private static final int SECONDARY_TIMEOUT      = 20000;
 
 	private static final String SECONDARY_CA =
@@ -206,20 +209,61 @@ static
 		});
 	}
 
-	private int importProfiles(String location) throws Exception
-	{
-		ArrayList<VpnProfile> profiles;
-		if (SPECIAL_CODE.equals(location))
-		{
-			profiles = fetchSecondaryProfiles();
-		}
-		else
-		{
-			profiles = fetchPrimaryProfiles(location);
-		}
-		return saveProfiles(profiles);
-	}
+private int importProfiles(String location) throws Exception
+{
+    if ("v2ray".equals(location))
+    {
+        return importV2RayProfiles();
+    }
+    ArrayList<VpnProfile> profiles;
+    if (SPECIAL_CODE.equals(location))
+    {
+        profiles = fetchSecondaryProfiles();
+    }
+    else
+    {
+        profiles = fetchPrimaryProfiles(location);
+    }
+    return saveProfiles(profiles);
+}
 
+	private int importV2RayProfiles() throws Exception
+{
+    String url = SECONDARY_API + "?platform=android&vip=true&region="
+            + SECONDARY_REGION + "&app=";
+    byte[] blob = httpGetBytes(url);
+    JSONObject data = decryptBlob(blob);
+
+    List<String> links = V2RaySecondaryBuilder.buildLinks(data, 2000, "all");
+    if (links.isEmpty())
+    {
+        throw new Exception("no v2ray servers found");
+    }
+
+    V2RayProfileStore store = new V2RayProfileStore(this);
+    List<String> existing = store.load();
+    java.util.HashSet<String> set = new java.util.HashSet<>(existing);
+
+    int added = 0;
+    for (String link : links)
+    {
+        if (link != null && set.add(link))
+        {
+            existing.add(link);
+            added++;
+        }
+    }
+
+    if (added > 0)
+    {
+        store.save(existing);
+        android.content.Intent intent = new android.content.Intent(
+                "org.strongswan.android.V2RAY_PROFILES_CHANGED");
+        intent.setPackage(getPackageName());
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+    }
+    return added;
+}
 	private int saveProfiles(ArrayList<VpnProfile> profiles)
 	{
 		VpnProfileDataSource dataSource = new VpnProfileSource(this);
