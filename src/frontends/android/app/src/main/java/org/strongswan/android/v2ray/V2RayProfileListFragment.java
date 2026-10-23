@@ -103,15 +103,122 @@ public class V2RayProfileListFragment extends Fragment
 				}
 			}
 		});
-		list.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener()
-		{
-			@Override
-			public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id)
-			{
-				confirmDelete(adapter.getItem(position));
-				return true;
-			}
-		});
+	list.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener()
+{
+    @Override
+    public boolean onItemLongClick(
+            AdapterView<?> parent,
+            View view,
+            int position,
+            long id)
+    {
+        final String selectedLink = adapter.getItem(position);
+
+        final String[] options = {
+                "Edit",
+                "Copy",
+                "Delete"
+        };
+
+        new AlertDialog.Builder(requireActivity())
+                .setTitle(V2RayConfigBuilder.name(selectedLink))
+                .setItems(options, (dialog, which) ->
+                {
+                    if (which == 0)
+                    {
+                        // Edit the selected profile.
+                        V2RayProfileEditor.show(
+                                requireContext(),
+                                selectedLink,
+                                false,
+                                (oldLink, newLink, copyMode) ->
+                                {
+                                    int index = links.indexOf(oldLink);
+
+                                    if (index < 0)
+                                    {
+                                        Toast.makeText(
+                                                requireContext(),
+                                                "Profile not found",
+                                                Toast.LENGTH_SHORT
+                                        ).show();
+                                        return;
+                                    }
+
+                                    if (!oldLink.equals(newLink)
+                                            && links.contains(newLink))
+                                    {
+                                        Toast.makeText(
+                                                requireContext(),
+                                                "This profile already exists",
+                                                Toast.LENGTH_LONG
+                                        ).show();
+                                        return;
+                                    }
+
+                                    // Stop the VPN if it is using the old link.
+                                    if (oldLink.equals(
+                                            SingBoxVpnService.getLink())
+                                            && SingBoxVpnService.isRunning())
+                                    {
+                                        SingBoxVpnService.stop(
+                                                requireContext()
+                                        );
+                                    }
+
+                                    links.set(index, newLink);
+                                    store.save(links);
+                                    adapter.notifyDataSetChanged();
+
+                                    Toast.makeText(
+                                            requireContext(),
+                                            "Profile updated",
+                                            Toast.LENGTH_SHORT
+                                    ).show();
+                                }
+                        );
+                    }
+                    else if (which == 1)
+                    {
+                        // Create a separate profile with a new name.
+                        V2RayProfileEditor.show(
+                                requireContext(),
+                                selectedLink,
+                                true,
+                                (oldLink, newLink, copyMode) ->
+                                {
+                                    if (links.contains(newLink))
+                                    {
+                                        Toast.makeText(
+                                                requireContext(),
+                                                "This profile already exists",
+                                                Toast.LENGTH_LONG
+                                        ).show();
+                                        return;
+                                    }
+
+                                    links.add(newLink);
+                                    store.save(links);
+                                    adapter.notifyDataSetChanged();
+
+                                    Toast.makeText(
+                                            requireContext(),
+                                            "Profile copied",
+                                            Toast.LENGTH_SHORT
+                                    ).show();
+                                }
+                        );
+                    }
+                    else if (which == 2)
+                    {
+                        confirmDelete(selectedLink);
+                    }
+                })
+                .show();
+
+        return true;
+    }
+});
 		root.addView(list, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
 		root.addView(empty);
 
