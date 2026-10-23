@@ -28,16 +28,15 @@ android:background="@color/primary_dark">
     android:layout_marginBottom="8dp"
     android:background="@drawable/tabs_container"
     android:padding="4dp"
+    android:minHeight="44dp"
     app:tabGravity="fill"
     app:tabMode="fixed"
-    app:tabIndicator="@null"
     app:tabIndicatorHeight="0dp"
     app:tabBackground="@drawable/tab_item_background"
     app:tabRippleColor="@android:color/transparent"
     app:tabTextColor="#94A3B8"
     app:tabSelectedTextColor="#FFFFFF"
-    app:tabTextAppearance="@style/TabTextAppearance"
-    app:tabMinHeight="44dp" />
+    app:tabTextAppearance="@style/TabTextAppearance" />
 
 <fragment
     android:id="@+id/profile_list_frag"
