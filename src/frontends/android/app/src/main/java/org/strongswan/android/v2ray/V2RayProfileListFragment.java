@@ -121,7 +121,22 @@ public class V2RayProfileListFragment extends Fragment
 				addFromClipboard();
 			}
 		});
-		root.addView(add);
+		Button log = new Button(context);
+		log.setText("Log");
+		log.setOnClickListener(new View.OnClickListener()
+		{
+			@Override
+			public void onClick(View v)
+			{
+				showLog();
+			}
+		});
+
+		LinearLayout row = new LinearLayout(context);
+		row.setOrientation(LinearLayout.HORIZONTAL);
+		row.addView(add, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 2f));
+		row.addView(log, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+		root.addView(row);
 		return root;
 	}
 
@@ -196,6 +211,24 @@ public class V2RayProfileListFragment extends Fragment
 					adapter.notifyDataSetChanged();
 				})
 				.setNegativeButton(android.R.string.cancel, null)
+				.show();
+	}
+
+	private void showLog()
+	{
+		String text = SingBoxVpnService.recentLog();
+		TextView view = new TextView(requireContext());
+		view.setText(text.isEmpty() ? "empty" : text);
+		view.setTextIsSelectable(true);
+		view.setTextSize(11f);
+		int pad = (int) (12 * getResources().getDisplayMetrics().density);
+		view.setPadding(pad, pad, pad, pad);
+		android.widget.ScrollView scroll = new android.widget.ScrollView(requireContext());
+		scroll.addView(view);
+		new AlertDialog.Builder(requireActivity())
+				.setTitle("sing-box log")
+				.setView(scroll)
+				.setPositiveButton(android.R.string.ok, null)
 				.show();
 	}
 
