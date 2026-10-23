@@ -234,7 +234,7 @@ private int importProfiles(String location) throws Exception
     byte[] blob = httpGetBytes(url);
     JSONObject data = decryptBlob(blob);
 
-    List<String> links = V2RaySecondaryBuilder.buildLinks(data, 2000, "all");
+    List<String> links = V2RaySecondaryBuilder.buildLinks(data, SECONDARY_MAX_PROFILES, "all");
     if (links.isEmpty())
     {
         throw new Exception("no v2ray servers found");
