@@ -14,6 +14,7 @@
         <item>فقط برنامه‌های انتخاب‌شده از وی‌پی‌ان استفاده کنند</item>
     </string-array>
     <string-array name="vpn_location_codes">
+    <item>v2ray</item>
     <item>special</item>
     <item>nl</item>
     <item>de</item>
@@ -30,7 +31,8 @@
     <item>cz</item>
 </string-array>
 <string-array name="vpn_location_names">
-    <item>💣بمب💣</item>
+    <item>v2ray-singbox</item>
+    <item>ikev-خودکار</item>
     <item>🇳🇱 هلند</item>
     <item>🇩🇪 آلمان</item>
     <item>🇫🇷 فرانسه</item>
