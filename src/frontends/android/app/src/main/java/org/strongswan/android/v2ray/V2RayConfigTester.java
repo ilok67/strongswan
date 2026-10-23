@@ -202,107 +202,42 @@ public final class V2RayConfigTester
         }
     }
 
-    private static final class NoopPlatform
-            implements io.nekohasekai.libbox.PlatformInterface
+private static final class NoopPlatform
+        implements io.nekohasekai.libbox.PlatformInterface
+{
+    public int openTun(io.nekohasekai.libbox.TunOptions options) throws Exception
     {
-        public void autoDetectInterfaceControl(int fd)
-        {
-        }
-
-        public boolean usePlatformAutoDetectInterfaceControl()
-        {
-            return false;
-        }
-
-        public boolean usePlatformDefaultInterfaceMonitor()
-        {
-            return false;
-        }
-
-        public boolean usePlatformInterfaceGetter()
-        {
-            return false;
-        }
-
-        public void clearDNSCache()
-        {
-        }
-
-        public void writeLog(String m)
-        {
-            Log.d(TAG, m);
-        }
-
-        public boolean useProcFS()
-        {
-            return false;
-        }
-
-        public int findConnectionOwner(int p, String s, int sp, String d, int dp)
-                throws Exception
-        {
-            return -1;
-        }
-
-        public void sendNotification(io.nekohasekai.libbox.Notification n)
-        {
-        }
-
-        public String packageNameByUid(int uid) throws Exception
-        {
-            return "";
-        }
-
-        public int uidByPackageName(String n) throws Exception
-        {
-            return -1;
-        }
-
-        public boolean includeAllNetworks()
-        {
-            return false;
-        }
-
-        public boolean underNetworkExtension()
-        {
-            return false;
-        }
-
-        public io.nekohasekai.libbox.WIFIState readWIFIState()
-        {
-            return null;
-        }
-
-        public io.nekohasekai.libbox.StringIterator systemCertificates()
-        {
-            return null;
-        }
-
-        public void startDefaultInterfaceMonitor(
-                io.nekohasekai.libbox.InterfaceUpdateListener l)
-        {
-        }
-
-        public void closeDefaultInterfaceMonitor(
-                io.nekohasekai.libbox.InterfaceUpdateListener l)
-        {
-        }
-
-        public io.nekohasekai.libbox.NetworkInterfaceIterator getInterfaces()
-                throws Exception
-        {
-            return new io.nekohasekai.libbox.NetworkInterfaceIterator()
-            {
-                public boolean hasNext()
-                {
-                    return false;
-                }
-
-                public io.nekohasekai.libbox.NetworkInterface next()
-                {
-                    return null;
-                }
-            };
-        }
+        throw new UnsupportedOperationException("tun not supported in tester");
     }
+
+    public void autoDetectInterfaceControl(int fd) {}
+    public boolean usePlatformAutoDetectInterfaceControl() { return false; }
+    public boolean usePlatformDefaultInterfaceMonitor() { return false; }
+    public boolean usePlatformInterfaceGetter() { return false; }
+    public void clearDNSCache() {}
+    public void writeLog(String m) { Log.d(TAG, m); }
+    public boolean useProcFS() { return false; }
+    public int findConnectionOwner(int p, String s, int sp, String d, int dp) throws Exception { return -1; }
+    public void sendNotification(io.nekohasekai.libbox.Notification n) {}
+    public String packageNameByUid(int uid) throws Exception { return ""; }
+    public int uidByPackageName(String n) throws Exception { return -1; }
+    public boolean includeAllNetworks() { return false; }
+    public boolean underNetworkExtension() { return false; }
+    public io.nekohasekai.libbox.WIFIState readWIFIState() { return null; }
+    public io.nekohasekai.libbox.StringIterator systemCertificates() { return null; }
+    public void startDefaultInterfaceMonitor(io.nekohasekai.libbox.InterfaceUpdateListener l) {}
+    public void closeDefaultInterfaceMonitor(io.nekohasekai.libbox.InterfaceUpdateListener l) {}
+    public io.nekohasekai.libbox.NetworkInterfaceIterator getInterfaces() throws Exception
+    {
+        return new io.nekohasekai.libbox.NetworkInterfaceIterator()
+        {
+            public boolean hasNext() { return false; }
+            public io.nekohasekai.libbox.NetworkInterface next() { return null; }
+        };
+    }
+}
+
+
+
+
 }
