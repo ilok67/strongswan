@@ -35,6 +35,8 @@ import org.strongswan.android.logic.StrongSwanApplication;
 import org.strongswan.android.logic.TrustedCertificateManager;
 import org.strongswan.android.ui.VpnProfileListFragment.OnVpnProfileSelectedListener;
 import org.strongswan.android.utils.Utils;
+import org.strongswan.android.v2ray.SingBoxVpnService;
+import org.strongswan.android.v2ray.V2RayProfileListFragment;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -48,12 +50,14 @@ import androidx.core.view.WindowCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
+import android.view.View;
+import com.google.android.material.tabs.TabLayout;
 
 public class MainActivity extends AppCompatActivity implements OnVpnProfileSelectedListener
 {
 	public static final String CONTACT_EMAIL = "android@strongswan.org";
 	public static final String EXTRA_CRL_LIST = "org.strongswan.android.CRL_LIST";
-
+    private int mTab;
 	/**
 	 * Use "bring your own device" (BYOD) features
 	 */
@@ -81,6 +85,41 @@ public class MainActivity extends AppCompatActivity implements OnVpnProfileSelec
 		});
 
 		mManagedConfigurationService = StrongSwanApplication.getInstance().getManagedConfigurationService();
+        TabLayout tabs = findViewById(R.id.tabs);
+tabs.addTab(tabs.newTab().setText("IKEv2"));
+tabs.addTab(tabs.newTab().setText("sing-box"));
+if (savedInstanceState == null)
+{
+	getSupportFragmentManager().beginTransaction()
+		.replace(R.id.v2ray_container, new V2RayProfileListFragment()).commit();
+}
+tabs.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener()
+{
+	@Override
+	public void onTabSelected(TabLayout.Tab tab)
+	{
+		showTab(tab.getPosition());
+	}
+
+	@Override
+	public void onTabUnselected(TabLayout.Tab tab)
+	{
+	}
+
+	@Override
+	public void onTabReselected(TabLayout.Tab tab)
+	{
+	}
+});
+int start = savedInstanceState != null ? savedInstanceState.getInt("tab", 0) : (SingBoxVpnService.isRunning() ? 1 : 0);
+TabLayout.Tab selected = tabs.getTabAt(start);
+if (selected != null)
+{
+	selected.select();
+}
+showTab(start);
+
+		
 	}
 
 	@Override
@@ -135,12 +174,29 @@ public class MainActivity extends AppCompatActivity implements OnVpnProfileSelec
 	@Override
 	public void onVpnProfileSelected(VpnProfile profile)
 	{
+		if (SingBoxVpnService.hasSession())
+           {
+	        SingBoxVpnService.stop(this);
+            }
 		Intent intent = new Intent(this, VpnProfileControlActivity.class);
 		intent.setAction(VpnProfileControlActivity.START_PROFILE);
 		intent.putExtra(VpnProfileControlActivity.EXTRA_VPN_PROFILE_UUID, profile.getUUID().toString());
 		startActivity(intent);
 	}
 
+	private void showTab(int position)
+{
+	mTab = position;
+	findViewById(R.id.profile_list_frag).setVisibility(position == 0 ? View.VISIBLE : View.GONE);
+	findViewById(R.id.v2ray_container).setVisibility(position == 1 ? View.VISIBLE : View.GONE);
+}
+
+@Override
+protected void onSaveInstanceState(Bundle outState)
+{
+	super.onSaveInstanceState(outState);
+	outState.putInt("tab", mTab);
+}
 	/**
 	 * Ask the user whether to clear the CRL cache.
 	 */
