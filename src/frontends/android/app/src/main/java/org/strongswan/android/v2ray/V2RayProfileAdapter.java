@@ -76,34 +76,38 @@ public class V2RayProfileAdapter extends ArrayAdapter<String>
 		TextView gateway = view.findViewById(R.id.profile_item_gateway);
 		gateway.setText(info.port > 0 ? info.host + ":" + info.port : info.host);
 
-	String ping = pings.get(link);
-String running = getContext().getString(R.string.ping_running);
-String timeout = getContext().getString(R.string.ping_timeout);
+	TextView pingView = view.findViewById(R.id.profile_item_ping);
+if (pingView != null)
+{
+    String ping = pings.get(link);
+    String running = getContext().getString(R.string.ping_running);
+    String timeout = getContext().getString(R.string.ping_timeout);
 
-if (ping == null)
-{
-    pingView.setText("\u2014");
-    pingView.setTextColor(0x99FFFFFF);
-}
-else if (running.equals(ping))
-{
-    pingView.setText(ping);
-    pingView.setTextColor(0xFFFFA000);
-}
-else if (ping.endsWith("ms"))
-{
-    pingView.setText(ping);
-    pingView.setTextColor(0xFF4ADE80);
-}
-else if (timeout.equals(ping))
-{
-    pingView.setText(ping);
-    pingView.setTextColor(0xFFEF4444);
-}
-else
-{
-    pingView.setText(ping);
-    pingView.setTextColor(0x99FFFFFF);
+    if (ping == null)
+    {
+        pingView.setText("\u2014");
+        pingView.setTextColor(0x99FFFFFF);
+    }
+    else if (running.equals(ping))
+    {
+        pingView.setText(ping);
+        pingView.setTextColor(0xFFFFA000);
+    }
+    else if (ping.endsWith("ms"))
+    {
+        pingView.setText(ping);
+        pingView.setTextColor(0xFF4ADE80);
+    }
+    else if (timeout.equals(ping))
+    {
+        pingView.setText(ping);
+        pingView.setTextColor(0xFFEF4444);
+    }
+    else
+    {
+        pingView.setText(ping);
+        pingView.setTextColor(0x99FFFFFF);
+    }
 }
 		view.findViewById(R.id.profile_item_username).setVisibility(View.GONE);
 		view.findViewById(R.id.profile_item_certificate).setVisibility(View.GONE);
