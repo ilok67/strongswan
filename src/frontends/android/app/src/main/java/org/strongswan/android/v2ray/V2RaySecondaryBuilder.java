@@ -6,6 +6,8 @@ import org.json.JSONObject;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -134,10 +136,15 @@ public final class V2RaySecondaryBuilder
         collect(data.optJSONArray("vip_servers"), servers);
 
         // مرتب‌سازی بر اساس load صعودی
-        servers.sort((a, b) -> {
-            int la = a.optInt("load", 999999);
-            int lb = b.optInt("load", 999999);
-            return Integer.compare(la, lb);
+        Collections.sort(servers, new Comparator<JSONObject>()
+        {
+            @Override
+            public int compare(JSONObject a, JSONObject b)
+            {
+                int la = a.optInt("load", 999999);
+                int lb = b.optInt("load", 999999);
+                return Integer.compare(la, lb);
+            }
         });
 
         for (JSONObject server : servers)
@@ -313,13 +320,13 @@ public final class V2RaySecondaryBuilder
         sb.append(flag).append(' ').append(index).append(' ').append(name);
         if (city != null && !city.isEmpty())
         {
-            sb.append(" \u2013 ").append(city);
+            sb.append(" – ").append(city);
         }
         return sb.toString();
     }
 
     private static String ssLink(String host, int port, String method,
-                                 String pass, String remark)
+                                  String pass, String remark)
     {
         try
         {
@@ -334,8 +341,8 @@ public final class V2RaySecondaryBuilder
     }
 
     private static String vmessLink(String host, int port, String uuid,
-                                    String scy, String net, String tls,
-                                    String sni, String remark)
+                                     String scy, String net, String tls,
+                                     String sni, String remark)
     {
         try
         {
