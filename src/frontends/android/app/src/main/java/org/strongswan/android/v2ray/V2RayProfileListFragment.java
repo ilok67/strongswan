@@ -31,6 +31,7 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import org.strongswan.android.R;
+import org.strongswan.android.ui.FreeServersActivity;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.strongswan.android.v2ray.V2RayConfigTester;
@@ -80,20 +81,20 @@ public class V2RayProfileListFragment extends Fragment
             }
         }
     };
-   private final BroadcastReceiver profilesChangedReceiver = new BroadcastReceiver()
-{
-    @Override
-    public void onReceive(Context context, Intent intent)
+    private final BroadcastReceiver profilesChangedReceiver = new BroadcastReceiver()
     {
-        if (adapter == null)
+        @Override
+        public void onReceive(Context context, Intent intent)
         {
-            return;
+            if (adapter == null)
+            {
+                return;
+            }
+            links.clear();
+            links.addAll(store.load());
+            adapter.notifyDataSetChanged();
         }
-        links.clear();
-        links.addAll(store.load());
-        adapter.notifyDataSetChanged();
-    }
-};
+    };
     @Override
     public View onCreateView(
             LayoutInflater inflater,
@@ -114,44 +115,34 @@ public class V2RayProfileListFragment extends Fragment
         profileList.setDivider(null);
         profileList.setDividerHeight(0);
         profileList.setClipToPadding(false);
-         
+
         adapter = new V2RayProfileAdapter(context, links);
         profileList.setAdapter(adapter);
 
         LinearLayout emptyView = new LinearLayout(context);
-emptyView.setOrientation(LinearLayout.VERTICAL);
-emptyView.setGravity(android.view.Gravity.CENTER);
-int pad = (int) (24 * getResources().getDisplayMetrics().density);
-emptyView.setPadding(pad, pad, pad, pad);
+        emptyView.setOrientation(LinearLayout.VERTICAL);
+        emptyView.setGravity(android.view.Gravity.CENTER);
+        int pad = (int) (24 * getResources().getDisplayMetrics().density);
+        emptyView.setPadding(pad, pad, pad, pad);
 
-TextView hint = new TextView(context);
-hint.setText("No sing-box profiles");
-hint.setGravity(android.view.Gravity.CENTER);
-emptyView.addView(hint);
+        TextView hint = new TextView(context);
+        hint.setText("No sing-box profiles");
+        hint.setGravity(android.view.Gravity.CENTER);
+        emptyView.addView(hint);
 
-Button getFree = new Button(context);
-getFree.setText("Get free servers");
-getFree.setOnClickListener(v -> {
-    startActivity(new Intent(requireContext(), FreeServersActivity.class));
-});
-LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-        ViewGroup.LayoutParams.WRAP_CONTENT,
-        ViewGroup.LayoutParams.WRAP_CONTENT);
-lp.topMargin = pad;
-emptyView.addView(getFree, lp);
+        Button getFree = new Button(context);
+        getFree.setText("Get free servers");
+        getFree.setOnClickListener(v -> {
+            startActivity(new Intent(requireContext(), FreeServersActivity.class));
+        });
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.topMargin = pad;
+        emptyView.addView(getFree, lp);
 
-profileList.setEmptyView(emptyView);
-root.addView(emptyView);
-        
+        profileList.setEmptyView(emptyView);
 
-        int pad = (int) (
-                24 * getResources().getDisplayMetrics().density
-        );
-
-        empty.setPadding(pad, pad, pad, pad);
-        profileList.setEmptyView(empty);
-
-        
         profileList.setOnItemClickListener(
                 new AdapterView.OnItemClickListener()
                 {
@@ -182,7 +173,7 @@ root.addView(emptyView);
                 }
         );
 
-        
+
         profileList.setChoiceMode(
                 ListView.CHOICE_MODE_MULTIPLE_MODAL
         );
@@ -361,7 +352,7 @@ root.addView(emptyView);
                             return true;
                         }
 
-                        
+
                         if (itemId == MENU_COPY)
                         {
                             StringBuilder clipboardText =
@@ -404,7 +395,7 @@ root.addView(emptyView);
                             return true;
                         }
 
-                        
+
                         if (itemId == MENU_DELETE)
                         {
                             mode.finish();
@@ -482,17 +473,16 @@ root.addView(emptyView);
                 )
         );
 
-        root.addView(empty);
         return root;
     }
 
-    
+
 
     @Override
     public void onStart()
     {
         super.onStart();
-         
+
         ContextCompat.registerReceiver(
                 requireContext(),
                 receiver,
@@ -512,23 +502,23 @@ root.addView(emptyView);
     public void onStop()
     {
        try
-{
-    LocalBroadcastManager.getInstance(requireContext())
-            .unregisterReceiver(profilesChangedReceiver);
-}
-catch (IllegalArgumentException ignored)
-{
-}
-		try
-        {
-            requireContext().unregisterReceiver(receiver);
-        }
-        catch (IllegalArgumentException ignored)
-        {
-            // Receiver was not registered.
-        }
+ {
+     LocalBroadcastManager.getInstance(requireContext())
+             .unregisterReceiver(profilesChangedReceiver);
+ }
+ catch (IllegalArgumentException ignored)
+ {
+ }
+ 		try
+         {
+             requireContext().unregisterReceiver(receiver);
+         }
+         catch (IllegalArgumentException ignored)
+         {
+             // Receiver was not registered.
+         }
 
-        super.onStop();
+         super.onStop();
     }
 
 
@@ -551,51 +541,51 @@ catch (IllegalArgumentException ignored)
                 .setNegativeButton(android.R.string.cancel, null)
                 .show();
     }
-public void pingAllPublic()
-{
-    pingAll();
-}
- private void pingAll()
-{
-    if (links.isEmpty())
-    {
-        return;
-    }
+ public void pingAllPublic()
+ {
+     pingAll();
+ }
+  private void pingAll()
+ {
+     if (links.isEmpty())
+     {
+         return;
+     }
 
-    final List<String> copy = new ArrayList<>(links);
-    final Context appContext = requireContext().getApplicationContext();
+     final List<String> copy = new ArrayList<>(links);
+     final Context appContext = requireContext().getApplicationContext();
 
-    adapter.clearPings();
+     adapter.clearPings();
 
-    for (String link : copy)
-    {
-        adapter.setPing(link, appContext.getString(R.string.ping_running));
-    }
+     for (String link : copy)
+     {
+         adapter.setPing(link, appContext.getString(R.string.ping_running));
+     }
 
-    ExecutorService pool = Executors.newFixedThreadPool(4);
+     ExecutorService pool = Executors.newFixedThreadPool(4);
 
-    for (final String link : copy)
-    {
-        pool.execute(() ->
-        {
-            String result = V2RayConfigTester.ping(appContext, link);
+     for (final String link : copy)
+     {
+         pool.execute(() ->
+         {
+             String result = V2RayConfigTester.ping(appContext, link);
 
-            Activity a = getActivity();
-            if (a == null)
-            {
-                return;
-            }
-            a.runOnUiThread(() ->
-            {
-                if (adapter != null)
-                {
-                    adapter.setPing(link, result);
-                }
-            });
-        });
-    }
-    pool.shutdown();
-}
+             Activity a = getActivity();
+             if (a == null)
+             {
+                 return;
+             }
+             a.runOnUiThread(() ->
+             {
+                 if (adapter != null)
+                 {
+                     adapter.setPing(link, result);
+                 }
+             });
+         });
+     }
+     pool.shutdown();
+ }
 
 
 
