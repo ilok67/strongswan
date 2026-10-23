@@ -9,9 +9,13 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.VpnService;
 import android.os.Bundle;
+import android.view.ActionMode;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -37,377 +41,746 @@ import java.util.concurrent.TimeUnit;
 
 public class V2RayProfileListFragment extends Fragment
 {
-	private V2RayProfileStore store;
-	private final List<String> links = new ArrayList<String>();
-	private V2RayProfileAdapter adapter;
-	private String pendingLink;
+    private static final int MENU_EDIT = 1001;
+    private static final int MENU_COPY = 1002;
+    private static final int MENU_DELETE = 1003;
 
-	private final ActivityResultLauncher<Intent> vpnPermission = registerForActivityResult(
-			new ActivityResultContracts.StartActivityForResult(),
-			result -> {
-				if (result.getResultCode() == Activity.RESULT_OK && pendingLink != null)
-				{
-					SingBoxVpnService.start(requireContext(), pendingLink);
-				}
-			});
+    private V2RayProfileStore store;
+    private final List<String> links = new ArrayList<>();
+    private V2RayProfileAdapter adapter;
+    private String pendingLink;
 
-	private final BroadcastReceiver receiver = new BroadcastReceiver()
-	{
-		@Override
-		public void onReceive(Context context, Intent intent)
-		{
-			if (adapter != null)
-			{
-				adapter.notifyDataSetChanged();
-			}
-		}
-	};
+    private ListView profileList;
+    private ActionMode actionMode;
 
-	@Override
-	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
-	{
-		Context context = requireContext();
-		store = new V2RayProfileStore(context);
-		links.clear();
-		links.addAll(store.load());
+    private final ActivityResultLauncher<Intent> vpnPermission =
+            registerForActivityResult(
+                    new ActivityResultContracts.StartActivityForResult(),
+                    result -> {
+                        if (result.getResultCode() == Activity.RESULT_OK
+                                && pendingLink != null)
+                        {
+                            SingBoxVpnService.start(
+                                    requireContext(),
+                                    pendingLink
+                            );
+                        }
+                    }
+            );
 
-		LinearLayout root = new LinearLayout(context);
-		root.setOrientation(LinearLayout.VERTICAL);
-
-		ListView list = new ListView(context);
-		list.setDivider(null);
-		list.setDividerHeight(0);
-		list.setClipToPadding(false);
-		adapter = new V2RayProfileAdapter(context, links);
-		list.setAdapter(adapter);
-
-		TextView empty = new TextView(context);
-		empty.setText("No V2Ray profiles. Copy a vless:// vmess:// trojan:// ss:// or hy2:// link and tap Paste.");
-		int pad = (int) (24 * getResources().getDisplayMetrics().density);
-		empty.setPadding(pad, pad, pad, pad);
-		list.setEmptyView(empty);
-
-		list.setOnItemClickListener(new AdapterView.OnItemClickListener()
-		{
-			@Override
-			public void onItemClick(AdapterView<?> parent, View view, int position, long id)
-			{
-				String link = adapter.getItem(position);
-				if (link.equals(SingBoxVpnService.getLink()) && SingBoxVpnService.isRunning())
-				{
-					SingBoxVpnService.stop(requireContext());
-				}
-				else
-				{
-					connect(link);
-				}
-			}
-		});
-	list.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener()
-{
-    @Override
-    public boolean onItemLongClick(
-            AdapterView<?> parent,
-            View view,
-            int position,
-            long id)
+    private final BroadcastReceiver receiver = new BroadcastReceiver()
     {
-        final String selectedLink = adapter.getItem(position);
+        @Override
+        public void onReceive(Context context, Intent intent)
+        {
+            if (adapter != null)
+            {
+                adapter.notifyDataSetChanged();
+            }
+        }
+    };
 
-        final String[] options = {
-                "Edit",
-                "Copy",
-                "Delete"
-        };
+    @Override
+    public View onCreateView(
+            LayoutInflater inflater,
+            ViewGroup container,
+            Bundle savedInstanceState)
+    {
+        Context context = requireContext();
 
-        new AlertDialog.Builder(requireActivity())
-                .setTitle(V2RayConfigBuilder.name(selectedLink))
-                .setItems(options, (dialog, which) ->
+        store = new V2RayProfileStore(context);
+
+        links.clear();
+        links.addAll(store.load());
+
+        LinearLayout root = new LinearLayout(context);
+        root.setOrientation(LinearLayout.VERTICAL);
+
+        profileList = new ListView(context);
+        profileList.setDivider(null);
+        profileList.setDividerHeight(0);
+        profileList.setClipToPadding(false);
+
+        adapter = new V2RayProfileAdapter(context, links);
+        profileList.setAdapter(adapter);
+
+        TextView empty = new TextView(context);
+        empty.setText(
+                "No V2Ray profiles. Copy a vless:// vmess:// trojan:// "
+                        + "ss:// or hy2:// link and tap Paste."
+        );
+
+        int pad = (int) (
+                24 * getResources().getDisplayMetrics().density
+        );
+
+        empty.setPadding(pad, pad, pad, pad);
+        profileList.setEmptyView(empty);
+
+        /*
+         * Normal tap:
+         * Connect to the selected profile, or disconnect if it is active.
+         */
+        profileList.setOnItemClickListener(
+                new AdapterView.OnItemClickListener()
                 {
-                    if (which == 0)
+                    @Override
+                    public void onItemClick(
+                            AdapterView<?> parent,
+                            View view,
+                            int position,
+                            long id)
                     {
-                        // Edit the selected profile.
-                        V2RayProfileEditor.show(
-                                requireContext(),
-                                selectedLink,
-                                false,
-                                (oldLink, newLink, copyMode) ->
-                                {
-                                    int index = links.indexOf(oldLink);
+                        String link = adapter.getItem(position);
 
-                                    if (index < 0)
+                        if (link == null)
+                        {
+                            return;
+                        }
+
+                        if (link.equals(SingBoxVpnService.getLink())
+                                && SingBoxVpnService.isRunning())
+                        {
+                            SingBoxVpnService.stop(requireContext());
+                        }
+                        else
+                        {
+                            connect(link);
+                        }
+                    }
+                }
+        );
+
+        /*
+         * Long press enables multiple selection.
+         * The Edit, Copy and Delete actions appear in the action bar.
+         */
+        profileList.setChoiceMode(
+                ListView.CHOICE_MODE_MULTIPLE_MODAL
+        );
+
+        profileList.setMultiChoiceModeListener(
+                new AbsListView.MultiChoiceModeListener()
+                {
+                    @Override
+                    public void onItemCheckedStateChanged(
+                            ActionMode mode,
+                            int position,
+                            long id,
+                            boolean checked)
+                    {
+                        int count = profileList.getCheckedItemCount();
+
+                        mode.setTitle(count + " selected");
+
+                        MenuItem editItem =
+                                mode.getMenu().findItem(MENU_EDIT);
+
+                        if (editItem != null)
+                        {
+                            // Edit is available only for one profile.
+                            editItem.setEnabled(count == 1);
+                        }
+                    }
+
+                    @Override
+                    public boolean onCreateActionMode(
+                            ActionMode mode,
+                            Menu menu)
+                    {
+                        actionMode = mode;
+
+                        menu.add(
+                                Menu.NONE,
+                                MENU_EDIT,
+                                0,
+                                "Edit"
+                        ).setShowAsAction(
+                                MenuItem.SHOW_AS_ACTION_IF_ROOM
+                        );
+
+                        menu.add(
+                                Menu.NONE,
+                                MENU_COPY,
+                                1,
+                                "Copy"
+                        ).setShowAsAction(
+                                MenuItem.SHOW_AS_ACTION_IF_ROOM
+                        );
+
+                        menu.add(
+                                Menu.NONE,
+                                MENU_DELETE,
+                                2,
+                                "Delete"
+                        ).setShowAsAction(
+                                MenuItem.SHOW_AS_ACTION_IF_ROOM
+                        );
+
+                        return true;
+                    }
+
+                    @Override
+                    public boolean onPrepareActionMode(
+                            ActionMode mode,
+                            Menu menu)
+                    {
+                        return false;
+                    }
+
+                    @Override
+                    public boolean onActionItemClicked(
+                            ActionMode mode,
+                            MenuItem item)
+                    {
+                        final List<String> selectedLinks =
+                                new ArrayList<>();
+
+                        android.util.SparseBooleanArray checkedItems =
+                                profileList.getCheckedItemPositions();
+
+                        for (int i = 0; i < profileList.getCount(); i++)
+                        {
+                            if (checkedItems.get(i))
+                            {
+                                String link = adapter.getItem(i);
+
+                                if (link != null)
+                                {
+                                    selectedLinks.add(link);
+                                }
+                            }
+                        }
+
+                        if (selectedLinks.isEmpty())
+                        {
+                            mode.finish();
+                            return true;
+                        }
+
+                        int itemId = item.getItemId();
+
+                        /*
+                         * EDIT
+                         * Only one profile can be edited at a time.
+                         */
+                        if (itemId == MENU_EDIT)
+                        {
+                            if (selectedLinks.size() != 1)
+                            {
+                                return true;
+                            }
+
+                            final String selectedLink =
+                                    selectedLinks.get(0);
+
+                            mode.finish();
+
+                            V2RayProfileEditor.show(
+                                    requireContext(),
+                                    selectedLink,
+                                    false,
+                                    (oldLink, newLink, copyMode) ->
                                     {
+                                        int index = links.indexOf(oldLink);
+
+                                        if (index < 0)
+                                        {
+                                            Toast.makeText(
+                                                    requireContext(),
+                                                    "Profile not found",
+                                                    Toast.LENGTH_SHORT
+                                            ).show();
+
+                                            return;
+                                        }
+
+                                        if (!oldLink.equals(newLink)
+                                                && links.contains(newLink))
+                                        {
+                                            Toast.makeText(
+                                                    requireContext(),
+                                                    "This profile already exists",
+                                                    Toast.LENGTH_LONG
+                                            ).show();
+
+                                            return;
+                                        }
+
+                                        // Stop VPN if it uses the old link.
+                                        if (oldLink.equals(
+                                                SingBoxVpnService.getLink())
+                                                && SingBoxVpnService.isRunning())
+                                        {
+                                            SingBoxVpnService.stop(
+                                                    requireContext()
+                                            );
+                                        }
+
+                                        links.set(index, newLink);
+
+                                        store.save(links);
+                                        adapter.notifyDataSetChanged();
+
                                         Toast.makeText(
                                                 requireContext(),
-                                                "Profile not found",
+                                                "Profile updated",
                                                 Toast.LENGTH_SHORT
                                         ).show();
-                                        return;
                                     }
+                            );
 
-                                    if (!oldLink.equals(newLink)
-                                            && links.contains(newLink))
-                                    {
-                                        Toast.makeText(
-                                                requireContext(),
-                                                "This profile already exists",
-                                                Toast.LENGTH_LONG
-                                        ).show();
-                                        return;
-                                    }
+                            return true;
+                        }
 
-                                    // Stop the VPN if it is using the old link.
-                                    if (oldLink.equals(
-                                            SingBoxVpnService.getLink())
-                                            && SingBoxVpnService.isRunning())
-                                    {
-                                        SingBoxVpnService.stop(
-                                                requireContext()
-                                        );
-                                    }
+                        /*
+                         * COPY
+                         * Copy the original profile link(s) to clipboard.
+                         * Do not create any new profile.
+                         */
+                        if (itemId == MENU_COPY)
+                        {
+                            StringBuilder clipboardText =
+                                    new StringBuilder();
 
-                                    links.set(index, newLink);
-                                    store.save(links);
-                                    adapter.notifyDataSetChanged();
-
-                                    Toast.makeText(
-                                            requireContext(),
-                                            "Profile updated",
-                                            Toast.LENGTH_SHORT
-                                    ).show();
-                                }
-                        );
-                    }
-                    else if (which == 1)
-                    {
-                        // Create a separate profile with a new name.
-                        V2RayProfileEditor.show(
-                                requireContext(),
-                                selectedLink,
-                                true,
-                                (oldLink, newLink, copyMode) ->
+                            for (String link : selectedLinks)
+                            {
+                                if (clipboardText.length() > 0)
                                 {
-                                    if (links.contains(newLink))
-                                    {
-                                        Toast.makeText(
-                                                requireContext(),
-                                                "This profile already exists",
-                                                Toast.LENGTH_LONG
-                                        ).show();
-                                        return;
-                                    }
-
-                                    links.add(newLink);
-                                    store.save(links);
-                                    adapter.notifyDataSetChanged();
-
-                                    Toast.makeText(
-                                            requireContext(),
-                                            "Profile copied",
-                                            Toast.LENGTH_SHORT
-                                    ).show();
+                                    clipboardText.append('\n');
                                 }
+
+                                clipboardText.append(link);
+                            }
+
+                            ClipboardManager clipboard =
+                                    (ClipboardManager)
+                                            requireContext().getSystemService(
+                                                    Context.CLIPBOARD_SERVICE
+                                            );
+
+                            if (clipboard != null)
+                            {
+                                ClipData clip = ClipData.newPlainText(
+                                        "V2Ray profile links",
+                                        clipboardText.toString()
+                                );
+
+                                clipboard.setPrimaryClip(clip);
+
+                                Toast.makeText(
+                                        requireContext(),
+                                        selectedLinks.size()
+                                                + " profile link(s) copied",
+                                        Toast.LENGTH_SHORT
+                                ).show();
+                            }
+
+                            mode.finish();
+                            return true;
+                        }
+
+                        /*
+                         * DELETE
+                         * Ask for confirmation before removing profiles.
+                         */
+                        if (itemId == MENU_DELETE)
+                        {
+                            mode.finish();
+
+                            final int deleteCount = selectedLinks.size();
+
+                            new AlertDialog.Builder(requireActivity())
+                                    .setTitle("Delete profiles")
+                                    .setMessage(
+                                            "Delete "
+                                                    + deleteCount
+                                                    + " selected profile(s)?"
+                                    )
+                                    .setPositiveButton(
+                                            "Delete",
+                                            (dialog, which) ->
+                                            {
+                                                // Stop VPN if its profile
+                                                // is among the deleted ones.
+                                                String runningLink =
+                                                        SingBoxVpnService.getLink();
+
+                                                if (runningLink != null
+                                                        && selectedLinks.contains(
+                                                                runningLink)
+                                                        && SingBoxVpnService.isRunning())
+                                                {
+                                                    SingBoxVpnService.stop(
+                                                            requireContext()
+                                                    );
+                                                }
+
+                                                links.removeAll(selectedLinks);
+
+                                                store.save(links);
+                                                adapter.notifyDataSetChanged();
+
+                                                Toast.makeText(
+                                                        requireContext(),
+                                                        deleteCount
+                                                                + " profile(s) deleted",
+                                                        Toast.LENGTH_SHORT
+                                                ).show();
+                                            }
+                                    )
+                                    .setNegativeButton(
+                                            android.R.string.cancel,
+                                            null
+                                    )
+                                    .show();
+
+                            return true;
+                        }
+
+                        return false;
+                    }
+
+                    @Override
+                    public void onDestroyActionMode(ActionMode mode)
+                    {
+                        actionMode = null;
+
+                        profileList.clearChoices();
+                        adapter.notifyDataSetChanged();
+                    }
+                }
+        );
+
+        root.addView(
+                profileList,
+                new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        0,
+                        1f
+                )
+        );
+
+        root.addView(empty);
+
+        LinearLayout row = new LinearLayout(context);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+
+        row.addView(
+                button(
+                        context,
+                        "Paste link",
+                        v -> addFromClipboard()
+                ),
+                new LinearLayout.LayoutParams(
+                        0,
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                        1f
+                )
+        );
+
+        row.addView(
+                button(
+                        context,
+                        "Ping",
+                        v -> pingAll()
+                ),
+                new LinearLayout.LayoutParams(
+                        0,
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                        1f
+                )
+        );
+
+        row.addView(
+                button(
+                        context,
+                        "Log",
+                        v -> showLog()
+                ),
+                new LinearLayout.LayoutParams(
+                        0,
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                        1f
+                )
+        );
+
+        root.addView(row);
+
+        return root;
+    }
+
+    private Button button(
+            Context context,
+            String text,
+            View.OnClickListener listener)
+    {
+        Button button = new Button(context);
+        button.setText(text);
+        button.setOnClickListener(listener);
+        return button;
+    }
+
+    @Override
+    public void onStart()
+    {
+        super.onStart();
+
+        ContextCompat.registerReceiver(
+                requireContext(),
+                receiver,
+                new IntentFilter(SingBoxVpnService.ACTION_STATE),
+                ContextCompat.RECEIVER_NOT_EXPORTED
+        );
+
+        if (adapter != null)
+        {
+            adapter.notifyDataSetChanged();
+        }
+    }
+
+    @Override
+    public void onStop()
+    {
+        try
+        {
+            requireContext().unregisterReceiver(receiver);
+        }
+        catch (IllegalArgumentException ignored)
+        {
+            // Receiver was not registered.
+        }
+
+        super.onStop();
+    }
+
+    private void addFromClipboard()
+    {
+        ClipboardManager clipboard =
+                (ClipboardManager) requireContext().getSystemService(
+                        Context.CLIPBOARD_SERVICE
+                );
+
+        if (clipboard == null || !clipboard.hasPrimaryClip())
+        {
+            Toast.makeText(
+                    getActivity(),
+                    "clipboard is empty",
+                    Toast.LENGTH_SHORT
+            ).show();
+
+            return;
+        }
+
+        ClipData data = clipboard.getPrimaryClip();
+
+        if (data == null || data.getItemCount() == 0)
+        {
+            Toast.makeText(
+                    getActivity(),
+                    "clipboard is empty",
+                    Toast.LENGTH_SHORT
+            ).show();
+
+            return;
+        }
+
+        String text = data.getItemAt(0)
+                .coerceToText(requireContext())
+                .toString();
+
+        int added = 0;
+
+        for (String line : text.split("\\r?\\n"))
+        {
+            String link = line.trim();
+
+            if (link.isEmpty() || links.contains(link))
+            {
+                continue;
+            }
+
+            try
+            {
+                V2RayConfigBuilder.build(link, "1.10.0");
+
+                links.add(link);
+                added++;
+            }
+            catch (Exception ignored)
+            {
+                // Ignore lines that are not valid profile links.
+            }
+        }
+
+        if (added > 0)
+        {
+            store.save(links);
+            adapter.notifyDataSetChanged();
+        }
+
+        Toast.makeText(
+                getActivity(),
+                added + " added",
+                Toast.LENGTH_SHORT
+        ).show();
+    }
+
+    private void confirmDelete(final String link)
+    {
+        new AlertDialog.Builder(requireActivity())
+                .setMessage(
+                        "Delete " + V2RayConfigBuilder.name(link) + "?"
+                )
+                .setPositiveButton(
+                        android.R.string.ok,
+                        (dialog, which) ->
+                        {
+                            links.remove(link);
+                            store.save(links);
+                            adapter.notifyDataSetChanged();
+                        }
+                )
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
+    private void pingAll()
+    {
+        if (links.isEmpty())
+        {
+            return;
+        }
+
+        final List<String> copy = new ArrayList<>(links);
+
+        final Context appContext =
+                requireContext().getApplicationContext();
+
+        adapter.clearPings();
+
+        for (String link : copy)
+        {
+            adapter.setPing(
+                    link,
+                    appContext.getString(R.string.ping_running)
+            );
+        }
+
+        Executors.newSingleThreadExecutor().execute(() ->
+        {
+            ExecutorService pool = Executors.newFixedThreadPool(
+                    Math.min(16, Math.max(1, copy.size()))
+            );
+
+            List<Future<String>> futures = new ArrayList<>();
+
+            try
+            {
+                for (final String link : copy)
+                {
+                    final V2RayConfigBuilder.Info info =
+                            V2RayConfigBuilder.info(link);
+
+                    futures.add(
+                            pool.submit(
+                                    () -> V2RayPing.ping(
+                                            appContext,
+                                            info.host,
+                                            info.port
+                                    )
+                            )
+                    );
+                }
+
+                for (int i = 0; i < copy.size(); i++)
+                {
+                    String result;
+
+                    try
+                    {
+                        result = futures.get(i).get(
+                                8,
+                                TimeUnit.SECONDS
                         );
                     }
-                    else if (which == 2)
+                    catch (Exception ignored)
                     {
-                        confirmDelete(selectedLink);
+                        result = "timeout";
                     }
-                })
-                .show();
 
-        return true;
+                    if ("timeout".equals(result))
+                    {
+                        result = appContext.getString(
+                                R.string.ping_timeout
+                        );
+                    }
+
+                    final String link = copy.get(i);
+                    final String resultText = result;
+
+                    Activity activity = getActivity();
+
+                    if (activity == null)
+                    {
+                        return;
+                    }
+
+                    activity.runOnUiThread(() ->
+                    {
+                        if (adapter != null)
+                        {
+                            adapter.setPing(link, resultText);
+                        }
+                    });
+                }
+            }
+            finally
+            {
+                pool.shutdownNow();
+            }
+        });
     }
-});
-		root.addView(list, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
-		root.addView(empty);
 
-		LinearLayout row = new LinearLayout(context);
-		row.setOrientation(LinearLayout.HORIZONTAL);
-		row.addView(button(context, "Paste link", new View.OnClickListener()
-		{
-			@Override
-			public void onClick(View v)
-			{
-				addFromClipboard();
-			}
-		}), new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-		row.addView(button(context, "Ping", new View.OnClickListener()
-		{
-			@Override
-			public void onClick(View v)
-			{
-				pingAll();
-			}
-		}), new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-		row.addView(button(context, "Log", new View.OnClickListener()
-		{
-			@Override
-			public void onClick(View v)
-			{
-				showLog();
-			}
-		}), new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-		root.addView(row);
-		return root;
-	}
+    private void showLog()
+    {
+        String text = SingBoxVpnService.recentLog();
 
-	private Button button(Context context, String text, View.OnClickListener listener)
-	{
-		Button b = new Button(context);
-		b.setText(text);
-		b.setOnClickListener(listener);
-		return b;
-	}
+        TextView view = new TextView(requireContext());
 
-	@Override
-	public void onStart()
-	{
-		super.onStart();
-		ContextCompat.registerReceiver(requireContext(), receiver, new IntentFilter(SingBoxVpnService.ACTION_STATE), ContextCompat.RECEIVER_NOT_EXPORTED);
-		adapter.notifyDataSetChanged();
-	}
+        view.setText(text.isEmpty() ? "empty" : text);
+        view.setTextIsSelectable(true);
+        view.setTextSize(11f);
 
-	@Override
-	public void onStop()
-	{
-		requireContext().unregisterReceiver(receiver);
-		super.onStop();
-	}
+        int pad = (int) (
+                12 * getResources().getDisplayMetrics().density
+        );
 
-	private void addFromClipboard()
-	{
-		ClipboardManager cm = (ClipboardManager) requireContext().getSystemService(Context.CLIPBOARD_SERVICE);
-		ClipData data = cm.getPrimaryClip();
-		if (data == null || data.getItemCount() == 0)
-		{
-			Toast.makeText(getActivity(), "clipboard is empty", Toast.LENGTH_SHORT).show();
-			return;
-		}
-		String text = data.getItemAt(0).coerceToText(requireContext()).toString();
-		int added = 0;
-		for (String line : text.split("\\r?\\n"))
-		{
-			String link = line.trim();
-			if (link.isEmpty() || links.contains(link))
-			{
-				continue;
-			}
-			try
-			{
-				V2RayConfigBuilder.build(link, "1.10.0");
-				links.add(link);
-				added++;
-			}
-			catch (Exception e)
-			{
-			}
-		}
-		if (added > 0)
-		{
-			store.save(links);
-			adapter.notifyDataSetChanged();
-		}
-		Toast.makeText(getActivity(), added + " added", Toast.LENGTH_SHORT).show();
-	}
+        view.setPadding(pad, pad, pad, pad);
 
-	private void confirmDelete(final String link)
-	{
-		new AlertDialog.Builder(requireActivity())
-				.setMessage("Delete " + V2RayConfigBuilder.name(link) + "?")
-				.setPositiveButton(android.R.string.ok, (d, w) -> {
-					links.remove(link);
-					store.save(links);
-					adapter.notifyDataSetChanged();
-				})
-				.setNegativeButton(android.R.string.cancel, null)
-				.show();
-	}
+        ScrollView scroll = new ScrollView(requireContext());
+        scroll.addView(view);
 
-	private void pingAll()
-	{
-		if (links.isEmpty())
-		{
-			return;
-		}
-		final List<String> copy = new ArrayList<String>(links);
-		final Context appContext = requireContext().getApplicationContext();
-		adapter.clearPings();
-		for (String link : copy)
-		{
-			adapter.setPing(link, appContext.getString(R.string.ping_running));
-		}
-		Executors.newSingleThreadExecutor().execute(() -> {
-			ExecutorService pool = Executors.newFixedThreadPool(Math.min(16, Math.max(1, copy.size())));
-			List<Future<String>> futures = new ArrayList<Future<String>>();
-			try
-			{
-				for (final String link : copy)
-				{
-					final V2RayConfigBuilder.Info info = V2RayConfigBuilder.info(link);
-					futures.add(pool.submit(() -> V2RayPing.ping(appContext, info.host, info.port)));
-				}
-				for (int i = 0; i < copy.size(); i++)
-				{
-					String result;
-					try
-					{
-						result = futures.get(i).get(8, TimeUnit.SECONDS);
-					}
-					catch (Exception e)
-					{
-						result = "timeout";
-					}
-					if ("timeout".equals(result))
-					{
-						result = appContext.getString(R.string.ping_timeout);
-					}
-					final String link = copy.get(i);
-					final String text = result;
-					Activity activity = getActivity();
-					if (activity == null)
-					{
-						return;
-					}
-					activity.runOnUiThread(() -> adapter.setPing(link, text));
-				}
-			}
-			finally
-			{
-				pool.shutdownNow();
-			}
-		});
-	}
+        new AlertDialog.Builder(requireActivity())
+                .setTitle("sing-box log")
+                .setView(scroll)
+                .setPositiveButton(android.R.string.ok, null)
+                .show();
+    }
 
-	private void showLog()
-	{
-		String text = SingBoxVpnService.recentLog();
-		TextView view = new TextView(requireContext());
-		view.setText(text.isEmpty() ? "empty" : text);
-		view.setTextIsSelectable(true);
-		view.setTextSize(11f);
-		int pad = (int) (12 * getResources().getDisplayMetrics().density);
-		view.setPadding(pad, pad, pad, pad);
-		ScrollView scroll = new ScrollView(requireContext());
-		scroll.addView(view);
-		new AlertDialog.Builder(requireActivity())
-				.setTitle("sing-box log")
-				.setView(scroll)
-				.setPositiveButton(android.R.string.ok, null)
-				.show();
-	}
+    private void connect(String link)
+    {
+        pendingLink = link;
 
-	private void connect(String link)
-	{
-		pendingLink = link;
-		Intent prepare = VpnService.prepare(requireContext());
-		if (prepare != null)
-		{
-			vpnPermission.launch(prepare);
-		}
-		else
-		{
-			SingBoxVpnService.start(requireContext(), link);
-		}
-	}
+        Intent prepare = VpnService.prepare(requireContext());
+
+        if (prepare != null)
+        {
+            vpnPermission.launch(prepare);
+        }
+        else
+        {
+            SingBoxVpnService.start(requireContext(), link);
+        }
+    }
 }
