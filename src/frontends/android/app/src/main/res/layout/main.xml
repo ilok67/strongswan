@@ -1,42 +1,56 @@
-<?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<?xml version="1.0" encoding="utf-8"?><LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+xmlns:app="http://schemas.android.com/apk/res-auto"
+android:id="@+id/layout"
+android:layout_width="match_parent"
+android:layout_height="match_parent"
+android:orientation="vertical"
+android:background="@color/primary_dark">
+
+<fragment
+    android:id="@+id/vpn_state_frag"
+    class="org.strongswan.android.ui.VpnStateFragment"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:id="@+id/layout" >
+    android:layout_height="wrap_content" />
 
-    <fragment
-            class="org.strongswan.android.ui.VpnStateFragment"
-            android:id="@+id/vpn_state_frag"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+<fragment
+    android:id="@+id/imc_state_frag"
+    class="org.strongswan.android.ui.ImcStateFragment"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content" />
 
-    <fragment
-            class="org.strongswan.android.ui.ImcStateFragment"
-            android:id="@+id/imc_state_frag"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+<com.google.android.material.tabs.TabLayout
+    android:id="@+id/tabs"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="12dp"
+    android:layout_marginEnd="12dp"
+    android:layout_marginTop="8dp"
+    android:layout_marginBottom="8dp"
+    android:background="@drawable/tabs_container"
+    android:padding="4dp"
+    app:tabGravity="fill"
+    app:tabMode="fixed"
+    app:tabIndicator="@null"
+    app:tabIndicatorHeight="0dp"
+    app:tabBackground="@drawable/tab_item_background"
+    app:tabRippleColor="@android:color/transparent"
+    app:tabTextColor="#94A3B8"
+    app:tabSelectedTextColor="#FFFFFF"
+    app:tabTextAppearance="@style/TabTextAppearance"
+    app:tabMinHeight="44dp" />
 
-    <com.google.android.material.tabs.TabLayout
-            android:id="@+id/tabs"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:tabGravity="fill"
-            app:tabMode="fixed"
-            xmlns:app="http://schemas.android.com/apk/res-auto" />
+<fragment
+    android:id="@+id/profile_list_frag"
+    class="org.strongswan.android.ui.VpnProfileListFragment"
+    android:layout_width="match_parent"
+    android:layout_height="0dp"
+    android:layout_weight="1" />
 
-    <fragment
-            class="org.strongswan.android.ui.VpnProfileListFragment"
-            android:id="@+id/profile_list_frag"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1" />
-
-    <FrameLayout
-            android:id="@+id/v2ray_container"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:visibility="gone" />
+<FrameLayout
+    android:id="@+id/v2ray_container"
+    android:layout_width="match_parent"
+    android:layout_height="0dp"
+    android:layout_weight="1"
+    android:visibility="gone" />
 
 </LinearLayout>
