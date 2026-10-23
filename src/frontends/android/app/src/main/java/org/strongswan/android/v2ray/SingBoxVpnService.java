@@ -4,7 +4,13 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.app.Service;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
+import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.content.pm.ServiceInfo;
 import android.net.ConnectivityManager;
 import android.net.LinkProperties;
@@ -13,25 +19,38 @@ import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
 import android.net.VpnService;
 import android.os.Build;
+import android.os.Handler;
+import android.os.IBinder;
+import android.os.Looper;
 import android.os.ParcelFileDescriptor;
+import android.os.PowerManager;
 import android.util.Log;
 
 import org.strongswan.android.R;
+import org.strongswan.android.data.VpnProfile;
+import org.strongswan.android.logic.VpnStateService;
+import org.strongswan.android.logic.VpnStateService.ErrorState;
+import org.strongswan.android.logic.VpnStateService.State;
+import org.strongswan.android.ui.MainActivity;
+import org.strongswan.android.utils.TrafficMonitor;
+
+import androidx.core.content.ContextCompat;
 
 import java.io.File;
 import java.net.InterfaceAddress;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import io.nekohasekai.libbox.BoxService;
-import io.nekohasekai.libbox.SetupOptions;
 import io.nekohasekai.libbox.InterfaceUpdateListener;
 import io.nekohasekai.libbox.Libbox;
 import io.nekohasekai.libbox.NetworkInterfaceIterator;
 import io.nekohasekai.libbox.PlatformInterface;
 import io.nekohasekai.libbox.RoutePrefix;
 import io.nekohasekai.libbox.RoutePrefixIterator;
+import io.nekohasekai.libbox.SetupOptions;
 import io.nekohasekai.libbox.StringIterator;
 import io.nekohasekai.libbox.TunOptions;
 import io.nekohasekai.libbox.WIFIState;
@@ -50,16 +69,101 @@ public class SingBoxVpnService extends VpnService implements PlatformInterface
 	private static final int NOTIFICATION_ID = 7201;
 
 	private static volatile boolean running;
+	private static volatile String sLink;
 	private static boolean libboxReady;
 
 	private final Object lock = new Object();
+	private final Object stateLock = new Object();
+	private final TrafficMonitor traffic = new TrafficMonitor();
+	private Handler handler;
+	private VpnStateService stateService;
 	private BoxService box;
 	private ParcelFileDescriptor tun;
 	private ConnectivityManager.NetworkCallback networkCallback;
+	private long connectedAt;
+
+	private final ServiceConnection stateConnection = new ServiceConnection()
+	{
+		@Override
+		public void onServiceConnected(ComponentName name, IBinder binder)
+		{
+			synchronized (stateLock)
+			{
+				stateService = ((VpnStateService.LocalBinder) binder).getService();
+			}
+		}
+
+		@Override
+		public void onServiceDisconnected(ComponentName name)
+		{
+			synchronized (stateLock)
+			{
+				stateService = null;
+			}
+		}
+	};
+
+	private final Runnable tick = new Runnable()
+	{
+		@Override
+		public void run()
+		{
+			if (!running)
+			{
+				return;
+			}
+			PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+			if (pm == null || pm.isInteractive())
+			{
+				traffic.update();
+				updateNotification();
+			}
+			handler.postDelayed(this, 1000);
+		}
+	};
 
 	public static boolean isRunning()
 	{
 		return running;
+	}
+
+	public static boolean hasSession()
+	{
+		return sLink != null;
+	}
+
+	public static String getLink()
+	{
+		return sLink;
+	}
+
+	public static void start(Context context, String link)
+	{
+		Intent i = new Intent(context, SingBoxVpnService.class);
+		i.setAction(ACTION_START);
+		i.putExtra(EXTRA_LINK, link);
+		ContextCompat.startForegroundService(context, i);
+	}
+
+	public static void stop(Context context)
+	{
+		if (!running && sLink == null)
+		{
+			return;
+		}
+		sLink = null;
+		Intent i = new Intent(context, SingBoxVpnService.class);
+		i.setAction(ACTION_STOP);
+		context.startService(i);
+	}
+
+	@Override
+	public void onCreate()
+	{
+		super.onCreate();
+		handler = new Handler(Looper.getMainLooper());
+		createNotificationChannel();
+		bindService(new Intent(this, VpnStateService.class), stateConnection, Service.BIND_AUTO_CREATE);
 	}
 
 	@Override
@@ -68,14 +172,14 @@ public class SingBoxVpnService extends VpnService implements PlatformInterface
 		String action = intent != null ? intent.getAction() : null;
 		if (ACTION_STOP.equals(action))
 		{
-			stopBox();
-			stopForeground(true);
-			stopSelf();
+			sLink = null;
+			shutdown();
 			return START_NOT_STICKY;
 		}
 		if (ACTION_START.equals(action))
 		{
 			final String link = intent.getStringExtra(EXTRA_LINK);
+			sLink = link;
 			goForeground();
 			new Thread(new Runnable()
 			{
@@ -94,60 +198,50 @@ public class SingBoxVpnService extends VpnService implements PlatformInterface
 	@Override
 	public void onRevoke()
 	{
-		stopBox();
-		stopForeground(true);
-		stopSelf();
+		sLink = null;
+		shutdown();
 	}
 
 	@Override
 	public void onDestroy()
 	{
-		stopBox();
+		synchronized (lock)
+		{
+			closeBox();
+		}
+		try
+		{
+			unbindService(stateConnection);
+		}
+		catch (Exception e)
+		{
+			Log.e(TAG, "unbind failed", e);
+		}
 		super.onDestroy();
 	}
 
-	private void goForeground()
+	private void shutdown()
 	{
-		Notification n = buildNotification();
-		if (Build.VERSION.SDK_INT >= 34)
+		synchronized (lock)
 		{
-			startForeground(NOTIFICATION_ID, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_SYSTEM_EXEMPTED);
+			closeBox();
 		}
-		else
-		{
-			startForeground(NOTIFICATION_ID, n);
-		}
-	}
-
-	private Notification buildNotification()
-	{
-		if (Build.VERSION.SDK_INT >= 26)
-		{
-			NotificationManager nm = getSystemService(NotificationManager.class);
-			nm.createNotificationChannel(new NotificationChannel(CHANNEL_ID, "V2Ray VPN", NotificationManager.IMPORTANCE_LOW));
-		}
-		Intent stop = new Intent(this, SingBoxVpnService.class).setAction(ACTION_STOP);
-		int piFlags = PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= 23 ? PendingIntent.FLAG_IMMUTABLE : 0);
-		PendingIntent stopIntent = PendingIntent.getService(this, 0, stop, piFlags);
-		Notification.Builder b = Build.VERSION.SDK_INT >= 26 ? new Notification.Builder(this, CHANNEL_ID) : new Notification.Builder(this);
-		b.setContentTitle("BardiaVPN");
-		b.setContentText("V2Ray");
-		b.setSmallIcon(R.drawable.ic_notification);
-		b.setOngoing(true);
-		b.addAction(android.R.drawable.ic_menu_close_clear_cancel, "Stop", stopIntent);
-		return b.build();
+		setState(State.DISABLED);
+		broadcastState(false, null);
+		stopForeground(true);
+		stopSelf();
 	}
 
 	private void startBox(String link)
 	{
 		try
 		{
+			awaitStateService();
+			dropIkev2();
 			synchronized (lock)
 			{
-				if (box != null)
-				{
-					return;
-				}
+				closeBox();
+				startConnection(link);
 				setupLibbox();
 				String config = V2RayConfigBuilder.build(link, Libbox.version());
 				BoxService service = Libbox.newService(config, this);
@@ -155,12 +249,21 @@ public class SingBoxVpnService extends VpnService implements PlatformInterface
 				box = service;
 				running = true;
 			}
+			connectedAt = System.currentTimeMillis();
+			traffic.reset();
+			traffic.update();
+			setState(State.CONNECTED);
+			updateNotification();
+			handler.post(tick);
 			broadcastState(true, null);
 		}
 		catch (Throwable t)
 		{
 			Log.e(TAG, "start failed", t);
-			stopBox();
+			synchronized (lock)
+			{
+				closeBox();
+			}
 			String version;
 			try
 			{
@@ -170,9 +273,83 @@ public class SingBoxVpnService extends VpnService implements PlatformInterface
 			{
 				version = "";
 			}
+			setError(ErrorState.GENERIC_ERROR);
 			broadcastState(false, t.getMessage() + version);
 			stopForeground(true);
 			stopSelf();
+		}
+	}
+
+	private void awaitStateService() throws InterruptedException
+	{
+		for (int i = 0; i < 40; i++)
+		{
+			synchronized (stateLock)
+			{
+				if (stateService != null)
+				{
+					return;
+				}
+			}
+			Thread.sleep(50);
+		}
+	}
+
+	private void dropIkev2() throws InterruptedException
+	{
+		synchronized (stateLock)
+		{
+			if (stateService == null || running || stateService.getState() == State.DISABLED)
+			{
+				return;
+			}
+			stateService.disconnect();
+		}
+		for (int i = 0; i < 100; i++)
+		{
+			synchronized (stateLock)
+			{
+				if (stateService == null || stateService.getState() == State.DISABLED)
+				{
+					return;
+				}
+			}
+			Thread.sleep(50);
+		}
+	}
+
+	private void startConnection(String link)
+	{
+		synchronized (stateLock)
+		{
+			if (stateService != null)
+			{
+				VpnProfile profile = new VpnProfile();
+				profile.setName(V2RayConfigBuilder.name(link));
+				stateService.startConnection(profile);
+			}
+		}
+	}
+
+	private void setState(State state)
+	{
+		synchronized (stateLock)
+		{
+			if (stateService != null)
+			{
+				stateService.setState(state);
+			}
+		}
+	}
+
+	private void setError(ErrorState error)
+	{
+		synchronized (stateLock)
+		{
+			if (stateService != null)
+			{
+				stateService.setError(error);
+			}
 		}
 	}
 
@@ -193,37 +370,34 @@ public class SingBoxVpnService extends VpnService implements PlatformInterface
 		libboxReady = true;
 	}
 
-	private void stopBox()
+	private void closeBox()
 	{
-		synchronized (lock)
+		running = false;
+		handler.removeCallbacks(tick);
+		if (box != null)
 		{
-			running = false;
-			if (box != null)
+			try
 			{
-				try
-				{
-					box.close();
-				}
-				catch (Throwable t)
-				{
-					Log.e(TAG, "close failed", t);
-				}
-				box = null;
+				box.close();
 			}
-			if (tun != null)
+			catch (Throwable t)
 			{
-				try
-				{
-					tun.close();
-				}
-				catch (Exception e)
-				{
-					Log.e(TAG, "tun close failed", e);
-				}
-				tun = null;
+				Log.e(TAG, "close failed", t);
 			}
+			box = null;
 		}
-		broadcastState(false, null);
+		if (tun != null)
+		{
+			try
+			{
+				tun.close();
+			}
+			catch (Exception e)
+			{
+				Log.e(TAG, "tun close failed", e);
+			}
+			tun = null;
+		}
 	}
 
 	private void broadcastState(boolean isRunning, String error)
@@ -238,11 +412,81 @@ public class SingBoxVpnService extends VpnService implements PlatformInterface
 		sendBroadcast(i);
 	}
 
+	private void createNotificationChannel()
+	{
+		if (Build.VERSION.SDK_INT >= 26)
+		{
+			NotificationChannel channel = new NotificationChannel(CHANNEL_ID, "V2Ray VPN", NotificationManager.IMPORTANCE_LOW);
+			channel.setLockscreenVisibility(Notification.VISIBILITY_SECRET);
+			channel.setShowBadge(false);
+			getSystemService(NotificationManager.class).createNotificationChannel(channel);
+		}
+	}
+
+	private void goForeground()
+	{
+		Notification n = buildNotification();
+		if (Build.VERSION.SDK_INT >= 34)
+		{
+			startForeground(NOTIFICATION_ID, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_SYSTEM_EXEMPTED);
+		}
+		else
+		{
+			startForeground(NOTIFICATION_ID, n);
+		}
+	}
+
+	private void updateNotification()
+	{
+		NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+		nm.notify(NOTIFICATION_ID, buildNotification());
+	}
+
+	private Notification buildNotification()
+	{
+		String link = sLink;
+		String name = V2RayConfigBuilder.name(link == null ? "" : link);
+		int piFlags = PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= 23 ? PendingIntent.FLAG_IMMUTABLE : 0);
+
+		Intent stop = new Intent(this, SingBoxVpnService.class).setAction(ACTION_STOP);
+		PendingIntent stopIntent = PendingIntent.getService(this, 0, stop, piFlags);
+		PendingIntent openIntent = PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class), piFlags);
+
+		Notification.Builder b = Build.VERSION.SDK_INT >= 26 ? new Notification.Builder(this, CHANNEL_ID) : new Notification.Builder(this);
+		b.setSmallIcon(R.drawable.ic_notification);
+		b.setCategory(Notification.CATEGORY_SERVICE);
+		b.setOngoing(true);
+		b.setOnlyAlertOnce(true);
+		b.setContentIntent(openIntent);
+		b.addAction(R.drawable.ic_notification_disconnect, getString(R.string.disconnect), stopIntent);
+		if (running)
+		{
+			b.setContentTitle(getString(R.string.state_connected));
+			b.setContentText(traffic.getLine());
+			b.setSubText(name);
+			b.setColor(ContextCompat.getColor(this, R.color.success_text));
+			b.setUsesChronometer(true);
+			if (connectedAt > 0)
+			{
+				b.setWhen(connectedAt);
+			}
+		}
+		else
+		{
+			b.setContentTitle(getString(R.string.state_connecting));
+			b.setContentText(name);
+			b.setColor(ContextCompat.getColor(this, R.color.warning_text));
+		}
+		return b.build();
+	}
+
 	public int openTun(TunOptions options) throws Exception
 	{
 		Builder builder = new Builder();
-		builder.setSession("BardiaVPN");
+		builder.setSession(V2RayConfigBuilder.name(sLink == null ? "" : sLink));
 		builder.setMtu(options.getMTU());
+		builder.setConfigureIntent(PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class),
+				PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= 23 ? PendingIntent.FLAG_IMMUTABLE : 0)));
 
 		RoutePrefixIterator addr4 = options.getInet4Address();
 		while (addr4.hasNext())
@@ -267,6 +511,7 @@ public class SingBoxVpnService extends VpnService implements PlatformInterface
 				builder.addRoute("::", 0);
 			}
 		}
+		applyAppFilter(builder);
 		if (Build.VERSION.SDK_INT >= 29)
 		{
 			builder.setMetered(false);
@@ -281,6 +526,63 @@ public class SingBoxVpnService extends VpnService implements PlatformInterface
 			tun = pfd;
 		}
 		return pfd.getFd();
+	}
+
+	private void applyAppFilter(Builder builder)
+	{
+		SharedPreferences filter = getSharedPreferences("app_filter", MODE_PRIVATE);
+		String mode = filter.getString("mode", "off");
+		Set<String> packages = filter.getStringSet("packages", Collections.<String>emptySet());
+		if (packages == null)
+		{
+			packages = Collections.<String>emptySet();
+		}
+		String self = getPackageName();
+		if ("only".equals(mode) && !packages.isEmpty())
+		{
+			for (String app : packages)
+			{
+				if (app.equals(self))
+				{
+					continue;
+				}
+				try
+				{
+					builder.addAllowedApplication(app);
+				}
+				catch (PackageManager.NameNotFoundException e)
+				{
+					Log.w(TAG, "package not found: " + app);
+				}
+			}
+			return;
+		}
+		if ("exclude".equals(mode))
+		{
+			for (String app : packages)
+			{
+				if (app.equals(self))
+				{
+					continue;
+				}
+				try
+				{
+					builder.addDisallowedApplication(app);
+				}
+				catch (PackageManager.NameNotFoundException e)
+				{
+					Log.w(TAG, "package not found: " + app);
+				}
+			}
+		}
+		try
+		{
+			builder.addDisallowedApplication(self);
+		}
+		catch (PackageManager.NameNotFoundException e)
+		{
+			Log.w(TAG, "own package not found");
+		}
 	}
 
 	public void autoDetectInterfaceControl(int fd)
