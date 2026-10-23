@@ -551,102 +551,47 @@ catch (IllegalArgumentException ignored)
                 .show();
     }
 
-    private void pingAll()
+ private void pingAll()
+{
+    if (links.isEmpty())
     {
-        if (links.isEmpty())
+        return;
+    }
+
+    final List<String> copy = new ArrayList<>(links);
+    final Context appContext = requireContext().getApplicationContext();
+
+    adapter.clearPings();
+
+    for (String link : copy)
+    {
+        adapter.setPing(link, appContext.getString(R.string.ping_running));
+    }
+
+    ExecutorService pool = Executors.newFixedThreadPool(4);
+
+    for (final String link : copy)
+    {
+        pool.execute(() ->
         {
-            return;
-        }
+            String result = V2RayConfigTester.ping(appContext, link);
 
-        final List<String> copy = new ArrayList<>(links);
-
-        final Context appContext =
-                requireContext().getApplicationContext();
-
-        adapter.clearPings();
-
-        for (String link : copy)
-        {
-            adapter.setPing(
-                    link,
-                    appContext.getString(R.string.ping_running)
-            );
-        }
-
-        Executors.newSingleThreadExecutor().execute(() ->
-        {
-            ExecutorService pool = Executors.newFixedThreadPool(
-                    Math.min(16, Math.max(1, copy.size()))
-            );
-
-            List<Future<String>> futures = new ArrayList<>();
-
-            try
+            Activity a = getActivity();
+            if (a == null)
             {
-                for (final String link : copy)
-                {
-                    final V2RayConfigBuilder.Info info =
-                            V2RayConfigBuilder.info(link);
-
-                    futures.add(
-                            pool.submit(
-                                    () -> V2RayPing.ping(
-                                            appContext,
-                                            info.host,
-                                            info.port
-                                    )
-                            )
-                    );
-                }
-
-                for (int i = 0; i < copy.size(); i++)
-                {
-                    String result;
-
-                    try
-                    {
-                        result = futures.get(i).get(
-                                8,
-                                TimeUnit.SECONDS
-                        );
-                    }
-                    catch (Exception ignored)
-                    {
-                        result = "timeout";
-                    }
-
-                    if ("timeout".equals(result))
-                    {
-                        result = appContext.getString(
-                                R.string.ping_timeout
-                        );
-                    }
-
-                    final String link = copy.get(i);
-                    final String resultText = result;
-
-                    Activity activity = getActivity();
-
-                    if (activity == null)
-                    {
-                        return;
-                    }
-
-                    activity.runOnUiThread(() ->
-                    {
-                        if (adapter != null)
-                        {
-                            adapter.setPing(link, resultText);
-                        }
-                    });
-                }
+                return;
             }
-            finally
+            a.runOnUiThread(() ->
             {
-                pool.shutdownNow();
-            }
+                if (adapter != null)
+                {
+                    adapter.setPing(link, result);
+                }
+            });
         });
     }
+    pool.shutdown();
+}
 
 
 
