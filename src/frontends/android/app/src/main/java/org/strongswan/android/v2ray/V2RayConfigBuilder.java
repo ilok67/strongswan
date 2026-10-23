@@ -177,7 +177,10 @@ public final class V2RayConfigBuilder
 			return "v2ray";
 		}
 	}
-
+public static JSONObject parseOutboundForEditor(String link) throws Exception
+{
+    return outbound(link.trim());
+}
 	private static JSONObject outbound(String link) throws Exception
 	{
 		int i = link.indexOf("://");
