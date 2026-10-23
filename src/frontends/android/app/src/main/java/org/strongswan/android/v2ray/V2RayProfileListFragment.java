@@ -464,14 +464,15 @@ public class V2RayProfileListFragment extends Fragment
                 }
         );
 
-        root.addView(
-                profileList,
-                new LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        0,
-                        1f
-                )
-        );
+        LinearLayout.LayoutParams fill = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                0,
+                1f);
+        root.addView(emptyView, fill);
+        root.addView(profileList, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                0,
+                1f));
 
         return root;
     }
@@ -492,8 +493,10 @@ public class V2RayProfileListFragment extends Fragment
         LocalBroadcastManager.getInstance(requireContext()).registerReceiver(
         profilesChangedReceiver,
         new IntentFilter("org.strongswan.android.V2RAY_PROFILES_CHANGED"));
-        if (adapter != null)
+        if (adapter != null && store != null)
         {
+            links.clear();
+            links.addAll(store.load());
             adapter.notifyDataSetChanged();
         }
     }
