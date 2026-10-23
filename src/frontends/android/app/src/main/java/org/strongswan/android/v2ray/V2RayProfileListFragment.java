@@ -31,11 +31,12 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import org.strongswan.android.R;
-
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import org.strongswan.android.v2ray.V2RayConfigTester;
+import java.util.ArrayList;
+import java.util.List;
+
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -550,7 +551,10 @@ catch (IllegalArgumentException ignored)
                 .setNegativeButton(android.R.string.cancel, null)
                 .show();
     }
-
+public void pingAllPublic()
+{
+    pingAll();
+}
  private void pingAll()
 {
     if (links.isEmpty())
