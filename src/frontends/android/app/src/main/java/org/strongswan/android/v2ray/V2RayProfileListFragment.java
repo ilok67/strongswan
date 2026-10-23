@@ -13,10 +13,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -26,14 +26,20 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
+import org.strongswan.android.R;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 public class V2RayProfileListFragment extends Fragment
 {
 	private V2RayProfileStore store;
 	private final List<String> links = new ArrayList<String>();
-	private ArrayAdapter<String> adapter;
+	private V2RayProfileAdapter adapter;
 	private String pendingLink;
 
 	private final ActivityResultLauncher<Intent> vpnPermission = registerForActivityResult(
@@ -69,26 +75,24 @@ public class V2RayProfileListFragment extends Fragment
 		root.setOrientation(LinearLayout.VERTICAL);
 
 		ListView list = new ListView(context);
-		adapter = new ArrayAdapter<String>(context, android.R.layout.simple_list_item_1, links)
-		{
-			@Override
-			public View getView(int position, View convertView, ViewGroup parent)
-			{
-				TextView v = (TextView) super.getView(position, convertView, parent);
-				String link = getItem(position);
-				boolean active = link != null && link.equals(SingBoxVpnService.getLink()) && SingBoxVpnService.isRunning();
-				v.setText(V2RayConfigBuilder.name(link) + (active ? "  \u25CF" : ""));
-				return v;
-			}
-		};
+		list.setDivider(null);
+		list.setDividerHeight(0);
+		list.setClipToPadding(false);
+		adapter = new V2RayProfileAdapter(context, links);
 		list.setAdapter(adapter);
-		list.setEmptyView(emptyView(context));
+
+		TextView empty = new TextView(context);
+		empty.setText("No V2Ray profiles. Copy a vless:// vmess:// trojan:// ss:// or hy2:// link and tap Paste.");
+		int pad = (int) (24 * getResources().getDisplayMetrics().density);
+		empty.setPadding(pad, pad, pad, pad);
+		list.setEmptyView(empty);
+
 		list.setOnItemClickListener(new AdapterView.OnItemClickListener()
 		{
 			@Override
 			public void onItemClick(AdapterView<?> parent, View view, int position, long id)
 			{
-				String link = links.get(position);
+				String link = adapter.getItem(position);
 				if (link.equals(SingBoxVpnService.getLink()) && SingBoxVpnService.isRunning())
 				{
 					SingBoxVpnService.stop(requireContext());
@@ -104,50 +108,49 @@ public class V2RayProfileListFragment extends Fragment
 			@Override
 			public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id)
 			{
-				confirmDelete(position);
+				confirmDelete(adapter.getItem(position));
 				return true;
 			}
 		});
 		root.addView(list, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
-		((ViewGroup) list.getParent()).addView(list.getEmptyView());
+		root.addView(empty);
 
-		Button add = new Button(context);
-		add.setText("Paste from clipboard");
-		add.setOnClickListener(new View.OnClickListener()
+		LinearLayout row = new LinearLayout(context);
+		row.setOrientation(LinearLayout.HORIZONTAL);
+		row.addView(button(context, "Paste link", new View.OnClickListener()
 		{
 			@Override
 			public void onClick(View v)
 			{
 				addFromClipboard();
 			}
-		});
-		Button log = new Button(context);
-		log.setText("Log");
-		log.setOnClickListener(new View.OnClickListener()
+		}), new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+		row.addView(button(context, "Ping", new View.OnClickListener()
+		{
+			@Override
+			public void onClick(View v)
+			{
+				pingAll();
+			}
+		}), new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+		row.addView(button(context, "Log", new View.OnClickListener()
 		{
 			@Override
 			public void onClick(View v)
 			{
 				showLog();
 			}
-		});
-
-		LinearLayout row = new LinearLayout(context);
-		row.setOrientation(LinearLayout.HORIZONTAL);
-		row.addView(add, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 2f));
-		row.addView(log, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+		}), new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
 		root.addView(row);
 		return root;
 	}
 
-	private View emptyView(Context context)
+	private Button button(Context context, String text, View.OnClickListener listener)
 	{
-		TextView empty = new TextView(context);
-		empty.setText("No V2Ray profiles. Copy a vless:// vmess:// trojan:// ss:// or hy2:// link and tap Paste.");
-		int pad = (int) (24 * getResources().getDisplayMetrics().density);
-		empty.setPadding(pad, pad, pad, pad);
-		empty.setVisibility(View.GONE);
-		return empty;
+		Button b = new Button(context);
+		b.setText(text);
+		b.setOnClickListener(listener);
+		return b;
 	}
 
 	@Override
@@ -201,17 +204,72 @@ public class V2RayProfileListFragment extends Fragment
 		Toast.makeText(getActivity(), added + " added", Toast.LENGTH_SHORT).show();
 	}
 
-	private void confirmDelete(final int position)
+	private void confirmDelete(final String link)
 	{
 		new AlertDialog.Builder(requireActivity())
-				.setMessage("Delete " + V2RayConfigBuilder.name(links.get(position)) + "?")
+				.setMessage("Delete " + V2RayConfigBuilder.name(link) + "?")
 				.setPositiveButton(android.R.string.ok, (d, w) -> {
-					links.remove(position);
+					links.remove(link);
 					store.save(links);
 					adapter.notifyDataSetChanged();
 				})
 				.setNegativeButton(android.R.string.cancel, null)
 				.show();
+	}
+
+	private void pingAll()
+	{
+		if (links.isEmpty())
+		{
+			return;
+		}
+		final List<String> copy = new ArrayList<String>(links);
+		final Context appContext = requireContext().getApplicationContext();
+		adapter.clearPings();
+		for (String link : copy)
+		{
+			adapter.setPing(link, appContext.getString(R.string.ping_running));
+		}
+		Executors.newSingleThreadExecutor().execute(() -> {
+			ExecutorService pool = Executors.newFixedThreadPool(Math.min(16, Math.max(1, copy.size())));
+			List<Future<String>> futures = new ArrayList<Future<String>>();
+			try
+			{
+				for (final String link : copy)
+				{
+					final V2RayConfigBuilder.Info info = V2RayConfigBuilder.info(link);
+					futures.add(pool.submit(() -> V2RayPing.ping(appContext, info.host, info.port)));
+				}
+				for (int i = 0; i < copy.size(); i++)
+				{
+					String result;
+					try
+					{
+						result = futures.get(i).get(8, TimeUnit.SECONDS);
+					}
+					catch (Exception e)
+					{
+						result = "timeout";
+					}
+					if ("timeout".equals(result))
+					{
+						result = appContext.getString(R.string.ping_timeout);
+					}
+					final String link = copy.get(i);
+					final String text = result;
+					Activity activity = getActivity();
+					if (activity == null)
+					{
+						return;
+					}
+					activity.runOnUiThread(() -> adapter.setPing(link, text));
+				}
+			}
+			finally
+			{
+				pool.shutdownNow();
+			}
+		});
 	}
 
 	private void showLog()
@@ -223,7 +281,7 @@ public class V2RayProfileListFragment extends Fragment
 		view.setTextSize(11f);
 		int pad = (int) (12 * getResources().getDisplayMetrics().density);
 		view.setPadding(pad, pad, pad, pad);
-		android.widget.ScrollView scroll = new android.widget.ScrollView(requireContext());
+		ScrollView scroll = new ScrollView(requireContext());
 		scroll.addView(view);
 		new AlertDialog.Builder(requireActivity())
 				.setTitle("sing-box log")
