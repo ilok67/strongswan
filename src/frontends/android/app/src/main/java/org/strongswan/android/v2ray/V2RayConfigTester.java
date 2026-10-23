@@ -7,7 +7,6 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.InetAddress;
@@ -19,28 +18,34 @@ import java.net.URLEncoder;
 
 import io.nekohasekai.libbox.BoxService;
 import io.nekohasekai.libbox.Libbox;
-import io.nekohasekai.libbox.SetupOptions;
+
 
 public final class V2RayConfigTester
 {
     private static final String TAG = "V2RayConfigTester";
     private static final String TEST_URL = "https://www.gstatic.com/generate_204";
 
-    private static volatile boolean setupDone = false;
+    private V2RayConfigTester()
+    {
+    }
 
-    private V2RayConfigTester() {}
-
+    /**
+     * @return "123 ms" یا "timeout"
+     */
     public static String ping(Context context, String link)
     {
         int delay = test(context, link, 5000);
         return delay >= 0 ? delay + " ms" : "timeout";
     }
 
+    /**
+     * @return میلی‌ثانیه یا -1
+     */
     public static int test(Context context, String link, int timeoutMs)
     {
         try
         {
-            ensureSetup(context);
+            V2RayLibbox.setup(context);
         }
         catch (Throwable t)
         {
@@ -56,6 +61,7 @@ public final class V2RayConfigTester
         }
         catch (Exception e)
         {
+            Log.e(TAG, "port alloc failed: " + e);
             return -1;
         }
 
@@ -81,25 +87,15 @@ public final class V2RayConfigTester
         {
             if (box != null)
             {
-                try { box.close(); } catch (Throwable ignored) {}
+                try
+                {
+                    box.close();
+                }
+                catch (Throwable ignored)
+                {
+                }
             }
         }
-    }
-
-    private static synchronized void ensureSetup(Context context) throws Exception
-    {
-        if (setupDone)
-        {
-            return;
-        }
-        File work = new File(context.getFilesDir(), "singbox_ping");
-        work.mkdirs();
-        SetupOptions o = new SetupOptions();
-        o.setBasePath(context.getFilesDir().getPath());
-        o.setWorkingPath(work.getPath());
-        o.setTempPath(context.getCacheDir().getPath());
-        Libbox.setup(o);
-        setupDone = true;
     }
 
     private static String buildTestConfig(String link, int apiPort) throws Exception
@@ -136,8 +132,14 @@ public final class V2RayConfigTester
             }
             catch (Exception ignored)
             {
-                try { Thread.sleep(100); }
-                catch (InterruptedException e) { return false; }
+                try
+                {
+                    Thread.sleep(100);
+                }
+                catch (InterruptedException e)
+                {
+                    return false;
+                }
             }
         }
         return false;
@@ -167,15 +169,24 @@ public final class V2RayConfigTester
                     new InputStreamReader(conn.getInputStream()));
             StringBuilder sb = new StringBuilder();
             String line;
-            while ((line = r.readLine()) != null) sb.append(line);
+            while ((line = r.readLine()) != null)
+            {
+                sb.append(line);
+            }
             r.close();
 
             String body = sb.toString();
             int idx = body.indexOf("\"delay\"");
-            if (idx < 0) return -1;
+            if (idx < 0)
+            {
+                return -1;
+            }
             int colon = body.indexOf(':', idx);
             int end = body.indexOf('}', colon);
-            if (colon < 0 || end < 0) return -1;
+            if (colon < 0 || end < 0)
+            {
+                return -1;
+            }
             return Integer.parseInt(body.substring(colon + 1, end).trim());
         }
         catch (Exception e)
@@ -184,36 +195,113 @@ public final class V2RayConfigTester
         }
         finally
         {
-            if (conn != null) conn.disconnect();
+            if (conn != null)
+            {
+                conn.disconnect();
+            }
         }
     }
 
     private static final class NoopPlatform
             implements io.nekohasekai.libbox.PlatformInterface
     {
-        public void autoDetectInterfaceControl(int fd) {}
-        public boolean usePlatformAutoDetectInterfaceControl() { return false; }
-        public boolean usePlatformDefaultInterfaceMonitor() { return false; }
-        public boolean usePlatformInterfaceGetter() { return false; }
-        public void clearDNSCache() {}
-        public void writeLog(String m) { Log.d(TAG, m); }
-        public boolean useProcFS() { return false; }
-        public int findConnectionOwner(int p, String s, int sp, String d, int dp) throws Exception { return -1; }
-        public void sendNotification(io.nekohasekai.libbox.Notification n) {}
-        public String packageNameByUid(int uid) throws Exception { return ""; }
-        public int uidByPackageName(String n) throws Exception { return -1; }
-        public boolean includeAllNetworks() { return false; }
-        public boolean underNetworkExtension() { return false; }
-        public io.nekohasekai.libbox.WIFIState readWIFIState() { return null; }
-        public io.nekohasekai.libbox.StringIterator systemCertificates() { return null; }
-        public void startDefaultInterfaceMonitor(io.nekohasekai.libbox.InterfaceUpdateListener l) {}
-        public void closeDefaultInterfaceMonitor(io.nekohasekai.libbox.InterfaceUpdateListener l) {}
-        public io.nekohasekai.libbox.NetworkInterfaceIterator getInterfaces() throws Exception
+        public void autoDetectInterfaceControl(int fd)
+        {
+        }
+
+        public boolean usePlatformAutoDetectInterfaceControl()
+        {
+            return false;
+        }
+
+        public boolean usePlatformDefaultInterfaceMonitor()
+        {
+            return false;
+        }
+
+        public boolean usePlatformInterfaceGetter()
+        {
+            return false;
+        }
+
+        public void clearDNSCache()
+        {
+        }
+
+        public void writeLog(String m)
+        {
+            Log.d(TAG, m);
+        }
+
+        public boolean useProcFS()
+        {
+            return false;
+        }
+
+        public int findConnectionOwner(int p, String s, int sp, String d, int dp)
+                throws Exception
+        {
+            return -1;
+        }
+
+        public void sendNotification(io.nekohasekai.libbox.Notification n)
+        {
+        }
+
+        public String packageNameByUid(int uid) throws Exception
+        {
+            return "";
+        }
+
+        public int uidByPackageName(String n) throws Exception
+        {
+            return -1;
+        }
+
+        public boolean includeAllNetworks()
+        {
+            return false;
+        }
+
+        public boolean underNetworkExtension()
+        {
+            return false;
+        }
+
+        public io.nekohasekai.libbox.WIFIState readWIFIState()
+        {
+            return null;
+        }
+
+        public io.nekohasekai.libbox.StringIterator systemCertificates()
+        {
+            return null;
+        }
+
+        public void startDefaultInterfaceMonitor(
+                io.nekohasekai.libbox.InterfaceUpdateListener l)
+        {
+        }
+
+        public void closeDefaultInterfaceMonitor(
+                io.nekohasekai.libbox.InterfaceUpdateListener l)
+        {
+        }
+
+        public io.nekohasekai.libbox.NetworkInterfaceIterator getInterfaces()
+                throws Exception
         {
             return new io.nekohasekai.libbox.NetworkInterfaceIterator()
             {
-                public boolean hasNext() { return false; }
-                public io.nekohasekai.libbox.NetworkInterface next() { return null; }
+                public boolean hasNext()
+                {
+                    return false;
+                }
+
+                public io.nekohasekai.libbox.NetworkInterface next()
+                {
+                    return null;
+                }
             };
         }
     }
