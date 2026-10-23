@@ -340,8 +340,8 @@ public boolean onMenuItemSelected(@NonNull MenuItem menuItem)
 	final android.content.SharedPreferences prefs =
 		requireContext().getSharedPreferences("app_filter", android.content.Context.MODE_PRIVATE);
 	final String[] modes = {"exclude", "only", "off"};
-	int checked = 0;
-	String current = prefs.getString("mode", "exclude");
+	int checked = 2;
+	String current = prefs.getString("mode", "off");
 	for (int i = 0; i < modes.length; i++)
 	{
 		if (modes[i].equals(current))
