@@ -25,7 +25,8 @@
     </string-array>
 
    <string-array name="vpn_location_codes">
-    <item>special</item>
+    <item>v2ray</item>
+     <item>special</item>
     <item>nl</item>
     <item>de</item>
     <item>fr</item>
@@ -41,7 +42,8 @@
     <item>cz</item>
 </string-array>
 <string-array name="vpn_location_names">
-    <item>💣Bomb💣</item>
+    <item>v2ray-singbox</item>
+    <item>ikev2-auto</item>
     <item>🇳🇱 Netherlands</item>
     <item>🇩🇪 Germany</item>
     <item>🇫🇷 France</item>
