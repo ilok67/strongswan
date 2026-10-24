@@ -548,7 +548,7 @@ public class V2RayProfileListFragment extends Fragment
  {
      pingAll();
  }
-  private void pingAll()
+  private void pingAllasli()
  {
      if (links.isEmpty())
      {
@@ -590,7 +590,45 @@ public class V2RayProfileListFragment extends Fragment
      pool.shutdown();
  }
 
+private void pingAll()
+{
+	if (links.isEmpty())
+	{
+		return;
+	}
 
+	final List<String> copy = new ArrayList<>(links);
+	final Context appContext = requireContext().getApplicationContext();
+	adapter.clearPings();
+
+	for (String link : copy)
+	{
+		adapter.setPing(link, appContext.getString(R.string.ping_running));
+	}
+
+	ExecutorService pool = Executors.newFixedThreadPool(24);
+	for (final String link : copy)
+	{
+		pool.execute(() ->
+		{
+			V2RayConfigBuilder.Info info = V2RayConfigBuilder.info(link);
+			String result = V2RayPing.ping(appContext, info.host, info.port);
+			Activity a = getActivity();
+			if (a == null)
+			{
+				return;
+			}
+			a.runOnUiThread(() ->
+			{
+				if (adapter != null)
+				{
+					adapter.setPing(link, result);
+				}
+			});
+		});
+	}
+	pool.shutdown();
+}
 
     private void connect(String link)
     {
