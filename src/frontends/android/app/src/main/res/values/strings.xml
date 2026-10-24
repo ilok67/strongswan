@@ -287,4 +287,10 @@
     <string name="tile_connect">Connect VPN</string>
     <string name="tile_disconnect">Disconnect VPN</string>
 
+    <string name="delete_no_ping">Delete configs with no ping</string>
+    <string name="delete_no_ping_ikev2">IKEv2</string>
+    <string name="delete_no_ping_singbox">sing-box</string>
+    <string name="delete_no_ping_confirm">Delete %d config(s) with no ping result?</string>
+    <string name="delete_no_ping_none">No configs without a ping result</string>
+    <string name="delete_no_ping_run_first">Run Ping first, then try again</string>
 </resources>
