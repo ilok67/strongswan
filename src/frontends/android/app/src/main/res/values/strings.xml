@@ -293,4 +293,5 @@
     <string name="delete_no_ping_confirm">Delete %d config(s) with no ping result?</string>
     <string name="delete_no_ping_none">No configs without a ping result</string>
     <string name="delete_no_ping_run_first">Run Ping first, then try again</string>
+    <string name="ping_disconnect_first">Disconnect sing-box before testing</string>
 </resources>
