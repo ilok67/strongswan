@@ -565,7 +565,7 @@ public class V2RayProfileListFragment extends Fragment
          adapter.setPing(link, appContext.getString(R.string.ping_running));
      }
 
-     ExecutorService pool = Executors.newFixedThreadPool(4);
+     ExecutorService pool = Executors.newSingleThreadExecutor();
 
      for (final String link : copy)
      {
