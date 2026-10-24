@@ -12,6 +12,7 @@ import org.strongswan.android.data.VpnProfileSource;
 import org.strongswan.android.data.VpnType;
 import org.strongswan.android.security.LocalCertificateStore;
 import org.strongswan.android.utils.Constants;
+import org.strongswan.android.v2ray.V2RayProfileStore;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -20,6 +21,8 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
 
@@ -27,6 +30,8 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 public final class ProfileBackup
 {
+	private static final String V2RAY_CHANGED = "org.strongswan.android.V2RAY_PROFILES_CHANGED";
+
 	private ProfileBackup() {}
 
 	public static int export(Context context, Uri uri) throws Exception
@@ -65,14 +70,23 @@ public final class ProfileBackup
 				}
 				arr.put(o);
 			}
+			JSONArray links = new JSONArray();
+			for (String link : new V2RayProfileStore(context).load())
+			{
+				if (link != null && !link.isEmpty())
+				{
+					links.put(link);
+				}
+			}
 			JSONObject root = new JSONObject();
-			root.put("version", 1);
+			root.put("version", 2);
 			root.put("profiles", arr);
+			root.put("links", links);
 			try (OutputStream out = context.getContentResolver().openOutputStream(uri))
 			{
 				out.write(root.toString().getBytes(StandardCharsets.UTF_8));
 			}
-			return all.size();
+			return all.size() + links.length();
 		}
 		finally
 		{
@@ -94,12 +108,32 @@ public final class ProfileBackup
 			}
 			json = new String(buffer.toByteArray(), StandardCharsets.UTF_8);
 		}
-		JSONArray arr = new JSONObject(json).getJSONArray("profiles");
+		JSONObject root = new JSONObject(json);
+		int ike = restoreIke(context, root.optJSONArray("profiles"));
+		int box = restoreLinks(context, root.optJSONArray("links"));
+		return ike + box;
+	}
+
+	private static int restoreIke(Context context, JSONArray arr)
+	{
+		if (arr == null)
+		{
+			return 0;
+		}
 		VpnProfileDataSource db = new VpnProfileSource(context);
 		db.open();
 		LocalCertificateStore certs = new LocalCertificateStore();
-		CertificateFactory cf = CertificateFactory.getInstance("X.509");
-		java.util.ArrayList<String> uuids = new java.util.ArrayList<>();
+		CertificateFactory cf;
+		try
+		{
+			cf = CertificateFactory.getInstance("X.509");
+		}
+		catch (Exception e)
+		{
+			db.close();
+			return 0;
+		}
+		ArrayList<String> uuids = new ArrayList<>();
 		try
 		{
 			for (int i = 0; i < arr.length(); i++)
@@ -158,5 +192,32 @@ public final class ProfileBackup
 			LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
 		}
 		return uuids.size();
+	}
+
+	private static int restoreLinks(Context context, JSONArray arr)
+	{
+		if (arr == null || arr.length() == 0)
+		{
+			return 0;
+		}
+		V2RayProfileStore store = new V2RayProfileStore(context);
+		List<String> existing = store.load();
+		HashSet<String> seen = new HashSet<>(existing);
+		int added = 0;
+		for (int i = 0; i < arr.length(); i++)
+		{
+			String link = arr.optString(i, "").trim();
+			if (!link.isEmpty() && seen.add(link))
+			{
+				existing.add(link);
+				added++;
+			}
+		}
+		if (added > 0)
+		{
+			store.save(existing);
+			LocalBroadcastManager.getInstance(context).sendBroadcast(new android.content.Intent(V2RAY_CHANGED));
+		}
+		return added;
 	}
 }
