@@ -11,7 +11,7 @@ public final class V2RayLibbox
 {
     private static volatile boolean setupDone = false;
     private static final Object lock = new Object();
-
+   public static final Object GATE = new Object();
     private V2RayLibbox()
     {
     }
