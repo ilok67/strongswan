@@ -32,6 +32,7 @@ import org.strongswan.android.logic.StrongSwanApplication;
 import org.strongswan.android.ui.adapter.VpnProfileAdapter;
 import org.strongswan.android.utils.Constants;
 import org.strongswan.android.utils.Utils;
+import org.strongswan.android.v2ray.V2RayProfileListFragment;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -370,6 +371,11 @@ public boolean onMenuItemSelected(@NonNull MenuItem menuItem)
 		.show();
 	return true;
 } 
+if (menuItem.getItemId() == R.id.delete_no_ping)
+{
+	showDeleteNoPingDialog();
+	return true;
+}
 if (menuItem.getItemId() == R.id.about)
 {
 	startActivity(new android.content.Intent(getActivity(), org.strongswan.android.ui.AboutActivity.class));
@@ -458,6 +464,87 @@ private void checkUpdate(boolean silent)
 		}
 	});
 }
+	private void showDeleteNoPingDialog()
+	{
+		new androidx.appcompat.app.AlertDialog.Builder(requireActivity())
+			.setTitle(R.string.delete_no_ping)
+			.setItems(new CharSequence[]{
+				getString(R.string.delete_no_ping_ikev2),
+				getString(R.string.delete_no_ping_singbox)
+			}, (dialog, which) -> {
+				if (which == 0)
+				{
+					deleteNoPingIkev2();
+				}
+				else
+				{
+					deleteNoPingSingBox();
+				}
+			})
+			.show();
+	}
+
+	private void deleteNoPingIkev2()
+	{
+		if (mVpnProfiles == null || mVpnProfiles.isEmpty())
+		{
+			Toast.makeText(getActivity(), R.string.delete_no_ping_none, Toast.LENGTH_SHORT).show();
+			return;
+		}
+		if (!mListAdapter.isPingFinished())
+		{
+			Toast.makeText(getActivity(), R.string.delete_no_ping_run_first, Toast.LENGTH_SHORT).show();
+			return;
+		}
+
+		final List<VpnProfile> targets = new ArrayList<>();
+		for (VpnProfile profile : mVpnProfiles)
+		{
+			if (!profile.isReadOnly() && !mListAdapter.hasMsPing(profile.getUUID().toString()))
+			{
+				targets.add(profile);
+			}
+		}
+
+		if (targets.isEmpty())
+		{
+			Toast.makeText(getActivity(), R.string.delete_no_ping_none, Toast.LENGTH_SHORT).show();
+			return;
+		}
+
+		new androidx.appcompat.app.AlertDialog.Builder(requireActivity())
+			.setTitle(R.string.delete_no_ping)
+			.setMessage(getString(R.string.delete_no_ping_confirm, targets.size()))
+			.setPositiveButton(android.R.string.ok, (d, w) -> {
+				String[] uuids = new String[targets.size()];
+				for (int i = 0; i < targets.size(); i++)
+				{
+					VpnProfile profile = targets.get(i);
+					uuids[i] = profile.getUUID().toString();
+					mDataSource.deleteVpnProfile(profile);
+				}
+				Intent intent = new Intent(Constants.VPN_PROFILES_CHANGED);
+				intent.putExtra(Constants.VPN_PROFILES_MULTIPLE, uuids);
+				LocalBroadcastManager.getInstance(requireActivity()).sendBroadcast(intent);
+				Toast.makeText(getActivity(), R.string.profiles_deleted, Toast.LENGTH_SHORT).show();
+			})
+			.setNegativeButton(android.R.string.cancel, null)
+			.show();
+	}
+
+	private void deleteNoPingSingBox()
+	{
+		Fragment f = requireActivity().getSupportFragmentManager().findFragmentById(R.id.v2ray_container);
+		if (f instanceof V2RayProfileListFragment)
+		{
+			((V2RayProfileListFragment)f).deleteNoPingWithConfirm();
+		}
+		else
+		{
+			Toast.makeText(getActivity(), R.string.delete_no_ping_none, Toast.LENGTH_SHORT).show();
+		}
+	}
+
 public void pingAllPublic()
 {
     pingAll();
