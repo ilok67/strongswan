@@ -544,6 +544,49 @@ public class V2RayProfileListFragment extends Fragment
                 .setNegativeButton(android.R.string.cancel, null)
                 .show();
     }
+    public void deleteNoPingWithConfirm()
+    {
+        if (adapter == null || links.isEmpty())
+        {
+            Toast.makeText(requireContext(), R.string.delete_no_ping_none, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (!adapter.isPingFinished())
+        {
+            Toast.makeText(requireContext(), R.string.delete_no_ping_run_first, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        final String runningLink = SingBoxVpnService.isRunning() ? SingBoxVpnService.getLink() : null;
+        final List<String> targets = new ArrayList<>();
+        for (String link : links)
+        {
+            if (!adapter.hasMsPing(link) && !link.equals(runningLink))
+            {
+                targets.add(link);
+            }
+        }
+
+        if (targets.isEmpty())
+        {
+            Toast.makeText(requireContext(), R.string.delete_no_ping_none, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        new AlertDialog.Builder(requireActivity())
+                .setTitle(R.string.delete_no_ping)
+                .setMessage(getString(R.string.delete_no_ping_confirm, targets.size()))
+                .setPositiveButton(android.R.string.ok, (dialog, which) ->
+                {
+                    links.removeAll(targets);
+                    store.save(links);
+                    adapter.notifyDataSetChanged();
+                    Toast.makeText(requireContext(), R.string.profiles_deleted, Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
  public void pingAllPublic()
  {
      pingAll();
