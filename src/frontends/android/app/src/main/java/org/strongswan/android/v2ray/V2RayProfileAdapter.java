@@ -41,6 +41,29 @@ public class V2RayProfileAdapter extends ArrayAdapter<String>
 		notifyDataSetChanged();
 	}
 
+	public boolean hasMsPing(String key)
+	{
+		String ping = pings.get(key);
+		return ping != null && ping.endsWith("ms");
+	}
+
+	public boolean isPingFinished()
+	{
+		if (pings.isEmpty())
+		{
+			return false;
+		}
+		String running = getContext().getString(R.string.ping_running);
+		for (String value : pings.values())
+		{
+			if (running.equals(value))
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+
 	@Override
 	public View getView(int position, View convertView, ViewGroup parent)
 	{
