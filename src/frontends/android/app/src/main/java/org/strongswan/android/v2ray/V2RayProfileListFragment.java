@@ -54,6 +54,7 @@ public class V2RayProfileListFragment extends Fragment
 
     private ListView profileList;
     private ActionMode actionMode;
+    private volatile boolean pinging;
 
     private final ActivityResultLauncher<Intent> vpnPermission =
             registerForActivityResult(
@@ -593,47 +594,56 @@ public class V2RayProfileListFragment extends Fragment
  }
   private void pingAll()
  {
-     if (links.isEmpty())
+     if (links.isEmpty() || pinging)
      {
+         return;
+     }
+     if (SingBoxVpnService.isRunning())
+     {
+         Toast.makeText(requireContext(), R.string.ping_disconnect_first, Toast.LENGTH_SHORT).show();
          return;
      }
 
      final List<String> copy = new ArrayList<>(links);
      final Context appContext = requireContext().getApplicationContext();
+     final String running = appContext.getString(R.string.ping_running);
+     final String timeout = appContext.getString(R.string.ping_timeout);
 
      adapter.clearPings();
 
      for (String link : copy)
      {
-         adapter.setPing(link, appContext.getString(R.string.ping_running));
+         adapter.setPing(link, running);
      }
 
-     ExecutorService pool = Executors.newSingleThreadExecutor();
-
-     for (final String link : copy)
+     pinging = true;
+     new Thread(() ->
      {
-         pool.execute(() ->
+         try
          {
-             String result = V2RayConfigTester.ping(appContext, link);
-
-             Activity a = getActivity();
-             if (a == null)
+             V2RayConfigTester.pingAll(appContext, copy, 5000, 16, (link, delay) ->
              {
-                 return;
-             }
-             a.runOnUiThread(() ->
-             {
-                 if (adapter != null)
+                 final String result = delay >= 0 ? delay + " ms" : timeout;
+                 Activity a = getActivity();
+                 if (a == null)
                  {
-                     adapter.setPing(link, result);
+                     return;
                  }
+                 a.runOnUiThread(() ->
+                 {
+                     if (adapter != null)
+                     {
+                         adapter.setPing(link, result);
+                     }
+                 });
              });
-         });
-     }
-     pool.shutdown();
+         }
+         finally
+         {
+             pinging = false;
+         }
+     }).start();
  }
-
-
 
     private void connect(String link)
     {
