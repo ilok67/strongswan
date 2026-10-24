@@ -400,7 +400,7 @@ private void checkUpdate(boolean silent)
 	android.content.SharedPreferences prefs =
 		activity.getSharedPreferences("update", android.content.Context.MODE_PRIVATE);
 	long now = System.currentTimeMillis();
-	if (silent && now - prefs.getLong("last_check", 0) < 24L * 60 * 60 * 1000)
+	if (silent && now - prefs.getLong("last_check", 0) < 3L * 60 * 60 * 1000)
 	{
 		return;
 	}
