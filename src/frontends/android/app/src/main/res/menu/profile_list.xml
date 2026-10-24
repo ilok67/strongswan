@@ -12,6 +12,10 @@
         android:title="@string/app_filter"
         app:showAsAction="never" />
     <item
+        android:id="@+id/delete_no_ping"
+        android:title="@string/delete_no_ping"
+        app:showAsAction="never" />
+    <item
         android:id="@+id/backup_profiles"
         android:title="@string/backup_title"
         app:showAsAction="never" />
