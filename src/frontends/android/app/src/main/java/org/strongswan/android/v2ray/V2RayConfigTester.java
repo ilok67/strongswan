@@ -38,65 +38,70 @@ public final class V2RayConfigTester
         return delay >= 0 ? delay + " ms" : "timeout";
     }
 
-    /**
-     * @return میلی‌ثانیه یا -1
-     */
-    public static int test(Context context, String link, int timeoutMs)
-    {
-        try
-        {
-            V2RayLibbox.setup(context);
-        }
-        catch (Throwable t)
-        {
-            Log.e(TAG, "setup failed: " + t);
-            return -1;
-        }
+public static int test(Context context, String link, int timeoutMs)
+{
+	synchronized (V2RayLibbox.GATE)
+	{
+		if (SingBoxVpnService.isRunning())
+		{
+			return -1;
+		}
+		try
+		{
+			V2RayLibbox.setup(context);
+		}
+		catch (Throwable t)
+		{
+			Log.e(TAG, "setup failed: " + t);
+			return -1;
+		}
 
-        int port;
-        try (ServerSocket ss = new ServerSocket(0, 1,
-                InetAddress.getByName("127.0.0.1")))
-        {
-            port = ss.getLocalPort();
-        }
-        catch (Exception e)
-        {
-            Log.e(TAG, "port alloc failed: " + e);
-            return -1;
-        }
+		int port;
+		try (ServerSocket ss = new ServerSocket(0, 1, InetAddress.getByName("127.0.0.1")))
+		{
+			port = ss.getLocalPort();
+		}
+		catch (Exception e)
+		{
+			Log.e(TAG, "port alloc failed: " + e);
+			return -1;
+		}
 
-        BoxService box = null;
-        try
-        {
-            String config = buildTestConfig(link, port);
-            box = Libbox.newService(config, new NoopPlatform());
-            box.start();
-
-            if (!waitForApi(port, 4000))
-            {
-                return -1;
-            }
-            return requestDelay(port, "proxy", timeoutMs);
-        }
-        catch (Throwable t)
-        {
-            Log.e(TAG, "test failed: " + t);
-            return -1;
-        }
-        finally
-        {
-            if (box != null)
-            {
-                try
-                {
-                    box.close();
-                }
-                catch (Throwable ignored)
-                {
-                }
-            }
-        }
-    }
+		BoxService box = null;
+		try
+		{
+			String config = buildTestConfig(link, port);
+			box = Libbox.newService(config, new NoopPlatform());
+			box.start();
+			if (!waitForApi(port, 4000))
+			{
+				return -1;
+			}
+			return requestDelay(port, "proxy", timeoutMs);
+		}
+		catch (Throwable t)
+		{
+			Log.e(TAG, "test failed: " + t);
+			return -1;
+		}
+		finally
+		{
+			if (box != null)
+			{
+				try
+				{
+					box.close();
+				}
+				catch (Throwable ignored)
+				{
+				}
+			}
+		}
+	}
+}
+    
+        
+    
 
     private static String buildTestConfig(String link, int apiPort) throws Exception
     {
