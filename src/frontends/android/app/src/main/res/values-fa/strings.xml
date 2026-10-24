@@ -254,4 +254,10 @@
     <string name="tile_default">قطع/وصل وی‌پی‌ان</string>
     <string name="tile_connect">اتصال وی‌پی‌ان</string>
     <string name="tile_disconnect">قطع وی‌پی‌ان</string>
+    <string name="delete_no_ping">حذف کانفیگ‌های بدون پینگ</string>
+    <string name="delete_no_ping_ikev2">IKEv2</string>
+    <string name="delete_no_ping_singbox">sing-box</string>
+    <string name="delete_no_ping_confirm">%d کانفیگ بدون نتیجه‌ی پینگ حذف شود؟</string>
+    <string name="delete_no_ping_none">کانفیگی بدون نتیجه‌ی پینگ وجود ندارد</string>
+    <string name="delete_no_ping_run_first">اول پینگ بگیر، بعد دوباره امتحان کن</string>
 </resources>
