@@ -91,7 +91,9 @@ public class FreeServersActivity extends AppCompatActivity
 		"01fb3864e37eb5d4ada3a50a1f1a373e".getBytes(StandardCharsets.US_ASCII);
 	private static final String SECONDARY_USER      = "myvpn";
 	private static final String SECONDARY_REMOTE_ID = "node.mobilejump.mobi";
-	private static final String SECONDARY_REGION    = "IR";
+	private static final String[] SECONDARY_REGIONS = {"IR", "US", "EU", "RU", "DE", "TR"};
+   private static final String[] VIP_VALUES = {"true", "false"};
+	private static final Random RANDOM = new Random();
 	private static final int SECONDARY_MAX_PROFILES = 100;
 	private static final int SECONDARY_TIMEOUT      = 20000;
 
@@ -109,7 +111,7 @@ public class FreeServersActivity extends AppCompatActivity
 		"l2gisV9xw/GKpf7uXmmHP1Qpd5hKMIHIsiNtIHHLaDNxwTHbixFYZn/4xgZSMp5m" +
 		"0YZWQKV1Zmnxh7dG1cMWP8f/Zbxz+huYo9FPI+m7AMbXItLnKq9CyOhiAcasUoDG" +
 		"gJqBNU9Zk7+qWUiUapWalDXWoEMYMEJdaEblc7gTn4BtL8wel5exb8kX44ITqosA" +
-		"PIT9Y7yM+lzgyZ79NZv3C9vresgTcpjRAfIYSRNSl9eAZBVgdLvxAgMBAAGjQjBA" +
+		"PIT9Y7yM+lzgZ79NZv3C9vresgTcpjRAfIYSRNSl9eAZBVgdLvxAgMBAAGjQjBA" +
 		"MA8GA1UdEwEB/wQFMAMBAf8wDgYDVR0PAQH/BAQDAgEGMB0GA1UdDgQWBBQZWeuU" +
 		"8ViQUKaHGsIRo5OxFgS86zANBgkqhkiG9w0BAQwFAAOCAgEAL+H10cJU2EoCILBn" +
 		"cS8OX6vsO5NzNYYtE7b7kA3D5mKq9aTVLhP7FSWmCu748ams3f1WEMg6DExHXxDI" +
@@ -159,7 +161,12 @@ static
 		SEC_NAMES.put(r[0], r[2]);
 	}
 }
-	
+	private static String getRandomSecondaryRegion() {
+    return SECONDARY_REGIONS[RANDOM.nextInt(SECONDARY_REGIONS.length)];
+	}
+	private static String getRandomVip() {
+    return VIP_VALUES[ThreadLocalRandom.current().nextInt(VIP_VALUES.length)];
+	}
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
 	{
@@ -229,15 +236,15 @@ private int importProfiles(String location) throws Exception
 
 	private int importV2RayProfiles() throws Exception
 {
-    String url = SECONDARY_API + "?platform=android&vip=true&region="
-            + SECONDARY_REGION + "&app=";
+    String url = SECONDARY_API + "?platform=android&vip=" + getRandomVip() + "&region="
+            + getRandomSecondaryRegion() + "&app=";
     byte[] blob = httpGetBytes(url);
     JSONObject data = decryptBlob(blob);
 
     List<String> links = V2RaySecondaryBuilder.buildLinks(data, SECONDARY_MAX_PROFILES, "all");
     if (links.isEmpty())
     {
-        throw new Exception("no v2ray servers found");
+        throw new Exception("no v2ray servers found try again");
     }
 
     V2RayProfileStore store = new V2RayProfileStore(this);
@@ -326,8 +333,8 @@ private int importProfiles(String location) throws Exception
 
 	private ArrayList<VpnProfile> fetchSecondaryProfiles() throws Exception
 	{
-		String url = SECONDARY_API + "?platform=android&vip=true&region="
-			+ SECONDARY_REGION + "&app=";
+		String url = SECONDARY_API + "?platform=android&vip=" + getRandomVip()  + "&region="
+			+ getRandomSecondaryRegion() + "&app=";
 		byte[] blob = httpGetBytes(url);
 		JSONObject data = decryptBlob(blob);
 
@@ -382,7 +389,7 @@ private int importProfiles(String location) throws Exception
 
 		if (result.isEmpty())
 		{
-			throw new Exception("no servers found");
+			throw new Exception("no servers found try again");
 		}
 		return result;
 	}
