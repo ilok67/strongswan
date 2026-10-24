@@ -43,11 +43,12 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.zip.Inflater;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-import java.util.List;
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
@@ -92,7 +93,7 @@ public class FreeServersActivity extends AppCompatActivity
 	private static final String SECONDARY_USER      = "myvpn";
 	private static final String SECONDARY_REMOTE_ID = "node.mobilejump.mobi";
 	private static final String[] SECONDARY_REGIONS = {"IR", "US", "EU", "RU", "DE", "TR"};
-   private static final String[] VIP_VALUES = {"true", "false"};
+    private static final String[] VIP_VALUES = {"true", "false"};
 	private static final Random RANDOM = new Random();
 	private static final int SECONDARY_MAX_PROFILES = 100;
 	private static final int SECONDARY_TIMEOUT      = 20000;
@@ -235,7 +236,7 @@ private int importProfiles(String location) throws Exception
 }
 
 	private int importV2RayProfiles() throws Exception
-{
+	{
     String url = SECONDARY_API + "?platform=android&vip=" + getRandomVip() + "&region="
             + getRandomSecondaryRegion() + "&app=";
     byte[] blob = httpGetBytes(url);
