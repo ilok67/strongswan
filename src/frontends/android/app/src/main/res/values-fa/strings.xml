@@ -260,4 +260,5 @@
     <string name="delete_no_ping_confirm">%d کانفیگ بدون نتیجه‌ی پینگ حذف شود؟</string>
     <string name="delete_no_ping_none">کانفیگی بدون نتیجه‌ی پینگ وجود ندارد</string>
     <string name="delete_no_ping_run_first">اول پینگ بگیر، بعد دوباره امتحان کن</string>
+    <string name="ping_disconnect_first">قبل از تست، اتصال sing-box را قطع کن</string>
 </resources>
