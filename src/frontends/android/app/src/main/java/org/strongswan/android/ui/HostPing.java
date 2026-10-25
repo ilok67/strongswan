@@ -1,5 +1,12 @@
 package org.strongswan.android.ui;
 
+import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
+import android.os.Build;
+import org.strongswan.android.logic.StrongSwanApplication;
+
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -35,7 +42,8 @@ public final class HostPing
 		}
 		int ikePort = (port != null && port > 0) ? port : 500;
 
-		InetAddress addr = resolve(host);
+		Network network = underlyingNetwork();
+		InetAddress addr = resolve(host, network);
 		if (addr == null)
 		{
 			return "timeout";
@@ -48,6 +56,10 @@ public final class HostPing
 
 		try (DatagramSocket socket = new DatagramSocket())
 		{
+			if (network != null && Build.VERSION.SDK_INT >= 23)
+			{
+				network.bindSocket(socket);
+			}
 			socket.connect(new InetSocketAddress(addr, ikePort));
 			socket.setSoTimeout(TIMEOUT_MS);
 			byte[] buf = new byte[2048];
@@ -87,7 +99,24 @@ public final class HostPing
 		return "timeout";
 	}
 
-	private static InetAddress resolve(String host)
+	@SuppressWarnings("deprecation")
+	private static Network underlyingNetwork()
+	{
+		Context context = StrongSwanApplication.getContext();
+		ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+		for (Network n : cm.getAllNetworks())
+		{
+			NetworkCapabilities nc = cm.getNetworkCapabilities(n);
+			if (nc != null && nc.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+				&& !nc.hasTransport(NetworkCapabilities.TRANSPORT_VPN))
+			{
+				return n;
+			}
+		}
+		return null;
+	}
+
+	private static InetAddress resolve(String host, Network network)
 	{
 		ExecutorService executor = Executors.newSingleThreadExecutor();
 		try
@@ -97,7 +126,7 @@ public final class HostPing
 				@Override
 				public InetAddress call() throws Exception
 				{
-					return InetAddress.getByName(host);
+					return network != null ? network.getByName(host) : InetAddress.getByName(host);
 				}
 			});
 			return f.get(DNS_TIMEOUT_MS, TimeUnit.MILLISECONDS);
