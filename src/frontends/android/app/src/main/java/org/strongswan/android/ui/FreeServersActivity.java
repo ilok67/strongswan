@@ -1,15 +1,16 @@
 package org.strongswan.android.ui;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Base64;
 import android.util.Log;
-import android.widget.Toast;
-import android.widget.TextView;
+import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.Spinner;
-import android.widget.ArrayAdapter;
-import android.view.View;
+import android.widget.TextView;
+import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
@@ -41,10 +42,10 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Random;
+import java.util.Locale;
 import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadLocalRandom;
@@ -70,21 +71,42 @@ public class FreeServersActivity extends AppCompatActivity
 		"https://108.61.176.133",
 	};
 
-	private static final String APP_VERSION       = "3.1.6";
-	private static final String APP_VERSION_CODE  = "146";
-	private static final String PACKAGE           = "com.jrzheng.supervpnfree";
-	private static final String SECRET_SALT       = "2y6w498L2I";
+	private static final String APP_VERSION          = "3.1.6";
+	private static final String APP_VERSION_CODE     = "146";
+	private static final String PACKAGE              = "com.jrzheng.supervpnfree";
+	private static final String SECRET_SALT          = "2y6w498L2I";
 	private static final String APP_SIGNATURE_SHA256 =
 		"5200D5E89B55D901033896DB249503EFB28479279158101A6A0D3BEA4C7AB906";
 
-	private static final String FIXED_ALIAS       = "en";
-	private static final String FIXED_CHANNEL     = "play";
-	private static final String FIXED_GEO         = "IR";
+	private static final String FIXED_ALIAS   = "en";
+	private static final String FIXED_CHANNEL = "play";
+	private static final String FIXED_GEO     = "IR";
 
 	private static final int CONNECT_TIMEOUT = 5000;
 	private static final int READ_TIMEOUT    = 8000;
 
+	private static final String[][] DEVICES = {
+		{"Google",  "Pixel 8",     "UP1A.231005.007"},
+		{"Google",  "Pixel 8 Pro", "UP1A.231005.007"},
+		{"Google",  "Pixel 7",     "TQ3A.230901.001"},
+		{"Google",  "Pixel 6a",    "TQ3A.230805.001"},
+		{"Samsung", "SM-S918B",    "UP1A.231005.007"},
+		{"Samsung", "SM-S911B",    "UP1A.231005.007"},
+		{"Samsung", "SM-A546B",    "UP1A.231005.007"},
+		{"Samsung", "SM-A346B",    "UP1A.231005.007"},
+		{"Xiaomi",  "22111317G",   "TKQ1.221114.001"},
+		{"Xiaomi",  "2201123G",    "TKQ1.221114.001"},
+		{"Xiaomi",  "23021RAAEG",  "UKQ1.230804.001"},
+		{"Huawei",  "FOA-LX9",     "HUAWEIFOA-LX9"},
+		{"Huawei",  "ELS-NX9",     "HUAWEIELS-NX9"},
+		{"OnePlus", "CPH2449",     "TP1A.220905.001"},
+		{"Oppo",    "CPH2525",     "TP1A.220905.001"},
+		{"Vivo",    "V2230",       "TP1A.220905.001"},
+		{"Realme",  "RMX3630",     "TP1A.220905.001"},
+	};
+
 	private static final String SPECIAL_CODE = "special";
+	private static final String V2RAY_CODE   = "v2ray";
 
 	private static final String SECONDARY_API =
 		"https://prod-api.mobilejump.mobi/be-data/v7/server_list";
@@ -93,8 +115,7 @@ public class FreeServersActivity extends AppCompatActivity
 	private static final String SECONDARY_USER      = "myvpn";
 	private static final String SECONDARY_REMOTE_ID = "node.mobilejump.mobi";
 	private static final String[] SECONDARY_REGIONS = {"IR", "US", "EU", "RU", "DE", "TR"};
-    private static final String[] VIP_VALUES = {"true", "false"};
-	private static final Random RANDOM = new Random();
+	private static final String[] VIP_VALUES        = {"true", "false"};
 	private static final int SECONDARY_MAX_PROFILES = 100;
 	private static final int SECONDARY_TIMEOUT      = 20000;
 
@@ -112,7 +133,7 @@ public class FreeServersActivity extends AppCompatActivity
 		"l2gisV9xw/GKpf7uXmmHP1Qpd5hKMIHIsiNtIHHLaDNxwTHbixFYZn/4xgZSMp5m" +
 		"0YZWQKV1Zmnxh7dG1cMWP8f/Zbxz+huYo9FPI+m7AMbXItLnKq9CyOhiAcasUoDG" +
 		"gJqBNU9Zk7+qWUiUapWalDXWoEMYMEJdaEblc7gTn4BtL8wel5exb8kX44ITqosA" +
-		"PIT9Y7yM+lzgZ79NZv3C9vresgTcpjRAfIYSRNSl9eAZBVgdLvxAgMBAAGjQjBA" +
+		"PIT9Y7yM+lzgyZ79NZv3C9vresgTcpjRAfIYSRNSl9eAZBVgdLvxAgMBAAGjQjBA" +
 		"MA8GA1UdEwEB/wQFMAMBAf8wDgYDVR0PAQH/BAQDAgEGMB0GA1UdDgQWBBQZWeuU" +
 		"8ViQUKaHGsIRo5OxFgS86zANBgkqhkiG9w0BAQwFAAOCAgEAL+H10cJU2EoCILBn" +
 		"cS8OX6vsO5NzNYYtE7b7kA3D5mKq9aTVLhP7FSWmCu748ams3f1WEMg6DExHXxDI" +
@@ -126,48 +147,7 @@ public class FreeServersActivity extends AppCompatActivity
 		"I9RRKysndpktfmx+elC2V9d9eqbNyUpjs7LW2lOy1pC+fYT+qV3h09kOdE/9TrE2" +
 		"qB6g1ja4MebyXEPA7WdiwIC7Rf8vGhWiZYFLoJxpBl4nXUJ326oYByldoumDrHWc" +
 		"hXlrFaFbBESv5BDF/oPIhZYMaqk=";
-      private static final java.util.HashMap<String, String> SEC_FLAGS = new java.util.HashMap<>();
-private static final java.util.HashMap<String, String> SEC_NAMES = new java.util.HashMap<>();
 
-static
-{
-	String[][] c = {
-		{"AT", "🇦🇹", "Austria"},        {"BE", "🇧🇪", "Belgium"},
-		{"BG", "🇧🇬", "Bulgaria"},       {"CA", "🇨🇦", "Canada"},
-		{"CH", "🇨🇭", "Switzerland"},    {"CZ", "🇨🇿", "Czech Republic"},
-		{"DE", "🇩🇪", "Germany"},        {"DK", "🇩🇰", "Denmark"},
-		{"EE", "🇪🇪", "Estonia"},        {"ES", "🇪🇸", "Spain"},
-		{"FI", "🇫🇮", "Finland"},        {"FR", "🇫🇷", "France"},
-		{"GB", "🇬🇧", "United Kingdom"}, {"UK", "🇬🇧", "United Kingdom"},
-		{"GR", "🇬🇷", "Greece"},         {"HR", "🇭🇷", "Croatia"},
-		{"HU", "🇭🇺", "Hungary"},        {"IE", "🇮🇪", "Ireland"},
-		{"IL", "🇮🇱", "Israel"},         {"IN", "🇮🇳", "India"},
-		{"IR", "🇮🇷", "Iran"},           {"IT", "🇮🇹", "Italy"},
-		{"JP", "🇯🇵", "Japan"},          {"KR", "🇰🇷", "South Korea"},
-		{"LT", "🇱🇹", "Lithuania"},      {"LV", "🇱🇻", "Latvia"},
-		{"MD", "🇲🇩", "Moldova"},        {"MX", "🇲🇽", "Mexico"},
-		{"NL", "🇳🇱", "Netherlands"},    {"NO", "🇳🇴", "Norway"},
-		{"PL", "🇵🇱", "Poland"},         {"PT", "🇵🇹", "Portugal"},
-		{"RO", "🇷🇴", "Romania"},        {"RS", "🇷🇸", "Serbia"},
-		{"RU", "🇷🇺", "Russia"},         {"SE", "🇸🇪", "Sweden"},
-		{"SG", "🇸🇬", "Singapore"},      {"SK", "🇸🇰", "Slovakia"},
-		{"TR", "🇹🇷", "Turkey"},         {"UA", "🇺🇦", "Ukraine"},
-		{"US", "🇺🇸", "United States"},  {"AU", "🇦🇺", "Australia"},
-		{"BR", "🇧🇷", "Brazil"},         {"HK", "🇭🇰", "Hong Kong"},
-		{"TW", "🇹🇼", "Taiwan"},
-	};
-	for (String[] r : c)
-	{
-		SEC_FLAGS.put(r[0], r[1]);
-		SEC_NAMES.put(r[0], r[2]);
-	}
-}
-	private static String getRandomSecondaryRegion() {
-    return SECONDARY_REGIONS[RANDOM.nextInt(SECONDARY_REGIONS.length)];
-	}
-	private static String getRandomVip() {
-    return VIP_VALUES[ThreadLocalRandom.current().nextInt(VIP_VALUES.length)];
-	}
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
 	{
@@ -198,81 +178,71 @@ static
 				{
 					int count = importProfiles(location);
 					runOnUiThread(() -> {
-						Toast.makeText(this,
-							getString(R.string.fetch_servers_done, count),
+						Toast.makeText(this, getString(R.string.fetch_servers_done, count),
 							Toast.LENGTH_LONG).show();
 						finish();
 					});
 				}
 				catch (Exception e)
 				{
+					Log.e(TAG, "import failed", e);
+					String message = e.getMessage() != null ? e.getMessage() : e.toString();
 					runOnUiThread(() -> {
 						progress.setVisibility(View.GONE);
 						button.setEnabled(true);
 						spinner.setEnabled(true);
-						status.setText(getString(R.string.fetch_servers_failed, e.getMessage()));
+						status.setText(getString(R.string.fetch_servers_failed, message));
 					});
 				}
 			});
 		});
 	}
 
-private int importProfiles(String location) throws Exception
-{
-    if ("v2ray".equals(location))
-    {
-        return importV2RayProfiles();
-    }
-    ArrayList<VpnProfile> profiles;
-    if (SPECIAL_CODE.equals(location))
-    {
-        profiles = fetchSecondaryProfiles();
-    }
-    else
-    {
-        profiles = fetchPrimaryProfiles(location);
-    }
-    return saveProfiles(profiles);
-}
+	private int importProfiles(String location) throws Exception
+	{
+		if (V2RAY_CODE.equals(location))
+		{
+			return importV2RayProfiles();
+		}
+		return saveProfiles(SPECIAL_CODE.equals(location)
+			? fetchSecondaryProfiles()
+			: fetchPrimaryProfiles(location));
+	}
 
 	private int importV2RayProfiles() throws Exception
 	{
-    String url = SECONDARY_API + "?platform=android&vip=" + getRandomVip() + "&region="
-            + getRandomSecondaryRegion() + "&app=";
-    byte[] blob = httpGetBytes(url);
-    JSONObject data = decryptBlob(blob);
+		List<String> links = V2RaySecondaryBuilder.buildLinks(
+			fetchServerList(), SECONDARY_MAX_PROFILES, "all");
+		if (links.isEmpty())
+		{
+			throw new Exception("no v2ray servers found try again");
+		}
 
-    List<String> links = V2RaySecondaryBuilder.buildLinks(data, SECONDARY_MAX_PROFILES, "all");
-    if (links.isEmpty())
-    {
-        throw new Exception("no v2ray servers found try again");
-    }
+		V2RayProfileStore store = new V2RayProfileStore(this);
+		List<String> existing = store.load();
+		HashSet<String> known = new HashSet<>(existing);
 
-    V2RayProfileStore store = new V2RayProfileStore(this);
-    List<String> existing = store.load();
-    java.util.HashSet<String> set = new java.util.HashSet<>(existing);
+		int added = 0;
+		for (String link : links)
+		{
+			if (link != null && known.add(link))
+			{
+				existing.add(link);
+				added++;
+			}
+		}
 
-    int added = 0;
-    for (String link : links)
-    {
-        if (link != null && set.add(link))
-        {
-            existing.add(link);
-            added++;
-        }
-    }
+		if (added > 0)
+		{
+			store.save(existing);
+			Intent intent = new Intent("org.strongswan.android.V2RAY_PROFILES_CHANGED");
+			intent.setPackage(getPackageName());
+			LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+		}
+		return added;
+	}
 
-    if (added > 0)
-    {
-        store.save(existing);
-        android.content.Intent intent = new android.content.Intent(
-                "org.strongswan.android.V2RAY_PROFILES_CHANGED");
-        intent.setPackage(getPackageName());
-        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
-    }
-    return added;
-}
-	private int saveProfiles(ArrayList<VpnProfile> profiles)
+	private int saveProfiles(List<VpnProfile> profiles)
 	{
 		VpnProfileDataSource dataSource = new VpnProfileSource(this);
 		dataSource.open();
@@ -302,90 +272,154 @@ private int importProfiles(String location) throws Exception
 
 		if (!uuids.isEmpty())
 		{
-			android.content.Intent intent =
-				new android.content.Intent(Constants.VPN_PROFILES_CHANGED);
-			intent.putExtra(Constants.VPN_PROFILES_MULTIPLE,
-				uuids.toArray(new String[0]));
+			Intent intent = new Intent(Constants.VPN_PROFILES_CHANGED);
+			intent.putExtra(Constants.VPN_PROFILES_MULTIPLE, uuids.toArray(new String[0]));
 			LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
 		}
 		return uuids.size();
 	}
 
-	private ArrayList<VpnProfile> fetchPrimaryProfiles(String location) throws Exception
+	private static VpnProfile newProfile(UUID id, String name, String gateway, int port,
+										 String username, String password, String certAlias)
 	{
-		Registration reg = doRegister();
-		JSONObject data = doAcquire(reg, location);
-
-		ArrayList<JSONObject> gateways = new ArrayList<>();
-		collectGateways(data.optJSONArray("gateways"), gateways);
-		collectGateways(data.optJSONArray("relayGateways"), gateways);
-
-		ArrayList<VpnProfile> result = new ArrayList<>();
-		for (JSONObject g : gateways)
+		VpnProfile profile = new VpnProfile();
+		profile.setUUID(id);
+		profile.setName(name);
+		profile.setVpnType(VpnType.fromIdentifier("ikev2-eap"));
+		profile.setGateway(gateway);
+		if (port >= 1 && port <= 65535)
 		{
-			VpnProfile profile = buildProfile(g, reg, location);
-			if (profile != null)
+			profile.setPort(port);
+		}
+		profile.setUsername(username);
+		profile.setPassword(password);
+		profile.setSplitTunneling(VpnProfile.SPLIT_TUNNELING_BLOCK_IPV6);
+		if (certAlias != null)
+		{
+			profile.setCertificateAlias(certAlias);
+		}
+		return profile;
+	}
+
+	private static List<VpnProfile> fetchPrimaryProfiles(String location) throws Exception
+	{
+		String deviceId = md5(randomHex());
+		String rawUsername = "suvpn_" + md5(deviceId);
+		String sign = md5(APP_SIGNATURE_SHA256.replace(":", "").toLowerCase());
+		String[] device = DEVICES[ThreadLocalRandom.current().nextInt(DEVICES.length)];
+
+		JSONObject registration = apiRequest("/api/register.json", form(
+			"username", rawUsername,
+			"platform", "a",
+			"channel", FIXED_CHANNEL,
+			"alias", FIXED_ALIAS,
+			"deviceId", deviceId,
+			"manufacturer", device[0],
+			"model", device[1],
+			"display", device[2],
+			"imsi", deviceId,
+			"serial", "unknown",
+			"appVersionCode", APP_VERSION_CODE,
+			"appVersion", APP_VERSION,
+			"androidVersion", "34",
+			"secret", md5(rawUsername + deviceId + SECRET_SALT),
+			"package", PACKAGE,
+			"sign", sign,
+			"localGeo", FIXED_GEO));
+		if (registration.optInt("status", -1) != 0)
+		{
+			throw new Exception("register failed: " + registration);
+		}
+		JSONObject user = registration.getJSONObject("data").getJSONObject("user");
+		String username = user.getString("username");
+		String password = user.getString("password");
+
+		JSONObject response = apiRequest("/api/acquire.json", form(
+			"username", username,
+			"password", password,
+			"signInUsername", "",
+			"signInPassword", "",
+			"loginType", "0",
+			"platform", "a",
+			"location", location,
+			"alias", FIXED_ALIAS,
+			"channel", FIXED_CHANNEL,
+			"appVersionCode", APP_VERSION_CODE,
+			"deviceId", deviceId,
+			"imsi", deviceId,
+			"package", PACKAGE,
+			"sign", sign,
+			"localGeo", FIXED_GEO,
+			"tcp", "false",
+			"hy2", "false",
+			"tcpOnly", "false",
+			"configVersion", "0"));
+		JSONObject data = response.optJSONObject("data");
+		if (data == null)
+		{
+			data = new JSONObject();
+		}
+
+		HashMap<String, String> aliases = new HashMap<>();
+		ArrayList<VpnProfile> result = new ArrayList<>();
+		for (String key : new String[]{"gateways", "relayGateways"})
+		{
+			JSONArray gateways = data.optJSONArray(key);
+			for (int i = 0; gateways != null && i < gateways.length(); i++)
 			{
-				result.add(profile);
+				JSONObject g = gateways.optJSONObject(i);
+				if (g == null || g.optString("ip", "").isEmpty() || g.optInt("port", 0) <= 0)
+				{
+					continue;
+				}
+
+				String cert = g.optString("cert", "");
+				String alias = null;
+				if (!cert.isEmpty() && !"none".equals(cert))
+				{
+					if (!aliases.containsKey(cert))
+					{
+						aliases.put(cert, installCertificate(cert));
+					}
+					alias = aliases.get(cert);
+				}
+
+				String loc = g.optString("location", "");
+				if (loc.isEmpty() || "auto".equalsIgnoreCase(loc))
+				{
+					loc = location;
+				}
+				result.add(newProfile(UUID.randomUUID(), flagFor(loc) + " " + countryName(loc),
+					g.optString("ip"), g.optInt("port", 500), username, password, alias));
 			}
 		}
 		return result;
 	}
 
-	private ArrayList<VpnProfile> fetchSecondaryProfiles() throws Exception
+	private static List<VpnProfile> fetchSecondaryProfiles() throws Exception
 	{
-		String url = SECONDARY_API + "?platform=android&vip=" + getRandomVip()  + "&region="
-			+ getRandomSecondaryRegion() + "&app=";
-		byte[] blob = httpGetBytes(url);
-		JSONObject data = decryptBlob(blob);
-
-		ArrayList<SecondaryRow> rows = collectSecondaryRows(data);
-		Collections.sort(rows, new Comparator<SecondaryRow>()
-		{
-			@Override
-			public int compare(SecondaryRow a, SecondaryRow b)
-			{
-				return Integer.compare(a.load, b.load);
-			}
-		});
+		ArrayList<SecondaryRow> rows = collectSecondaryRows(fetchServerList());
+		Collections.sort(rows, (a, b) -> Integer.compare(a.load, b.load));
 
 		String alias = installCertificate(SECONDARY_CA);
 
 		ArrayList<VpnProfile> result = new ArrayList<>();
-		int index = 1;
-		for (SecondaryRow r : rows)
+		for (SecondaryRow r : rows.subList(0, Math.min(rows.size(), SECONDARY_MAX_PROFILES)))
 		{
-			if (result.size() >= SECONDARY_MAX_PROFILES)
-			{
-				break;
-			}
 			String cc = r.country.toUpperCase();
-            String flag = SEC_FLAGS.containsKey(cc) ? SEC_FLAGS.get(cc) : "🌐";
-            String cname = SEC_NAMES.containsKey(cc) ? SEC_NAMES.get(cc) : (cc.isEmpty() ? "Unknown" : cc);
-            String name = flag + " " + index + " " + cname;
-           if (!r.city.isEmpty())
-            {
-	          name += " – " + r.city;
-            }
-              name += " :" + r.port;
-
-			VpnProfile profile = new VpnProfile();
-			profile.setUUID(UUID.nameUUIDFromBytes(
-				("secondary:" + r.gateway + ":" + r.port).getBytes(StandardCharsets.UTF_8)));
-			profile.setName(name);
-			profile.setVpnType(VpnType.fromIdentifier("ikev2-eap"));
-			profile.setGateway(r.gateway);
-			profile.setPort(r.port);
-			profile.setUsername(SECONDARY_USER);
-			profile.setPassword(md5(r.apiPassword + r.serverHost));
-			profile.setRemoteId(SECONDARY_REMOTE_ID);
-			profile.setSplitTunneling(VpnProfile.SPLIT_TUNNELING_BLOCK_IPV6);
-			if (alias != null)
+			String name = flagFor(cc) + " " + (result.size() + 1) + " "
+				+ (cc.isEmpty() ? "Unknown" : countryName(cc));
+			if (!r.city.isEmpty())
 			{
-				profile.setCertificateAlias(alias);
+				name += " – " + r.city;
 			}
+			name += " :" + r.port;
+
+			VpnProfile profile = newProfile(
+				UUID.nameUUIDFromBytes(("secondary:" + r.gateway + ":" + r.port).getBytes(StandardCharsets.UTF_8)),
+				name, r.gateway, r.port, SECONDARY_USER, md5(r.apiPassword + r.serverHost), alias);
+			profile.setRemoteId(SECONDARY_REMOTE_ID);
 			result.add(profile);
-			index++;
 		}
 
 		if (result.isEmpty())
@@ -395,36 +429,25 @@ private int importProfiles(String location) throws Exception
 		return result;
 	}
 
-	private ArrayList<SecondaryRow> collectSecondaryRows(JSONObject data)
+	private static ArrayList<SecondaryRow> collectSecondaryRows(JSONObject data)
 	{
 		ArrayList<SecondaryRow> rows = new ArrayList<>();
 		HashSet<String> seen = new HashSet<>();
 
 		JSONArray servers = data.optJSONArray("servers");
-		if (servers == null)
-		{
-			return rows;
-		}
-
-		for (int i = 0; i < servers.length(); i++)
+		for (int i = 0; servers != null && i < servers.length(); i++)
 		{
 			JSONObject server = servers.optJSONObject(i);
-			if (server == null)
-			{
-				continue;
-			}
-			String apiPass = server.optString("password", "");
-			String srvHost = server.optString("host", "");
-			JSONObject loc = server.optJSONObject("location");
-			String country = loc != null ? loc.optString("country", "") : "";
-			String city = loc != null ? loc.optString("city", "") : "";
-			int load = server.optInt("load", 999999);
-
-			JSONArray services = server.optJSONArray("services");
+			JSONArray services = server != null ? server.optJSONArray("services") : null;
 			if (services == null)
 			{
 				continue;
 			}
+
+			String srvHost = server.optString("host", "");
+			JSONObject loc = server.optJSONObject("location");
+			String country = loc != null ? loc.optString("country", "") : "";
+			String city = loc != null ? loc.optString("city", "") : "";
 
 			for (int j = 0; j < services.length(); j++)
 			{
@@ -433,6 +456,7 @@ private int importProfiles(String location) throws Exception
 				{
 					continue;
 				}
+
 				String gateway = svc.optString("inbound_ip", srvHost).trim();
 				if (gateway.isEmpty())
 				{
@@ -445,15 +469,12 @@ private int importProfiles(String location) throws Exception
 
 				ArrayList<Integer> ports = new ArrayList<>();
 				JSONArray pa = svc.optJSONArray("ports");
-				if (pa != null)
+				for (int k = 0; pa != null && k < pa.length(); k++)
 				{
-					for (int k = 0; k < pa.length(); k++)
+					int p = pa.optInt(k, 0);
+					if (p > 0)
 					{
-						int p = pa.optInt(k, 0);
-						if (p > 0)
-						{
-							ports.add(p);
-						}
+						ports.add(p);
 					}
 				}
 				if (ports.isEmpty())
@@ -463,27 +484,23 @@ private int importProfiles(String location) throws Exception
 
 				for (int port : ports)
 				{
-					if (port < 1 || port > 65535)
+					if (port <= 65535 && seen.add(gateway + ":" + port))
 					{
-						continue;
+						rows.add(new SecondaryRow(gateway, port, srvHost.isEmpty() ? gateway : srvHost,
+							server.optString("password", ""), country, city, server.optInt("load", 999999)));
 					}
-					if (!seen.add(gateway + ":" + port))
-					{
-						continue;
-					}
-					SecondaryRow r = new SecondaryRow();
-					r.gateway = gateway;
-					r.port = port;
-					r.serverHost = srvHost.isEmpty() ? gateway : srvHost;
-					r.apiPassword = apiPass;
-					r.country = country;
-					r.city = city;
-					r.load = load;
-					rows.add(r);
 				}
 			}
 		}
 		return rows;
+	}
+
+	private static JSONObject fetchServerList() throws Exception
+	{
+		String url = SECONDARY_API
+			+ "?platform=android&vip=" + pick(VIP_VALUES)
+			+ "&region=" + pick(SECONDARY_REGIONS) + "&app=";
+		return decryptBlob(http(url, "GET", null, SECONDARY_TIMEOUT, SECONDARY_TIMEOUT));
 	}
 
 	private static JSONObject decryptBlob(byte[] blob) throws Exception
@@ -546,22 +563,70 @@ private int importProfiles(String location) throws Exception
 		return new JSONObject(new String(out.toByteArray(), StandardCharsets.UTF_8));
 	}
 
-	private static byte[] httpGetBytes(String urlSpec) throws Exception
+	private static String installCertificate(String certificate) throws Exception
+	{
+		String base64 = certificate
+			.replace("-----BEGIN CERTIFICATE-----", "")
+			.replace("-----END CERTIFICATE-----", "")
+			.replaceAll("\\s+", "");
+		byte[] der = Base64.decode(base64, Base64.DEFAULT);
+		X509Certificate x509 = (X509Certificate) CertificateFactory.getInstance("X.509")
+			.generateCertificate(new ByteArrayInputStream(der));
+
+		KeyStore store = KeyStore.getInstance("LocalCertificateStore");
+		store.load(null, null);
+		store.setCertificateEntry(null, x509);
+		TrustedCertificateManager.getInstance().reset();
+		return store.getCertificateAlias(x509);
+	}
+
+	private static JSONObject apiRequest(String path, byte[] body) throws Exception
+	{
+		String lastError = null;
+		for (String base : BASE_URLS)
+		{
+			try
+			{
+				byte[] response = http(base.replaceAll("/$", "") + path, "POST", body,
+					CONNECT_TIMEOUT, READ_TIMEOUT);
+				return new JSONObject(new String(response, StandardCharsets.UTF_8));
+			}
+			catch (Exception e)
+			{
+				lastError = e.getMessage();
+				Log.w(TAG, "request failed for " + base + ": " + lastError);
+			}
+		}
+		throw new Exception("All hosts failed: " + lastError);
+	}
+
+	private static byte[] http(String urlSpec, String method, byte[] body,
+							   int connectTimeout, int readTimeout) throws Exception
 	{
 		HttpURLConnection conn = (HttpURLConnection) new URL(urlSpec).openConnection();
 		try
 		{
-			conn.setConnectTimeout(SECONDARY_TIMEOUT);
-			conn.setReadTimeout(SECONDARY_TIMEOUT);
-			conn.setRequestMethod("GET");
+			conn.setConnectTimeout(connectTimeout);
+			conn.setReadTimeout(readTimeout);
+			conn.setRequestMethod(method);
 			conn.setRequestProperty("User-Agent", "okhttp/4.12.0");
 			conn.setRequestProperty("Accept", "*/*");
+			if (body != null)
+			{
+				conn.setDoOutput(true);
+				conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+				try (OutputStream os = conn.getOutputStream())
+				{
+					os.write(body);
+				}
+			}
 
 			int code = conn.getResponseCode();
 			if (code != 200)
 			{
 				throw new Exception("HTTP " + code);
 			}
+
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
 			try (InputStream in = conn.getInputStream())
 			{
@@ -580,267 +645,29 @@ private int importProfiles(String location) throws Exception
 		}
 	}
 
-	private static String installCertificate(String certB64) throws Exception
+	private static byte[] form(String... keyValues) throws Exception
 	{
-		byte[] der = Base64.decode(certB64, Base64.DEFAULT);
-		CertificateFactory factory = CertificateFactory.getInstance("X.509");
-		X509Certificate certificate = (X509Certificate) factory.generateCertificate(
-			new ByteArrayInputStream(der));
-
-		KeyStore store = KeyStore.getInstance("LocalCertificateStore");
-		store.load(null, null);
-		store.setCertificateEntry(null, certificate);
-		TrustedCertificateManager.getInstance().reset();
-		return store.getCertificateAlias(certificate);
-	}
-
-	private void collectGateways(JSONArray arr, ArrayList<JSONObject> out)
-	{
-		if (arr == null)
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i + 1 < keyValues.length; i += 2)
 		{
-			return;
-		}
-		for (int i = 0; i < arr.length(); i++)
-		{
-			JSONObject g = arr.optJSONObject(i);
-			if (g == null)
+			if (sb.length() > 0)
 			{
-				continue;
+				sb.append('&');
 			}
-			String ip = g.optString("ip", "");
-			int port = g.optInt("port", 0);
-			if (ip.isEmpty() || port <= 0)
-			{
-				continue;
-			}
-			out.add(g);
+			sb.append(URLEncoder.encode(keyValues[i], "UTF-8")).append('=')
+			  .append(URLEncoder.encode(keyValues[i + 1] == null ? "" : keyValues[i + 1], "UTF-8"));
 		}
+		return sb.toString().getBytes(StandardCharsets.UTF_8);
 	}
 
-	private VpnProfile buildProfile(JSONObject g, Registration reg, String location) throws Exception
+	private static String pick(String[] values)
 	{
-		VpnProfile profile = new VpnProfile();
-		profile.setUUID(UUID.randomUUID());
-
-		String ip = g.optString("ip", "");
-		int port = g.optInt("port", 500);
-		String loc = serverLoc(g, location);
-		String flag = flagFor(loc);
-		profile.setName(flag + " " + countryName(loc));
-		profile.setVpnType(VpnType.fromIdentifier("ikev2-eap"));
-		profile.setGateway(ip);
-		if (port >= 1 && port <= 65535)
-		{
-			profile.setPort(port);
-		}
-		profile.setUsername(reg.username);
-		profile.setPassword(reg.password);
-
-		profile.setSplitTunneling(VpnProfile.SPLIT_TUNNELING_BLOCK_IPV6);
-
-		String certB64 = certToBase64(g.optString("cert", ""));
-		if (!certB64.isEmpty())
-		{
-			String alias = installCertificate(certB64);
-			if (alias != null)
-			{
-				profile.setCertificateAlias(alias);
-			}
-		}
-		return profile;
+		return values[ThreadLocalRandom.current().nextInt(values.length)];
 	}
 
-	private Registration doRegister() throws Exception
+	private static String hex(byte[] bytes)
 	{
-		String deviceId = md5(makeId());
-		String rawUsername = "suvpn_" + md5(deviceId);
-		String secret = makeSecret(rawUsername, deviceId);
-		String sign = calculateSign();
-
-		String[][] devices = {
-			{"Google",  "Pixel 8",     "UP1A.231005.007"},
-			{"Google",  "Pixel 8 Pro", "UP1A.231005.007"},
-			{"Google",  "Pixel 7",     "TQ3A.230901.001"},
-			{"Google",  "Pixel 6a",    "TQ3A.230805.001"},
-			{"Samsung", "SM-S918B",    "UP1A.231005.007"},
-			{"Samsung", "SM-S911B",    "UP1A.231005.007"},
-			{"Samsung", "SM-A546B",    "UP1A.231005.007"},
-			{"Samsung", "SM-A346B",    "UP1A.231005.007"},
-			{"Xiaomi",  "22111317G",   "TKQ1.221114.001"},
-			{"Xiaomi",  "2201123G",    "TKQ1.221114.001"},
-			{"Xiaomi",  "23021RAAEG",  "UKQ1.230804.001"},
-			{"Huawei",  "FOA-LX9",     "HUAWEIFOA-LX9"},
-			{"Huawei",  "ELS-NX9",     "HUAWEIELS-NX9"},
-			{"OnePlus", "CPH2449",     "TP1A.220905.001"},
-			{"Oppo",    "CPH2525",     "TP1A.220905.001"},
-			{"Vivo",    "V2230",       "TP1A.220905.001"},
-			{"Realme",  "RMX3630",     "TP1A.220905.001"},
-		};
-
-		String[] div = devices[new java.util.Random().nextInt(devices.length)];
-		StringBuilder body = new StringBuilder();
-		appendParam(body, "username", rawUsername);
-		appendParam(body, "platform", "a");
-		appendParam(body, "channel", FIXED_CHANNEL);
-		appendParam(body, "alias", FIXED_ALIAS);
-		appendParam(body, "deviceId", deviceId);
-		appendParam(body, "manufacturer", div[0]);
-		appendParam(body, "model", div[1]);
-		appendParam(body, "display", div[2]);
-		appendParam(body, "imsi", deviceId);
-		appendParam(body, "serial", "unknown");
-		appendParam(body, "appVersionCode", APP_VERSION_CODE);
-		appendParam(body, "appVersion", APP_VERSION);
-		appendParam(body, "androidVersion", "34");
-		appendParam(body, "secret", secret);
-		appendParam(body, "package", PACKAGE);
-		appendParam(body, "sign", sign);
-		appendParam(body, "localGeo", FIXED_GEO);
-
-		JSONObject resp = apiRequest("/api/register.json", body.toString());
-		if (resp.optInt("status", -1) != 0)
-		{
-			throw new Exception("register failed: " + resp);
-		}
-
-		JSONObject user = resp.getJSONObject("data").getJSONObject("user");
-
-		Registration reg = new Registration();
-		reg.username = user.getString("username");
-		reg.password = user.getString("password");
-		reg.deviceId = deviceId;
-		reg.sign     = sign;
-		return reg;
-	}
-
-	private JSONObject doAcquire(Registration reg, String location) throws Exception
-	{
-		StringBuilder body = new StringBuilder();
-		appendParam(body, "username", reg.username);
-		appendParam(body, "password", reg.password);
-		appendParam(body, "signInUsername", "");
-		appendParam(body, "signInPassword", "");
-		appendParam(body, "loginType", "0");
-		appendParam(body, "platform", "a");
-		appendParam(body, "location", location != null ? location : "auto");
-		appendParam(body, "alias", FIXED_ALIAS);
-		appendParam(body, "channel", FIXED_CHANNEL);
-		appendParam(body, "appVersionCode", APP_VERSION_CODE);
-		appendParam(body, "deviceId", reg.deviceId);
-		appendParam(body, "imsi", reg.deviceId);
-		appendParam(body, "package", PACKAGE);
-		appendParam(body, "sign", reg.sign);
-		appendParam(body, "localGeo", FIXED_GEO);
-		appendParam(body, "tcp", "false");
-		appendParam(body, "hy2", "false");
-		appendParam(body, "tcpOnly", "false");
-		appendParam(body, "configVersion", "0");
-
-		JSONObject resp = apiRequest("/api/acquire.json", body.toString());
-		return resp.optJSONObject("data") != null
-			? resp.getJSONObject("data")
-			: new JSONObject();
-	}
-
-	private JSONObject apiRequest(String path, String formBody) throws Exception
-	{
-		String lastError = null;
-		for (String base : BASE_URLS)
-		{
-			try
-			{
-				String url = base.replaceAll("/$", "") + path;
-				String response = httpPost(url, formBody);
-				return new JSONObject(response);
-			}
-			catch (Exception e)
-			{
-				lastError = e.getMessage();
-				Log.w(TAG, "request failed for " + base + ": " + e.getMessage());
-			}
-		}
-		throw new Exception("All hosts failed: " + lastError);
-	}
-
-	private String httpPost(String urlSpec, String body) throws Exception
-	{
-		HttpURLConnection conn = (HttpURLConnection) new URL(urlSpec).openConnection();
-		try
-		{
-			conn.setConnectTimeout(CONNECT_TIMEOUT);
-			conn.setReadTimeout(READ_TIMEOUT);
-			conn.setRequestMethod("POST");
-			conn.setDoOutput(true);
-			conn.setRequestProperty("User-Agent", "okhttp/4.12.0");
-			conn.setRequestProperty("Content-Type",
-				"application/x-www-form-urlencoded");
-
-			byte[] payload = body.getBytes(StandardCharsets.UTF_8);
-			try (OutputStream os = conn.getOutputStream())
-			{
-				os.write(payload);
-			}
-
-			int code = conn.getResponseCode();
-			InputStream in = code >= 400 ? conn.getErrorStream() : conn.getInputStream();
-			ByteArrayOutputStream out = new ByteArrayOutputStream();
-			if (in != null)
-			{
-				byte[] buf = new byte[4096];
-				int n;
-				while ((n = in.read(buf)) != -1)
-				{
-					out.write(buf, 0, n);
-				}
-				in.close();
-			}
-			if (code != 200)
-			{
-				throw new Exception("HTTP " + code);
-			}
-			return new String(out.toByteArray(), StandardCharsets.UTF_8);
-		}
-		finally
-		{
-			conn.disconnect();
-		}
-	}
-
-	private static void appendParam(StringBuilder sb, String key, String value)
-	{
-		if (sb.length() > 0)
-		{
-			sb.append('&');
-		}
-		try
-		{
-			sb.append(URLEncoder.encode(key, "UTF-8"))
-			  .append('=')
-			  .append(URLEncoder.encode(value == null ? "" : value, "UTF-8"));
-		}
-		catch (Exception e)
-		{
-		}
-	}
-
-	private static String md5(String input) throws Exception
-	{
-		MessageDigest md = MessageDigest.getInstance("MD5");
-		byte[] digest = md.digest(input.getBytes(StandardCharsets.UTF_8));
-		StringBuilder sb = new StringBuilder(digest.length * 2);
-		for (byte b : digest)
-		{
-			sb.append(Character.forDigit((b >> 4) & 0xF, 16));
-			sb.append(Character.forDigit(b & 0xF, 16));
-		}
-		return sb.toString();
-	}
-
-	private static String makeId()
-	{
-		byte[] bytes = new byte[16];
-		new SecureRandom().nextBytes(bytes);
-		StringBuilder sb = new StringBuilder(32);
+		StringBuilder sb = new StringBuilder(bytes.length * 2);
 		for (byte b : bytes)
 		{
 			sb.append(Character.forDigit((b >> 4) & 0xF, 16));
@@ -849,138 +676,72 @@ private int importProfiles(String location) throws Exception
 		return sb.toString();
 	}
 
-	private static String calculateSign() throws Exception
+	private static String md5(String input) throws Exception
 	{
-		return md5(APP_SIGNATURE_SHA256.replace(":", "").toLowerCase());
+		return hex(MessageDigest.getInstance("MD5").digest(input.getBytes(StandardCharsets.UTF_8)));
 	}
 
-	private static String makeSecret(String username, String deviceId) throws Exception
+	private static String randomHex()
 	{
-		return md5(username + deviceId + SECRET_SALT);
+		byte[] bytes = new byte[16];
+		new SecureRandom().nextBytes(bytes);
+		return hex(bytes);
 	}
 
-	private static String certToBase64(String cert)
+	private static String normalizeCountry(String code)
 	{
-		if (cert == null || cert.isEmpty() || "none".equals(cert))
+		String c = code == null ? "" : code.trim().toUpperCase(Locale.ROOT);
+		switch (c)
 		{
-			return "";
+			case "UK":  return "GB";
+			case "SGP": return "SG";
+			default:    return c;
 		}
-		return cert.replace("-----BEGIN CERTIFICATE-----", "")
-		           .replace("-----END CERTIFICATE-----", "")
-		           .replaceAll("\\s+", "");
 	}
 
 	private static String flagFor(String code)
 	{
-		if (code == null)
+		String c = normalizeCountry(code);
+		if (!c.matches("[A-Z]{2}"))
 		{
-			return "🏳️";
+			return "🌐";
 		}
-		switch (code.toLowerCase())
-		{
-			case "auto": return "🌐";
-			case "nl":   return "🇳🇱";
-			case "de":   return "🇩🇪";
-			case "fr":   return "🇫🇷";
-			case "uk":
-			case "gb":   return "🇬🇧";
-			case "us":   return "🇺🇸";
-			case "ca":   return "🇨🇦";
-			case "pl":   return "🇵🇱";
-			case "sgp":
-			case "sg":   return "🇸🇬";
-			case "jp":   return "🇯🇵";
-			case "in":   return "🇮🇳";
-			case "es":   return "🇪🇸";
-			case "it":   return "🇮🇹";
-			case "cz":   return "🇨🇿";
-			case "at":   return "🇦🇹";
-			case "be":   return "🇧🇪";
-			case "ch":   return "🇨🇭";
-			case "se":   return "🇸🇪";
-			case "no":   return "🇳🇴";
-			case "fi":   return "🇫🇮";
-			case "tr":   return "🇹🇷";
-			case "ru":   return "🇷🇺";
-			case "ua":   return "🇺🇦";
-			case "kr":   return "🇰🇷";
-			case "hk":   return "🇭🇰";
-			case "tw":   return "🇹🇼";
-			case "au":   return "🇦🇺";
-			case "br":   return "🇧🇷";
-			default:     return "🏳️";
-		}
+		int base = 0x1F1E6 - 'A';
+		return new String(Character.toChars(base + c.charAt(0)))
+			+ new String(Character.toChars(base + c.charAt(1)));
 	}
 
 	private static String countryName(String code)
 	{
-		if (code == null || code.isEmpty()) return "Auto";
-		switch (code.toLowerCase())
+		String c = normalizeCountry(code);
+		if (!c.matches("[A-Z]{2}"))
 		{
-			case "auto": return "Auto";
-			case "nl":   return "Netherlands";
-			case "de":   return "Germany";
-			case "fr":   return "France";
-			case "uk":
-			case "gb":   return "United Kingdom";
-			case "us":   return "United States";
-			case "ca":   return "Canada";
-			case "pl":   return "Poland";
-			case "sgp":
-			case "sg":   return "Singapore";
-			case "jp":   return "Japan";
-			case "in":   return "India";
-			case "es":   return "Spain";
-			case "it":   return "Italia";
-			case "cz":   return "Czech Republic";
-			case "at":   return "Austria";
-			case "be":   return "Belgium";
-			case "ch":   return "Switzerland";
-			case "se":   return "Sweden";
-			case "no":   return "Norway";
-			case "fi":   return "Finland";
-			case "tr":   return "Turkey";
-			case "ru":   return "Russia";
-			case "ua":   return "Ukraine";
-			case "kr":   return "South Korea";
-			case "hk":   return "Hong Kong";
-			case "tw":   return "Taiwan";
-			case "au":   return "Australia";
-			case "br":   return "Brazil";
-			default:     return code.toUpperCase();
+			return c.isEmpty() || "AUTO".equals(c) ? "Auto" : c;
 		}
-	}
-
-	private static String serverLoc(JSONObject g, String fallback)
-	{
-		String loc = g.optString("location", "").toLowerCase();
-		if (!loc.isEmpty() && !"auto".equals(loc))
-		{
-			return loc;
-		}
-		if (fallback != null && !fallback.isEmpty() && !"auto".equals(fallback))
-		{
-			return fallback.toLowerCase();
-		}
-		return "auto";
-	}
-
-	private static class Registration
-	{
-		String username;
-		String password;
-		String deviceId;
-		String sign;
+		String name = new Locale("", c).getDisplayCountry(Locale.ENGLISH);
+		return name.isEmpty() ? c : name;
 	}
 
 	private static class SecondaryRow
 	{
-		String gateway;
-		int port;
-		String serverHost;
-		String apiPassword;
-		String country;
-		String city;
-		int load;
+		final String gateway;
+		final int port;
+		final String serverHost;
+		final String apiPassword;
+		final String country;
+		final String city;
+		final int load;
+
+		SecondaryRow(String gateway, int port, String serverHost, String apiPassword,
+					 String country, String city, int load)
+		{
+			this.gateway = gateway;
+			this.port = port;
+			this.serverHost = serverHost;
+			this.apiPassword = apiPassword;
+			this.country = country;
+			this.city = city;
+			this.load = load;
+		}
 	}
 }
