@@ -1062,10 +1062,10 @@ public void stateChanged()
 					appHandling = SelectedAppsHandling.SELECTED_APPS_EXCLUDE;
 					mSelectedApps.clear();
 				case SELECTED_APPS_EXCLUDE:
-					mSelectedApps.add(getPackageName());
+					mSelectedApps.remove(getPackageName());
 					break;
 				case SELECTED_APPS_ONLY:
-					mSelectedApps.remove(getPackageName());
+					mSelectedApps.add(getPackageName());
 					break;
 			}
 			SharedPreferences filter = getSharedPreferences("app_filter", MODE_PRIVATE);
@@ -1078,7 +1078,7 @@ public void stateChanged()
 					appHandling = SelectedAppsHandling.SELECTED_APPS_ONLY;
 					mSelectedApps.clear();
 					mSelectedApps.addAll(global);
-					mSelectedApps.remove(getPackageName());
+					mSelectedApps.add(getPackageName());
 				}
 				else
 				{
@@ -1089,11 +1089,12 @@ public void stateChanged()
 					if (appHandling == SelectedAppsHandling.SELECTED_APPS_ONLY)
 					{
 						mSelectedApps.removeAll(global);
+						mSelectedApps.add(getPackageName());
 					}
 					else
 					{
 						mSelectedApps.addAll(global);
-						mSelectedApps.add(getPackageName());
+						mSelectedApps.remove(getPackageName());
 					}
 				}
 			}
