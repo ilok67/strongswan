@@ -429,7 +429,7 @@ public class SingBoxVpnService extends VpnService implements PlatformInterface
 		Notification n = buildNotification();
 		if (Build.VERSION.SDK_INT >= 34)
 		{
-			startForeground(NOTIFICATION_ID, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_SYSTEM_EXEMPTED);
+			startForeground(NOTIFICATION_ID, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
 		}
 		else
 		{
