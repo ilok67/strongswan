@@ -222,7 +222,7 @@
             android:name="android.content.APP_RESTRICTIONS"
             android:resource="@xml/managed_configuration" />
 
-        <!-- ==================== Services (همه داخل application) ==================== -->
+        <!-- ==================== Services  ==================== -->
 
         <service
             android:name=".v2ray.SingBoxVpnService"
@@ -269,7 +269,7 @@
 
         <provider
             android:name=".data.LogContentProvider"
-            android:authorities="org.strongswan.android.content.log"
+            android:authorities="${applicationId}.content.log"
             android:exported="true" >
             <!-- android:grantUriPermissions="true" combined with a custom permission does
                  not work (probably too many indirections with ACTION_SEND) so we secure
