@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.strongswan.android.logic.CharonVpnService;
-
+import org.strongswan.android.BuildConfig;
 import android.content.ContentProvider;
 import android.content.ContentValues;
 import android.database.Cursor;
