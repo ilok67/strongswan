@@ -2,7 +2,9 @@ apply plugin: 'com.android.application'
 
 android {
     namespace = 'org.strongswan.android'
-
+    buildFeatures {
+          buildConfig = true
+               }
     defaultConfig {
         applicationId "com.bardia.vpn"
         compileSdk = 36
