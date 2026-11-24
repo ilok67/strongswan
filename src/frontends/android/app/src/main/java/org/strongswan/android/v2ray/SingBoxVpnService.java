@@ -27,6 +27,7 @@ import android.os.PowerManager;
 import android.util.Log;
 
 import org.strongswan.android.R;
+import org.strongswan.android.awg.AwgVpnService;
 import org.strongswan.android.data.VpnProfile;
 import org.strongswan.android.logic.VpnStateService;
 import org.strongswan.android.logic.VpnStateService.ErrorState;
@@ -238,6 +239,11 @@ public class SingBoxVpnService extends VpnService implements PlatformInterface
 		try
 		{
 			awaitStateService();
+			AwgVpnService.stop(this);
+			for (int i = 0; i < 60 && AwgVpnService.isRunning(); i++)
+			{
+				Thread.sleep(50);
+			}
 			dropIkev2();
 			synchronized (lock)
 			{
