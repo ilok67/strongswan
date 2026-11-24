@@ -36,6 +36,8 @@ import org.strongswan.android.logic.TrustedCertificateManager;
 import org.strongswan.android.ui.VpnProfileListFragment.OnVpnProfileSelectedListener;
 import org.strongswan.android.utils.Utils;
 import org.strongswan.android.v2ray.SingBoxVpnService;
+import org.strongswan.android.awg.AwgProfileListFragment;
+import org.strongswan.android.awg.AwgVpnService;
 import org.strongswan.android.v2ray.V2RayProfileListFragment;
 
 import java.io.File;
@@ -88,10 +90,12 @@ public class MainActivity extends AppCompatActivity implements OnVpnProfileSelec
         TabLayout tabs = findViewById(R.id.tabs);
 tabs.addTab(tabs.newTab().setText("IKEv2"));
 tabs.addTab(tabs.newTab().setText("sing-box"));
+tabs.addTab(tabs.newTab().setText("AmneziaWG"));
 if (savedInstanceState == null)
 {
 	getSupportFragmentManager().beginTransaction()
-		.replace(R.id.v2ray_container, new V2RayProfileListFragment()).commit();
+		.replace(R.id.v2ray_container, new V2RayProfileListFragment())
+		.replace(R.id.awg_container, new AwgProfileListFragment()).commit();
 }
 tabs.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener()
 {
@@ -111,7 +115,7 @@ tabs.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener()
 	{
 	}
 });
-int start = savedInstanceState != null ? savedInstanceState.getInt("tab", 0) : (SingBoxVpnService.isRunning() ? 1 : 0);
+int start = savedInstanceState != null ? savedInstanceState.getInt("tab", 0) : (SingBoxVpnService.isRunning() ? 1 : (AwgVpnService.isActive() ? 2 : 0));
 TabLayout.Tab selected = tabs.getTabAt(start);
 if (selected != null)
 {
@@ -149,6 +153,10 @@ public boolean onCreateOptionsMenu(Menu menu)
 	{
     if (item.getItemId() == 9999)
     {
+        if (mTab == 2)
+        {
+            return true;
+        }
         if (mTab == 1)
         {
             Fragment f = getSupportFragmentManager()
@@ -214,6 +222,7 @@ public boolean onCreateOptionsMenu(Menu menu)
 	mTab = position;
 	findViewById(R.id.profile_list_frag).setVisibility(position == 0 ? View.VISIBLE : View.GONE);
 	findViewById(R.id.v2ray_container).setVisibility(position == 1 ? View.VISIBLE : View.GONE);
+	findViewById(R.id.awg_container).setVisibility(position == 2 ? View.VISIBLE : View.GONE);
 }
 
 @Override
