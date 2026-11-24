@@ -44,6 +44,7 @@ jobs:
               -DANDROID_ABI=$abi \
               -DANDROID_PLATFORM=android-21 \
               -DCMAKE_BUILD_TYPE=Release \
+              -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
               -DGRADLE_USER_HOME="$PWD/build/gradle_user_home" \
               -DCMAKE_LIBRARY_OUTPUT_DIRECTORY="$PWD/out/$abi" \
               -DCMAKE_C_FLAGS="-Wno-deprecated-declarations"
