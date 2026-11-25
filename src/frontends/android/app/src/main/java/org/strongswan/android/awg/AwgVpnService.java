@@ -229,21 +229,11 @@ public class AwgVpnService extends VpnService
 		try
 		{
 			awaitStateService();
-			// Fully stop other VPN cores before opening a new TUN (avoids crash & double notification)
 			SingBoxVpnService.stop(this);
-			for (int i = 0; i < 100 && SingBoxVpnService.isRunning(); i++)
+			for (int i = 0; i < 60 && SingBoxVpnService.isRunning(); i++)
 			{
 				Thread.sleep(50);
 			}
-			try
-			{
-				NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-				if (nm != null)
-				{
-					nm.cancel(7201); // SingBox notification id
-				}
-			}
-			catch (Exception ignored) {}
 			dropIkev2();
 			JSONObject p = new JSONObject(json);
 			String name = p.optString("name", "AmneziaWG");
