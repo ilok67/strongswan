@@ -1,0 +1,53 @@
+name: Roll back before menu_popup_bg.xml
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out master
+        uses: actions/checkout@v4
+        with:
+          ref: master
+          fetch-depth: 0
+
+      - name: Create rollback branch and revert commits
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          TARGET="efa18d5858ff67ecfe5a1ed418fae8aaf3eafef5"
+          BRANCH="rollback/before-menu-popup-${GITHUB_RUN_ID}"
+
+          git fetch origin master
+          git checkout -B "$BRANCH" origin/master
+          git merge-base --is-ancestor "$TARGET" HEAD
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          mapfile -t COMMITS < <(git rev-list --reverse "$TARGET..HEAD")
+          for ((i=${#COMMITS[@]}-1; i>=0; i--)); do
+            git revert --no-edit "${COMMITS[$i]}"
+          done
+
+          git push origin "$BRANCH"
+
+          echo "BRANCH=$BRANCH" >> "$GITHUB_ENV"
+
+      - name: Open rollback pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr create \
+            --base master \
+            --head "$BRANCH" \
+            --title "Rollback to before menu_popup_bg.xml was added" \
+            --body "Reverts commits after efa18d5858ff67ecfe5a1ed418fae8aaf3eafef5 for review."
