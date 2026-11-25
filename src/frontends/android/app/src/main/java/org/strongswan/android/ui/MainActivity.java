@@ -21,12 +21,7 @@ package org.strongswan.android.ui;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.PowerManager;
-import android.provider.Settings;
 import android.text.format.Formatter;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -53,8 +48,6 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDialogFragment;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import androidx.core.view.WindowCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
@@ -94,88 +87,53 @@ public class MainActivity extends AppCompatActivity implements OnVpnProfileSelec
 		});
 
 		mManagedConfigurationService = StrongSwanApplication.getInstance().getManagedConfigurationService();
-		// Request notification + battery optimization permissions once at startup
-		requestRuntimePermissions();
-
         TabLayout tabs = findViewById(R.id.tabs);
-		tabs.addTab(tabs.newTab().setText("IKEv2"));
-		tabs.addTab(tabs.newTab().setText("sing-box"));
-		tabs.addTab(tabs.newTab().setText("AmneziaWG"));
-		if (savedInstanceState == null)
-		{
-			getSupportFragmentManager().beginTransaction()
-				.replace(R.id.v2ray_container, new V2RayProfileListFragment())
-				.replace(R.id.awg_container, new AwgProfileListFragment()).commit();
-		}
-		tabs.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener()
-		{
-			@Override
-			public void onTabSelected(TabLayout.Tab tab)
-			{
-				showTab(tab.getPosition());
-			}
-
-			@Override
-			public void onTabUnselected(TabLayout.Tab tab)
-			{
-			}
-
-			@Override
-			public void onTabReselected(TabLayout.Tab tab)
-			{
-			}
-		});
-		int start = savedInstanceState != null ? savedInstanceState.getInt("tab", 0) : (SingBoxVpnService.isRunning() ? 1 : (AwgVpnService.isActive() ? 2 : 0));
-		TabLayout.Tab selected = tabs.getTabAt(start);
-		if (selected != null)
-		{
-			selected.select();
-		}
-		showTab(start);
-	}
-
-	private void requestRuntimePermissions()
+tabs.addTab(tabs.newTab().setText("IKEv2"));
+tabs.addTab(tabs.newTab().setText("sing-box"));
+tabs.addTab(tabs.newTab().setText("AmneziaWG"));
+if (savedInstanceState == null)
+{
+	getSupportFragmentManager().beginTransaction()
+		.replace(R.id.v2ray_container, new V2RayProfileListFragment())
+		.replace(R.id.awg_container, new AwgProfileListFragment()).commit();
+}
+tabs.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener()
+{
+	@Override
+	public void onTabSelected(TabLayout.Tab tab)
 	{
-		// Notification permission (Android 13+)
-		if (Build.VERSION.SDK_INT >= 33)
-		{
-			if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS)
-					!= PackageManager.PERMISSION_GRANTED)
-			{
-				ActivityCompat.requestPermissions(this,
-					new String[]{android.Manifest.permission.POST_NOTIFICATIONS}, 1001);
-			}
-		}
-		// Battery optimization whitelist
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-		{
-			PowerManager pm = (PowerManager) getSystemService(POWER_SERVICE);
-			if (pm != null && !pm.isIgnoringBatteryOptimizations(getPackageName()))
-			{
-				try
-				{
-					Intent intent = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
-					intent.setData(Uri.parse("package:" + getPackageName()));
-					startActivity(intent);
-				}
-				catch (Exception ignored)
-				{
-				}
-			}
-		}
+		showTab(tab.getPosition());
 	}
 
 	@Override
-	public boolean onCreateOptionsMenu(Menu menu)
+	public void onTabUnselected(TabLayout.Tab tab)
 	{
-		MenuItem ping = menu.add(Menu.NONE, 9999, 0, getString(R.string.ping_servers));
-		ping.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
-
-		MenuItem removeDead = menu.add(Menu.NONE, 9998, 1, getString(R.string.remove_dead_profiles));
-		removeDead.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
-
-		return super.onCreateOptionsMenu(menu);
 	}
+
+	@Override
+	public void onTabReselected(TabLayout.Tab tab)
+	{
+	}
+});
+int start = savedInstanceState != null ? savedInstanceState.getInt("tab", 0) : (SingBoxVpnService.isRunning() ? 1 : (AwgVpnService.isActive() ? 2 : 0));
+TabLayout.Tab selected = tabs.getTabAt(start);
+if (selected != null)
+{
+	selected.select();
+}
+showTab(start);
+
+		
+	}
+
+	@Override
+public boolean onCreateOptionsMenu(Menu menu)
+{
+    MenuItem ping = menu.add(Menu.NONE, 9999, 0, "Ping");
+    ping.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+
+    return super.onCreateOptionsMenu(menu);
+}
 
 	@Override
 	public boolean onPrepareOptionsMenu(Menu menu)
@@ -197,14 +155,9 @@ public class MainActivity extends AppCompatActivity implements OnVpnProfileSelec
     {
         if (mTab == 2)
         {
-            Fragment f = getSupportFragmentManager()
-                    .findFragmentById(R.id.awg_container);
-            if (f instanceof AwgProfileListFragment)
-            {
-                ((AwgProfileListFragment) f).runPing(false);
-            }
+            return true;
         }
-        else if (mTab == 1)
+        if (mTab == 1)
         {
             Fragment f = getSupportFragmentManager()
                     .findFragmentById(R.id.v2ray_container);
@@ -220,28 +173,6 @@ public class MainActivity extends AppCompatActivity implements OnVpnProfileSelec
             if (f instanceof VpnProfileListFragment)
             {
                 ((VpnProfileListFragment) f).pingAllPublic();
-            }
-        }
-        return true;
-    }
-    if (item.getItemId() == 9998)
-    {
-        if (mTab == 2)
-        {
-            Fragment f = getSupportFragmentManager()
-                    .findFragmentById(R.id.awg_container);
-            if (f instanceof AwgProfileListFragment)
-            {
-                ((AwgProfileListFragment) f).runPing(true);
-            }
-        }
-        else if (mTab == 1)
-        {
-            Fragment f = getSupportFragmentManager()
-                    .findFragmentById(R.id.v2ray_container);
-            if (f instanceof V2RayProfileListFragment)
-            {
-                ((V2RayProfileListFragment) f).deleteNoPingWithConfirm();
             }
         }
         return true;
@@ -276,14 +207,10 @@ public class MainActivity extends AppCompatActivity implements OnVpnProfileSelec
 	@Override
 	public void onVpnProfileSelected(VpnProfile profile)
 	{
-		if (SingBoxVpnService.isRunning())
-		{
-			SingBoxVpnService.stop(this);
-		}
-		if (AwgVpnService.isActive())
-		{
-			AwgVpnService.stop(this);
-		}
+		if (SingBoxVpnService.hasSession())
+           {
+	        SingBoxVpnService.stop(this);
+            }
 		Intent intent = new Intent(this, VpnProfileControlActivity.class);
 		intent.setAction(VpnProfileControlActivity.START_PROFILE);
 		intent.putExtra(VpnProfileControlActivity.EXTRA_VPN_PROFILE_UUID, profile.getUUID().toString());
