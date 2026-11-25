@@ -20,7 +20,6 @@
     <string name="ping_servers">پینگ</string>
     <string name="ping_running">در حال پینگ…</string>
     <string name="ping_timeout">تایم‌اوت</string>
-    <string name="remove_dead_profiles">حذف پروفایل‌های بدون پاسخ</string>
     <string name="check_update">بررسی آپدیت</string>
 <string name="v2ray_edit_profile">ویرایش پروفایل</string>
 <string name="v2ray_profile_name">نام پروفایل</string>
