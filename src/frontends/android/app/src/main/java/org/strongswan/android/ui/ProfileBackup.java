@@ -12,6 +12,8 @@ import org.strongswan.android.data.VpnProfileSource;
 import org.strongswan.android.data.VpnType;
 import org.strongswan.android.security.LocalCertificateStore;
 import org.strongswan.android.utils.Constants;
+import org.strongswan.android.awg.AwgProfileListFragment;
+import org.strongswan.android.awg.AwgProfileStore;
 import org.strongswan.android.v2ray.V2RayProfileStore;
 
 import java.io.ByteArrayInputStream;
@@ -78,15 +80,21 @@ public final class ProfileBackup
 					links.put(link);
 				}
 			}
+			JSONArray awgArr = new JSONArray();
+			for (JSONObject awg : new AwgProfileStore(context).load())
+			{
+				awgArr.put(awg);
+			}
 			JSONObject root = new JSONObject();
-			root.put("version", 2);
+			root.put("version", 3);
 			root.put("profiles", arr);
 			root.put("links", links);
+			root.put("awg", awgArr);
 			try (OutputStream out = context.getContentResolver().openOutputStream(uri))
 			{
 				out.write(root.toString().getBytes(StandardCharsets.UTF_8));
 			}
-			return all.size() + links.length();
+			return all.size() + links.length() + awgArr.length();
 		}
 		finally
 		{
@@ -111,7 +119,8 @@ public final class ProfileBackup
 		JSONObject root = new JSONObject(json);
 		int ike = restoreIke(context, root.optJSONArray("profiles"));
 		int box = restoreLinks(context, root.optJSONArray("links"));
-		return ike + box;
+		int awg = restoreAwg(context, root.optJSONArray("awg"));
+		return ike + box + awg;
 	}
 
 	private static int restoreIke(Context context, JSONArray arr)
@@ -192,6 +201,53 @@ public final class ProfileBackup
 			LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
 		}
 		return uuids.size();
+	}
+
+	private static int restoreAwg(Context context, JSONArray arr)
+	{
+		if (arr == null || arr.length() == 0)
+		{
+			return 0;
+		}
+		AwgProfileStore store = new AwgProfileStore(context);
+		List<JSONObject> existing = store.load();
+		HashSet<String> seen = new HashSet<>();
+		for (JSONObject p : existing)
+		{
+			seen.add(p.optString("host") + "|" + p.optString("client_priv_key"));
+		}
+		int added = 0;
+		for (int i = 0; i < arr.length(); i++)
+		{
+			JSONObject p = arr.optJSONObject(i);
+			if (p == null)
+			{
+				continue;
+			}
+			String key = p.optString("host") + "|" + p.optString("client_priv_key");
+			if (p.optString("host").isEmpty() || !seen.add(key))
+			{
+				continue;
+			}
+			try
+			{
+				if (!p.has("id"))
+				{
+					p.put("id", UUID.randomUUID().toString());
+				}
+			}
+			catch (Exception ignored)
+			{
+			}
+			existing.add(p);
+			added++;
+		}
+		if (added > 0)
+		{
+			store.save(existing);
+			LocalBroadcastManager.getInstance(context).sendBroadcast(new android.content.Intent(AwgProfileListFragment.PROFILES_CHANGED));
+		}
+		return added;
 	}
 
 	private static int restoreLinks(Context context, JSONArray arr)

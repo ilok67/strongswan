@@ -155,7 +155,12 @@ public class VpnStateFragment extends Fragment implements VpnStateListener
 	    {
 		SingBoxVpnService.stop(requireContext());
 	    }
-	    if (mService != null)
+	    boolean awgActive = org.strongswan.android.awg.AwgVpnService.isActive();
+	    if (awgActive)
+	    {
+		org.strongswan.android.awg.AwgVpnService.stop(requireContext());
+	    }
+	    if (mService != null && !awgActive)
      	{
 	    	mService.disconnect();
      	}
@@ -180,6 +185,22 @@ public class VpnStateFragment extends Fragment implements VpnStateListener
 	      	SingBoxVpnService.start(requireContext(), link);
 	    	return;
          	}
+	   String awgProfile = org.strongswan.android.awg.AwgVpnService.getLastProfile();
+	   if (awgProfile != null && mService != null && mService.getProfile() != null)
+	   {
+		try
+		{
+			org.json.JSONObject last = new org.json.JSONObject(awgProfile);
+			if (last.optString("name").equals(mService.getProfile().getName()))
+			{
+				org.strongswan.android.awg.AwgVpnService.start(requireContext(), last);
+				return;
+			}
+		}
+		catch (Exception ignored)
+		{
+		}
+	   }
       	if (mService != null)
      	{
 	    	mService.reconnect();

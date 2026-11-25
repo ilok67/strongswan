@@ -18,7 +18,20 @@
 
 package org.strongswan.android.ui;
 
+import android.Manifest;
 import android.app.Dialog;
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.net.Uri;
+import android.os.Build;
+import android.os.PowerManager;
+import android.provider.Settings;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.core.content.ContextCompat;
+import androidx.preference.PreferenceManager;
+import org.strongswan.android.utils.Constants;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
@@ -73,6 +86,7 @@ public class MainActivity extends AppCompatActivity implements OnVpnProfileSelec
 	public void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
+		CrashReporter.install(this);
 		setContentView(R.layout.main);
 		WindowCompat.enableEdgeToEdge(getWindow());
 		Utils.applyWindowInsetsAsMarginsForLists(findViewById(R.id.layout));
@@ -123,13 +137,68 @@ if (selected != null)
 }
 showTab(start);
 
-		
+		CrashReporter.showIfAny(this);
+		if (savedInstanceState == null)
+		{
+			checkStartupPermissions();
+		}
+	}
+
+	private final ActivityResultLauncher<String> mNotificationPermission = registerForActivityResult(
+		new ActivityResultContracts.RequestPermission(),
+		granted -> askBatteryOptimization());
+
+	private final ActivityResultLauncher<Intent> mBatteryRequest = registerForActivityResult(
+		new ActivityResultContracts.StartActivityForResult(),
+		result -> {
+		});
+
+	private void checkStartupPermissions()
+	{
+		SharedPreferences startup = getSharedPreferences("startup", MODE_PRIVATE);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+			&& ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+			&& !startup.getBoolean("notification_asked", false))
+		{
+			startup.edit().putBoolean("notification_asked", true).apply();
+			mNotificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS);
+			return;
+		}
+		askBatteryOptimization();
+	}
+
+	private void askBatteryOptimization()
+	{
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M || isFinishing())
+		{
+			return;
+		}
+		SharedPreferences startup = getSharedPreferences("startup", MODE_PRIVATE);
+		SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
+		PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+		if (pm == null || pm.isIgnoringBatteryOptimizations(getPackageName())
+			|| pref.getBoolean(Constants.PREF_IGNORE_POWER_WHITELIST, false)
+			|| startup.getBoolean("battery_asked", false))
+		{
+			return;
+		}
+		startup.edit().putBoolean("battery_asked", true).apply();
+		new AlertDialog.Builder(this)
+			.setTitle(R.string.power_whitelist_title)
+			.setMessage(R.string.power_whitelist_text)
+			.setPositiveButton(android.R.string.ok, (dialog, which) -> {
+				Intent intent = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+					Uri.parse("package:" + getPackageName()));
+				mBatteryRequest.launch(intent);
+			})
+			.setNegativeButton(android.R.string.cancel, null)
+			.show();
 	}
 
 	@Override
 public boolean onCreateOptionsMenu(Menu menu)
 {
-    MenuItem ping = menu.add(Menu.NONE, 9999, 0, "Ping");
+    MenuItem ping = menu.add(Menu.NONE, 9999, 0, R.string.menu_ping);
     ping.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
 
     return super.onCreateOptionsMenu(menu);
@@ -155,6 +224,12 @@ public boolean onCreateOptionsMenu(Menu menu)
     {
         if (mTab == 2)
         {
+            Fragment awg = getSupportFragmentManager()
+                    .findFragmentById(R.id.awg_container);
+            if (awg instanceof AwgProfileListFragment)
+            {
+                ((AwgProfileListFragment) awg).pingAllPublic();
+            }
             return true;
         }
         if (mTab == 1)
@@ -208,9 +283,13 @@ public boolean onCreateOptionsMenu(Menu menu)
 	public void onVpnProfileSelected(VpnProfile profile)
 	{
 		if (SingBoxVpnService.hasSession())
-           {
-	        SingBoxVpnService.stop(this);
-            }
+		{
+			SingBoxVpnService.stopBlocking(this, true);
+		}
+		if (AwgVpnService.isActive())
+		{
+			AwgVpnService.stopBlocking(this, true);
+		}
 		Intent intent = new Intent(this, VpnProfileControlActivity.class);
 		intent.setAction(VpnProfileControlActivity.START_PROFILE);
 		intent.putExtra(VpnProfileControlActivity.EXTRA_VPN_PROFILE_UUID, profile.getUUID().toString());

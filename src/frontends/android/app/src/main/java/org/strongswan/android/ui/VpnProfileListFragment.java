@@ -205,6 +205,10 @@ private final androidx.activity.result.ActivityResultLauncher<String[]> mImportL
         mListView.setOnItemClickListener(mVpnProfileClicked);
 
        View emptyBtn = view.findViewById(R.id.empty_fetch_servers);
+       if (emptyBtn instanceof android.widget.Button)
+       {
+        org.strongswan.android.ui.widget.UiStyle.fetchButton((android.widget.Button) emptyBtn);
+       }
        if (emptyBtn != null)
        {
         emptyBtn.setOnClickListener(v ->
@@ -252,6 +256,38 @@ private final androidx.activity.result.ActivityResultLauncher<String[]> mImportL
 		mVpnProfiles = mDataSource.getAllVpnProfiles();
 
 		mListAdapter = new VpnProfileAdapter(getActivity(), R.layout.profile_list_item, mVpnProfiles);
+		mListAdapter.setActionListener(new VpnProfileAdapter.ActionListener()
+		{
+			@Override
+			public void onEdit(VpnProfile profile)
+			{
+				Intent edit = new Intent(getActivity(), VpnProfileDetailActivity.class);
+				edit.putExtra(VpnProfileDataSource.KEY_UUID, profile.getUUID().toString());
+				startActivity(edit);
+			}
+
+			@Override
+			public void onShare(VpnProfile profile)
+			{
+				shareProfile(profile);
+			}
+
+			@Override
+			public void onDelete(final VpnProfile profile)
+			{
+				new androidx.appcompat.app.AlertDialog.Builder(requireActivity())
+					.setMessage(org.strongswan.android.utils.Str.get(R.string.awg_delete_confirm, profile.getName()))
+					.setPositiveButton(R.string.action_delete, (d, w) -> {
+						mDataSource.deleteVpnProfile(profile);
+						Intent intent = new Intent(Constants.VPN_PROFILES_CHANGED);
+						intent.putExtra(Constants.VPN_PROFILES_MULTIPLE, new String[]{profile.getUUID().toString()});
+						LocalBroadcastManager.getInstance(requireActivity()).sendBroadcast(intent);
+						Toast.makeText(getActivity(), R.string.profile_deleted, Toast.LENGTH_SHORT).show();
+					})
+					.setNegativeButton(android.R.string.cancel, null)
+					.show();
+			}
+		});
 
 		IntentFilter profileChangesFilter = new IntentFilter(Constants.VPN_PROFILES_CHANGED);
 		LocalBroadcastManager.getInstance(getActivity()).registerReceiver(mProfilesChanged, profileChangesFilter);
@@ -470,15 +506,20 @@ private void checkUpdate(boolean silent)
 			.setTitle(R.string.delete_no_ping)
 			.setItems(new CharSequence[]{
 				getString(R.string.delete_no_ping_ikev2),
-				getString(R.string.delete_no_ping_singbox)
+				getString(R.string.delete_no_ping_singbox),
+				getString(R.string.delete_no_ping_awg)
 			}, (dialog, which) -> {
 				if (which == 0)
 				{
 					deleteNoPingIkev2();
 				}
-				else
+				else if (which == 1)
 				{
 					deleteNoPingSingBox();
+				}
+				else
+				{
+					deleteNoPingAwg();
 				}
 			})
 			.show();
@@ -530,6 +571,65 @@ private void checkUpdate(boolean silent)
 			})
 			.setNegativeButton(android.R.string.cancel, null)
 			.show();
+	}
+
+	private void deleteNoPingAwg()
+	{
+		Fragment f = requireActivity().getSupportFragmentManager().findFragmentById(R.id.awg_container);
+		if (f instanceof org.strongswan.android.awg.AwgProfileListFragment)
+		{
+			((org.strongswan.android.awg.AwgProfileListFragment)f).deleteNoPingWithConfirm();
+		}
+		else
+		{
+			Toast.makeText(getActivity(), R.string.delete_no_ping_none, Toast.LENGTH_SHORT).show();
+		}
+	}
+
+	private void shareProfile(VpnProfile profile)
+	{
+		try
+		{
+			org.json.JSONObject o = new org.json.JSONObject();
+			o.put("uuid", UUID.randomUUID().toString());
+			o.put("name", profile.getName());
+			o.put("type", profile.getVpnType().getIdentifier());
+			org.json.JSONObject remote = new org.json.JSONObject();
+			remote.put("addr", profile.getGateway());
+			if (profile.getPort() != null)
+			{
+				remote.put("port", profile.getPort());
+			}
+			String remoteId = profile.getRemoteId();
+			if (remoteId != null && !remoteId.isEmpty())
+			{
+				remote.put("id", remoteId);
+			}
+			o.put("remote", remote);
+			org.json.JSONObject local = new org.json.JSONObject();
+			String user = profile.getUsername();
+			if (user != null && !user.isEmpty())
+			{
+				local.put("eap_id", user);
+			}
+			String pass = profile.getPassword();
+			if (pass != null && !pass.isEmpty())
+			{
+				local.put("shared_secret", pass);
+			}
+			if (local.length() > 0)
+			{
+				o.put("local", local);
+			}
+			Intent send = new Intent(Intent.ACTION_SEND);
+			send.setType("text/plain");
+			send.putExtra(Intent.EXTRA_TEXT, o.toString(2));
+			startActivity(Intent.createChooser(send, getString(R.string.share_title)));
+		}
+		catch (Exception e)
+		{
+			Toast.makeText(getActivity(), e.getMessage(), Toast.LENGTH_LONG).show();
+		}
 	}
 
 	private void deleteNoPingSingBox()
