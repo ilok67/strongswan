@@ -271,14 +271,18 @@ public class AwgProfileListFragment extends Fragment
 		empty.addView(getFree, lp);
 		emptyView = empty;
 		root.addView(empty, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+Context fabContext = new android.view.ContextThemeWrapper(
+	context,
+	com.google.android.material.R.style.Theme_MaterialComponents_NoActionBar
+);
+fab = new ExtendedFloatingActionButton(fabContext);
+fab.setText(R.string.awg_get_server);
+fab.setIconResource(R.drawable.ic_add);
+fab.setIconTint(android.content.res.ColorStateList.valueOf(Color.parseColor("#04210F")));
+fab.setTextColor(Color.parseColor("#04210F"));
+fab.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.parseColor("#4ADE80")));
+fab.setOnClickListener(v -> fetchFree());
 
-		fab = new ExtendedFloatingActionButton(context);
-		fab.setText(R.string.awg_get_server);
-		fab.setIconResource(R.drawable.ic_add);
-		fab.setIconTint(android.content.res.ColorStateList.valueOf(Color.parseColor("#04210F")));
-		fab.setTextColor(Color.parseColor("#04210F"));
-		fab.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.parseColor("#4ADE80")));
-		fab.setOnClickListener(v -> fetchFree());
 		FrameLayout.LayoutParams flp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
 		flp.gravity = Gravity.BOTTOM | Gravity.END;
 		int m = UiStyle.dp(context, 16);
