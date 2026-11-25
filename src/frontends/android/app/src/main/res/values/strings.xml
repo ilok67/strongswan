@@ -315,7 +315,6 @@
     <string name="awg_delete_confirm">Delete “%1$s”?</string>
     <string name="profile_deleted">Profile deleted</string>
     <string name="profile_updated">Profile updated</string>
-    <string name="profile_not_found">Profile not found</string>
     <string name="profile_exists">This profile already exists</string>
     <string name="share_title">Share profile</string>
     <string name="awg_share_key">Amnezia key (vpn://)</string>
