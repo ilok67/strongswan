@@ -71,6 +71,7 @@ public class SingBoxVpnService extends VpnService implements PlatformInterface
 
 	private static volatile boolean running;
 	private static volatile String sLink;
+	private static volatile SingBoxVpnService sInstance;
 	private static boolean libboxReady;
 	private static final java.util.ArrayDeque<String> logLines = new java.util.ArrayDeque<String>();
 
@@ -83,6 +84,7 @@ public class SingBoxVpnService extends VpnService implements PlatformInterface
 	private ParcelFileDescriptor tun;
 	private ConnectivityManager.NetworkCallback networkCallback;
 	private long connectedAt;
+	private volatile boolean foreground;
 
 	private final ServiceConnection stateConnection = new ServiceConnection()
 	{
@@ -147,6 +149,28 @@ public class SingBoxVpnService extends VpnService implements PlatformInterface
 		ContextCompat.startForegroundService(context, i);
 	}
 
+	public static void stopBlocking(Context context)
+	{
+		stopBlocking(context, false);
+	}
+
+	public static void stopBlocking(Context context, boolean updateState)
+	{
+		SingBoxVpnService instance = sInstance;
+		sLink = null;
+		if (instance != null)
+		{
+			try
+			{
+				instance.shutdown(updateState);
+			}
+			catch (Throwable t)
+			{
+				Log.e(TAG, "stopBlocking failed", t);
+			}
+		}
+	}
+
 	public static void stop(Context context)
 	{
 		if (!running && sLink == null)
@@ -163,6 +187,7 @@ public class SingBoxVpnService extends VpnService implements PlatformInterface
 	public void onCreate()
 	{
 		super.onCreate();
+		sInstance = this;
 		handler = new Handler(Looper.getMainLooper());
 		createNotificationChannel();
 		bindService(new Intent(this, VpnStateService.class), stateConnection, Service.BIND_AUTO_CREATE);
@@ -175,7 +200,7 @@ public class SingBoxVpnService extends VpnService implements PlatformInterface
 		if (ACTION_STOP.equals(action))
 		{
 			sLink = null;
-			shutdown();
+			shutdown(true);
 			return START_NOT_STICKY;
 		}
 		if (ACTION_START.equals(action))
@@ -201,12 +226,16 @@ public class SingBoxVpnService extends VpnService implements PlatformInterface
 	public void onRevoke()
 	{
 		sLink = null;
-		shutdown();
+		shutdown(!AwgVpnService.isActive());
 	}
 
 	@Override
 	public void onDestroy()
 	{
+		if (sInstance == this)
+		{
+			sInstance = null;
+		}
 		synchronized (lock)
 		{
 			closeBox();
@@ -222,16 +251,38 @@ public class SingBoxVpnService extends VpnService implements PlatformInterface
 		super.onDestroy();
 	}
 
-	private void shutdown()
+	private void shutdown(boolean updateState)
 	{
 		synchronized (lock)
 		{
 			closeBox();
 		}
-		setState(State.DISABLED);
+		if (updateState)
+		{
+			setState(State.DISABLED);
+		}
 		broadcastState(false, null);
-		stopForeground(true);
+		removeNotification();
 		stopSelf();
+	}
+
+	private void removeNotification()
+	{
+		foreground = false;
+		try
+		{
+			stopForeground(true);
+		}
+		catch (Throwable ignored)
+		{
+		}
+		try
+		{
+			((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).cancel(NOTIFICATION_ID);
+		}
+		catch (Throwable ignored)
+		{
+		}
 	}
 
 	private void startBox(String link)
@@ -239,12 +290,14 @@ public class SingBoxVpnService extends VpnService implements PlatformInterface
 		try
 		{
 			awaitStateService();
-			AwgVpnService.stop(this);
-			for (int i = 0; i < 60 && AwgVpnService.isRunning(); i++)
+			if (AwgVpnService.isActive())
 			{
-				Thread.sleep(50);
+				AwgVpnService.stopBlocking(this);
 			}
-			dropIkev2();
+			else
+			{
+				dropIkev2();
+			}
 			synchronized (lock)
 			{
 				closeBox();
@@ -255,6 +308,14 @@ public class SingBoxVpnService extends VpnService implements PlatformInterface
 				service.start();
 				box = service;
 				running = true;
+			}
+			if (sLink == null)
+			{
+				synchronized (lock)
+				{
+					closeBox();
+				}
+				return;
 			}
 			connectedAt = System.currentTimeMillis();
 			traffic.reset();
@@ -282,7 +343,7 @@ public class SingBoxVpnService extends VpnService implements PlatformInterface
 			}
 			setError(ErrorState.GENERIC_ERROR);
 			broadcastState(false, t.getMessage() + version);
-			stopForeground(true);
+			removeNotification();
 			stopSelf();
 		}
 	}
@@ -423,7 +484,7 @@ public class SingBoxVpnService extends VpnService implements PlatformInterface
 	{
 		if (Build.VERSION.SDK_INT >= 26)
 		{
-			NotificationChannel channel = new NotificationChannel(CHANNEL_ID, "V2Ray VPN", NotificationManager.IMPORTANCE_LOW);
+			NotificationChannel channel = new NotificationChannel(CHANNEL_ID, "sing-box VPN", NotificationManager.IMPORTANCE_LOW);
 			channel.setLockscreenVisibility(Notification.VISIBILITY_SECRET);
 			channel.setShowBadge(false);
 			getSystemService(NotificationManager.class).createNotificationChannel(channel);
@@ -432,6 +493,7 @@ public class SingBoxVpnService extends VpnService implements PlatformInterface
 
 	private void goForeground()
 	{
+		foreground = true;
 		Notification n = buildNotification();
 		if (Build.VERSION.SDK_INT >= 34)
 		{
@@ -445,6 +507,10 @@ public class SingBoxVpnService extends VpnService implements PlatformInterface
 
 	private void updateNotification()
 	{
+		if (!foreground)
+		{
+			return;
+		}
 		NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 		nm.notify(NOTIFICATION_ID, buildNotification());
 	}

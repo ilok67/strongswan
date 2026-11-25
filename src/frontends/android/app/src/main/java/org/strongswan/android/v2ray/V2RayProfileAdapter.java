@@ -18,6 +18,22 @@ import java.util.Map;
 
 public class V2RayProfileAdapter extends ArrayAdapter<String>
 {
+	public interface ActionListener
+	{
+		void onEdit(String link);
+
+		void onShare(String link);
+
+		void onDelete(String link);
+	}
+
+	private ActionListener actionListener;
+
+	public void setActionListener(ActionListener listener)
+	{
+		this.actionListener = listener;
+	}
+
 	private final List<String> items;
 	private final Map<String, String> pings = new HashMap<String, String>();
 	private ColorStateList nameColors;
@@ -134,6 +150,36 @@ if (pingView != null)
 }
 		view.findViewById(R.id.profile_item_username).setVisibility(View.GONE);
 		view.findViewById(R.id.profile_item_certificate).setVisibility(View.GONE);
+		final String itemLink = link;
+		org.strongswan.android.ui.widget.UiStyle.bindActions(view, true, true, new org.strongswan.android.ui.widget.UiStyle.CardActions()
+		{
+			@Override
+			public void onEdit()
+			{
+				if (actionListener != null)
+				{
+					actionListener.onEdit(itemLink);
+				}
+			}
+
+			@Override
+			public void onShare()
+			{
+				if (actionListener != null)
+				{
+					actionListener.onShare(itemLink);
+				}
+			}
+
+			@Override
+			public void onDelete()
+			{
+				if (actionListener != null)
+				{
+					actionListener.onDelete(itemLink);
+				}
+			}
+		});
 		return view;
 	}
 

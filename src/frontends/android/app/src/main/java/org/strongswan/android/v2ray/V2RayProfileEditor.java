@@ -1,6 +1,8 @@
 package org.strongswan.android.v2ray;
 
 import android.content.Context;
+import org.strongswan.android.R;
+import org.strongswan.android.utils.Str;
 import android.net.Uri;
 import android.util.Base64;
 import android.view.ViewGroup;
@@ -118,7 +120,7 @@ public final class V2RayProfileEditor
         {
             Toast.makeText(
                     context,
-                    "Cannot read this profile",
+                    Str.get(R.string.ve_cannot_read),
                     Toast.LENGTH_LONG
             ).show();
             return;
@@ -133,20 +135,20 @@ public final class V2RayProfileEditor
 
         if (copyMode)
         {
-            profileName = "Copy of " + profileName;
+            profileName = Str.get(R.string.ve_copy_of, profileName);
         }
 
-        form.field("name", "Profile name", profileName);
+        form.field("name", Str.get(R.string.ve_profile_name), profileName);
 
         form.field(
                 "server",
-                "Server / Host",
+                Str.get(R.string.ve_server_host),
                 outbound.optString("server", "")
         );
 
         form.field(
                 "port",
-                "Port",
+                Str.get(R.string.ve_port),
                 String.valueOf(outbound.optInt("server_port", 443))
         );
 
@@ -165,7 +167,7 @@ public final class V2RayProfileEditor
         {
             form.field(
                     "password",
-                    "Password",
+                    Str.get(R.string.ve_password),
                     outbound.optString("password", "")
             );
         }
@@ -174,7 +176,7 @@ public final class V2RayProfileEditor
         {
             form.field(
                     "method",
-                    "Encryption method",
+                    Str.get(R.string.ve_enc_method),
                     outbound.optString("method", "aes-128-gcm")
             );
         }
@@ -198,7 +200,7 @@ public final class V2RayProfileEditor
 
             form.field(
                     "security_method",
-                    "VMess security",
+                    Str.get(R.string.ve_vmess_security),
                     outbound.optString("security", "auto")
             );
         }
@@ -214,7 +216,7 @@ public final class V2RayProfileEditor
         boolean insecure = tls != null
                 && tls.optBoolean("insecure", false);
 
-        form.check("tls", "Enable TLS", tlsEnabled);
+        form.check("tls", Str.get(R.string.ve_enable_tls), tlsEnabled);
 
         if ("vless".equals(protocol)
                 || "trojan".equals(protocol)
@@ -223,7 +225,7 @@ public final class V2RayProfileEditor
         {
             form.field(
                     "sni",
-                    "SNI / Server name",
+                    Str.get(R.string.ve_sni),
                     tls == null ? "" : tls.optString("server_name", "")
             );
 
@@ -252,19 +254,19 @@ public final class V2RayProfileEditor
 
             form.field(
                     "alpn",
-                    "ALPN (comma separated)",
+                    Str.get(R.string.ve_alpn),
                     alpnText.toString()
             );
 
             form.field(
                     "fingerprint",
-                    "TLS fingerprint",
+                    Str.get(R.string.ve_tls_fp),
                     utls == null ? "" : utls.optString("fingerprint", "")
             );
 
             form.check(
                     "insecure",
-                    "Allow insecure certificate",
+                    Str.get(R.string.ve_allow_insecure),
                     insecure
             );
         }
@@ -277,13 +279,13 @@ public final class V2RayProfileEditor
 
             form.check(
                     "reality",
-                    "Enable Reality",
+                    Str.get(R.string.ve_enable_reality),
                     realityEnabled
             );
 
             form.field(
                     "public_key",
-                    "Reality public key",
+                    Str.get(R.string.ve_reality_pbk),
                     reality == null
                             ? ""
                             : reality.optString("public_key", "")
@@ -291,7 +293,7 @@ public final class V2RayProfileEditor
 
             form.field(
                     "short_id",
-                    "Reality short ID",
+                    Str.get(R.string.ve_reality_sid),
                     reality == null
                             ? ""
                             : reality.optString("short_id", "")
@@ -304,7 +306,7 @@ public final class V2RayProfileEditor
                 ? "tcp"
                 : transport.optString("type", "tcp");
 
-        form.field("network", "Transport / Network", network);
+        form.field("network", Str.get(R.string.ve_transport), network);
 
         String transportHost = "";
         String path = "";
@@ -332,13 +334,13 @@ public final class V2RayProfileEditor
 
         form.field(
                 "transport_host",
-                "Transport host / WS Host",
+                Str.get(R.string.ve_transport_host),
                 transportHost
         );
 
         form.field(
                 "path",
-                "Path",
+                Str.get(R.string.ve_path),
                 path
         );
 
@@ -354,13 +356,13 @@ public final class V2RayProfileEditor
 
             form.field(
                     "obfs_type",
-                    "Obfuscation type",
+                    Str.get(R.string.ve_obfs_type),
                     obfs == null ? "" : obfs.optString("type", "")
             );
 
             form.field(
                     "obfs_password",
-                    "Obfuscation password",
+                    Str.get(R.string.ve_obfs_pass),
                     obfs == null ? "" : obfs.optString("password", "")
             );
         }
@@ -370,13 +372,13 @@ public final class V2RayProfileEditor
         scroll.addView(form.layout);
 
         String title = copyMode
-                ? "Copy profile"
-                : "Edit profile";
+                ? Str.get(R.string.ve_copy_profile)
+                : Str.get(R.string.ve_edit_profile);
 
         new AlertDialog.Builder(context)
                 .setTitle(title)
                 .setView(scroll)
-                .setPositiveButton("Save", (dialog, which) ->
+                .setPositiveButton(Str.get(R.string.action_save), (dialog, which) ->
                 {
                     try
                     {
@@ -398,12 +400,12 @@ public final class V2RayProfileEditor
                     {
                         Toast.makeText(
                                 context,
-                                "Invalid profile: " + e.getMessage(),
+                                Str.get(R.string.ve_invalid_profile, e.getMessage()),
                                 Toast.LENGTH_LONG
                         ).show();
                     }
                 })
-                .setNegativeButton("Cancel", null)
+                .setNegativeButton(android.R.string.cancel, null)
                 .show();
     }
 
@@ -418,12 +420,12 @@ public final class V2RayProfileEditor
 
         if (name.isEmpty())
         {
-            throw new IllegalArgumentException("Profile name is required");
+            throw new IllegalArgumentException(Str.get(R.string.ve_err_name));
         }
 
         if (host.isEmpty())
         {
-            throw new IllegalArgumentException("Server is required");
+            throw new IllegalArgumentException(Str.get(R.string.ve_err_server));
         }
 
         int port;
@@ -434,12 +436,12 @@ public final class V2RayProfileEditor
         }
         catch (Exception e)
         {
-            throw new IllegalArgumentException("Port must be a number");
+            throw new IllegalArgumentException(Str.get(R.string.ve_err_port_number));
         }
 
         if (port < 1 || port > 65535)
         {
-            throw new IllegalArgumentException("Port must be 1-65535");
+            throw new IllegalArgumentException(Str.get(R.string.ve_err_port_range));
         }
 
         String safeHost = host;
@@ -499,7 +501,7 @@ public final class V2RayProfileEditor
 
             if (uuid.isEmpty())
             {
-                throw new IllegalArgumentException("UUID is required");
+                throw new IllegalArgumentException(Str.get(R.string.ve_err_uuid));
             }
 
             String security = "none";
@@ -553,7 +555,7 @@ public final class V2RayProfileEditor
 
             if (password.isEmpty())
             {
-                throw new IllegalArgumentException("Password is required");
+                throw new IllegalArgumentException(Str.get(R.string.ve_err_password));
             }
 
             String security = "none";
@@ -607,7 +609,7 @@ public final class V2RayProfileEditor
             if (method.isEmpty() || password.isEmpty())
             {
                 throw new IllegalArgumentException(
-                        "Encryption method and password are required"
+                        Str.get(R.string.ve_err_enc_pass)
                 );
             }
 
@@ -630,7 +632,7 @@ public final class V2RayProfileEditor
 
             if (password.isEmpty())
             {
-                throw new IllegalArgumentException("Password is required");
+                throw new IllegalArgumentException(Str.get(R.string.ve_err_password));
             }
 
             StringBuilder result = new StringBuilder();
@@ -658,7 +660,7 @@ public final class V2RayProfileEditor
         }
 
         throw new IllegalArgumentException(
-                "Unsupported protocol: " + protocol
+                Str.get(R.string.ve_unsupported, protocol)
         );
     }
 

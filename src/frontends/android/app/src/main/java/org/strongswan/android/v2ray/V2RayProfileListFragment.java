@@ -118,6 +118,29 @@ public class V2RayProfileListFragment extends Fragment
         profileList.setClipToPadding(false);
 
         adapter = new V2RayProfileAdapter(context, links);
+        adapter.setActionListener(new V2RayProfileAdapter.ActionListener()
+        {
+            @Override
+            public void onEdit(String link)
+            {
+                editLink(link);
+            }
+
+            @Override
+            public void onShare(String link)
+            {
+                Intent send = new Intent(Intent.ACTION_SEND);
+                send.setType("text/plain");
+                send.putExtra(Intent.EXTRA_TEXT, link);
+                startActivity(Intent.createChooser(send, getString(R.string.share_title)));
+            }
+
+            @Override
+            public void onDelete(String link)
+            {
+                confirmDelete(link);
+            }
+        });
         profileList.setAdapter(adapter);
 
         LinearLayout emptyView = new LinearLayout(context);
@@ -127,12 +150,13 @@ public class V2RayProfileListFragment extends Fragment
         emptyView.setPadding(pad, pad, pad, pad);
 
         TextView hint = new TextView(context);
-        hint.setText("No sing-box profiles");
+        hint.setText(R.string.no_singbox_profiles);
         hint.setGravity(android.view.Gravity.CENTER);
         emptyView.addView(hint);
 
         Button getFree = new Button(context);
-        getFree.setText("Get free servers");
+        getFree.setText(R.string.get_free_servers);
+        org.strongswan.android.ui.widget.UiStyle.fetchButton(getFree);
         getFree.setOnClickListener(v -> {
             startActivity(new Intent(requireContext(), FreeServersActivity.class));
         });
@@ -191,7 +215,7 @@ public class V2RayProfileListFragment extends Fragment
                     {
                         int count = profileList.getCheckedItemCount();
 
-                        mode.setTitle(count + " selected");
+                        mode.setTitle(org.strongswan.android.utils.Str.get(R.string.selected_count, count));
 
                         MenuItem editItem =
                                 mode.getMenu().findItem(MENU_EDIT);
@@ -214,7 +238,7 @@ public class V2RayProfileListFragment extends Fragment
                                 Menu.NONE,
                                 MENU_EDIT,
                                 0,
-                                "Edit"
+                                R.string.action_edit
                         ).setShowAsAction(
                                 MenuItem.SHOW_AS_ACTION_IF_ROOM
                         );
@@ -223,7 +247,7 @@ public class V2RayProfileListFragment extends Fragment
                                 Menu.NONE,
                                 MENU_COPY,
                                 1,
-                                "Copy"
+                                R.string.action_copy
                         ).setShowAsAction(
                                 MenuItem.SHOW_AS_ACTION_IF_ROOM
                         );
@@ -232,7 +256,7 @@ public class V2RayProfileListFragment extends Fragment
                                 Menu.NONE,
                                 MENU_DELETE,
                                 2,
-                                "Delete"
+                                R.string.action_delete
                         ).setShowAsAction(
                                 MenuItem.SHOW_AS_ACTION_IF_ROOM
                         );
@@ -308,7 +332,7 @@ public class V2RayProfileListFragment extends Fragment
                                         {
                                             Toast.makeText(
                                                     requireContext(),
-                                                    "Profile not found",
+                                                    R.string.profile_not_found,
                                                     Toast.LENGTH_SHORT
                                             ).show();
 
@@ -320,7 +344,7 @@ public class V2RayProfileListFragment extends Fragment
                                         {
                                             Toast.makeText(
                                                     requireContext(),
-                                                    "This profile already exists",
+                                                    R.string.profile_exists,
                                                     Toast.LENGTH_LONG
                                             ).show();
 
@@ -344,7 +368,7 @@ public class V2RayProfileListFragment extends Fragment
 
                                         Toast.makeText(
                                                 requireContext(),
-                                                "Profile updated",
+                                                R.string.profile_updated,
                                                 Toast.LENGTH_SHORT
                                         ).show();
                                     }
@@ -386,8 +410,8 @@ public class V2RayProfileListFragment extends Fragment
 
                                 Toast.makeText(
                                         requireContext(),
-                                        selectedLinks.size()
-                                                + " profile link(s) copied",
+                                        org.strongswan.android.utils.Str.get(
+                                                R.string.awg_copy_done, selectedLinks.size()),
                                         Toast.LENGTH_SHORT
                                 ).show();
                             }
@@ -404,14 +428,13 @@ public class V2RayProfileListFragment extends Fragment
                             final int deleteCount = selectedLinks.size();
 
                             new AlertDialog.Builder(requireActivity())
-                                    .setTitle("Delete profiles")
+                                    .setTitle(R.string.delete_profiles_title)
                                     .setMessage(
-                                            "Delete "
-                                                    + deleteCount
-                                                    + " selected profile(s)?"
+                                            org.strongswan.android.utils.Str.get(
+                                                    R.string.delete_profiles_msg, deleteCount)
                                     )
                                     .setPositiveButton(
-                                            "Delete",
+                                            R.string.action_delete,
                                             (dialog, which) ->
                                             {
                                                 // Stop VPN if its profile
@@ -436,8 +459,8 @@ public class V2RayProfileListFragment extends Fragment
 
                                                 Toast.makeText(
                                                         requireContext(),
-                                                        deleteCount
-                                                                + " profile(s) deleted",
+                                                        org.strongswan.android.utils.Str.get(
+                                                                R.string.profiles_deleted_count, deleteCount),
                                                         Toast.LENGTH_SHORT
                                                 ).show();
                                             }
@@ -527,19 +550,56 @@ public class V2RayProfileListFragment extends Fragment
 
 
 
+    private void editLink(final String selectedLink)
+    {
+        V2RayProfileEditor.show(
+                requireContext(),
+                selectedLink,
+                false,
+                (oldLink, newLink, copyMode) ->
+                {
+                    int index = links.indexOf(oldLink);
+                    if (index < 0)
+                    {
+                        Toast.makeText(requireContext(), R.string.profile_not_found, Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    if (!oldLink.equals(newLink) && links.contains(newLink))
+                    {
+                        Toast.makeText(requireContext(), R.string.profile_exists, Toast.LENGTH_LONG).show();
+                        return;
+                    }
+                    if (oldLink.equals(SingBoxVpnService.getLink()) && SingBoxVpnService.isRunning())
+                    {
+                        SingBoxVpnService.stop(requireContext());
+                    }
+                    links.set(index, newLink);
+                    store.save(links);
+                    adapter.notifyDataSetChanged();
+                    Toast.makeText(requireContext(), R.string.profile_updated, Toast.LENGTH_SHORT).show();
+                }
+        );
+    }
+
     private void confirmDelete(final String link)
     {
         new AlertDialog.Builder(requireActivity())
                 .setMessage(
-                        "Delete " + V2RayConfigBuilder.name(link) + "?"
+                        org.strongswan.android.utils.Str.get(
+                                R.string.awg_delete_confirm, V2RayConfigBuilder.name(link))
                 )
                 .setPositiveButton(
-                        android.R.string.ok,
+                        R.string.action_delete,
                         (dialog, which) ->
                         {
+                            if (link.equals(SingBoxVpnService.getLink()))
+                            {
+                                SingBoxVpnService.stop(requireContext());
+                            }
                             links.remove(link);
                             store.save(links);
                             adapter.notifyDataSetChanged();
+                            Toast.makeText(requireContext(), R.string.profile_deleted, Toast.LENGTH_SHORT).show();
                         }
                 )
                 .setNegativeButton(android.R.string.cancel, null)
