@@ -16,6 +16,22 @@ import java.util.List;
 
 public class VpnProfileAdapter extends ArrayAdapter<VpnProfile>
 {
+	public interface ActionListener
+	{
+		void onEdit(VpnProfile profile);
+
+		void onShare(VpnProfile profile);
+
+		void onDelete(VpnProfile profile);
+	}
+
+	private ActionListener actionListener;
+
+	public void setActionListener(ActionListener listener)
+	{
+		this.actionListener = listener;
+	}
+
 	private final int resource;
 	private final List<VpnProfile> items;
     private final java.util.Map<String, String> pings = new java.util.HashMap<>();
@@ -117,6 +133,38 @@ if (pingView != null)
 
 		tv = vpnProfileView.findViewById(R.id.profile_item_certificate);
 		tv.setVisibility(View.GONE);
+
+		final VpnProfile itemProfile = profile;
+		org.strongswan.android.ui.widget.UiStyle.bindActions(vpnProfileView, true, !profile.isReadOnly(),
+			new org.strongswan.android.ui.widget.UiStyle.CardActions()
+			{
+				@Override
+				public void onEdit()
+				{
+					if (actionListener != null)
+					{
+						actionListener.onEdit(itemProfile);
+					}
+				}
+
+				@Override
+				public void onShare()
+				{
+					if (actionListener != null)
+					{
+						actionListener.onShare(itemProfile);
+					}
+				}
+
+				@Override
+				public void onDelete()
+				{
+					if (actionListener != null)
+					{
+						actionListener.onDelete(itemProfile);
+					}
+				}
+			});
 
 		return vpnProfileView;
 	}
