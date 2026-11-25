@@ -118,106 +118,28 @@ public class V2RayProfileListFragment extends Fragment
         profileList.setClipToPadding(false);
 
         adapter = new V2RayProfileAdapter(context, links);
-        adapter.setActionListener(new V2RayProfileAdapter.ActionListener()
-        {
-            @Override
-            public void onEdit(String link)
-            {
-                V2RayProfileEditor.show(
-                        requireContext(),
-                        link,
-                        false,
-                        (oldLink, newLink, copyMode) -> {
-                            int index = links.indexOf(oldLink);
-                            if (index < 0)
-                            {
-                                Toast.makeText(requireContext(), R.string.profile_not_found, Toast.LENGTH_SHORT).show();
-                                return;
-                            }
-                            links.set(index, newLink);
-                            store.save(links);
-                            adapter.notifyDataSetChanged();
-                        }
-                );
-            }
-
-            @Override
-            public void onShare(String link)
-            {
-                try
-                {
-                    android.content.ClipboardManager cm =
-                            (android.content.ClipboardManager) requireContext().getSystemService(Context.CLIPBOARD_SERVICE);
-                    if (cm != null)
-                    {
-                        cm.setPrimaryClip(android.content.ClipData.newPlainText("profile", link));
-                        Toast.makeText(requireContext(), R.string.v2ray_copy, Toast.LENGTH_SHORT).show();
-                    }
-                    Intent send = new Intent(Intent.ACTION_SEND);
-                    send.setType("text/plain");
-                    send.putExtra(Intent.EXTRA_TEXT, link);
-                    startActivity(Intent.createChooser(send, V2RayConfigBuilder.name(link)));
-                }
-                catch (Exception e)
-                {
-                    Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
-                }
-            }
-
-            @Override
-            public void onDelete(String link)
-            {
-                new AlertDialog.Builder(requireContext())
-                        .setTitle(V2RayConfigBuilder.name(link))
-                        .setMessage(getString(R.string.delete_profile) + "?")
-                        .setPositiveButton(R.string.v2ray_delete, (d, w) -> {
-                            if (link.equals(SingBoxVpnService.getLink()) && SingBoxVpnService.isRunning())
-                            {
-                                SingBoxVpnService.stop(requireContext());
-                            }
-                            links.remove(link);
-                            store.save(links);
-                            adapter.notifyDataSetChanged();
-                        })
-                        .setNegativeButton(R.string.v2ray_cancel, null)
-                        .show();
-            }
-        });
         profileList.setAdapter(adapter);
 
         LinearLayout emptyView = new LinearLayout(context);
         emptyView.setOrientation(LinearLayout.VERTICAL);
         emptyView.setGravity(android.view.Gravity.CENTER);
-        float density = getResources().getDisplayMetrics().density;
-        int pad = (int) (24 * density);
+        int pad = (int) (24 * getResources().getDisplayMetrics().density);
         emptyView.setPadding(pad, pad, pad, pad);
 
         TextView hint = new TextView(context);
-        hint.setText(getString(R.string.no_profiles));
-        hint.setTextColor(0x99FFFFFF);
-        hint.setTextSize(15);
+        hint.setText("No sing-box profiles");
         hint.setGravity(android.view.Gravity.CENTER);
         emptyView.addView(hint);
 
         Button getFree = new Button(context);
-        getFree.setText(getString(R.string.fetch_servers));
-        getFree.setAllCaps(false);
-        getFree.setTextColor(0xFFFFFFFF);
-        getFree.setTextSize(14);
-        getFree.setTypeface(null, android.graphics.Typeface.BOLD);
-        int hPad = (int) (20 * density);
-        int vPad = (int) (12 * density);
-        getFree.setPadding(hPad, vPad, hPad, vPad);
-        getFree.setBackgroundResource(R.drawable.btn_fetch_servers);
+        getFree.setText("Get free servers");
         getFree.setOnClickListener(v -> {
             startActivity(new Intent(requireContext(), FreeServersActivity.class));
         });
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT);
         lp.topMargin = pad;
-        lp.setMarginStart((int) (12 * density));
-        lp.setMarginEnd((int) (12 * density));
         emptyView.addView(getFree, lp);
 
         profileList.setEmptyView(emptyView);
@@ -269,14 +191,7 @@ public class V2RayProfileListFragment extends Fragment
                     {
                         int count = profileList.getCheckedItemCount();
 
-                        if (count == 1)
-                        {
-                            mode.setTitle(getString(R.string.one_profile_selected));
-                        }
-                        else
-                        {
-                            mode.setTitle(getString(R.string.x_profiles_selected, count));
-                        }
+                        mode.setTitle(count + " selected");
 
                         MenuItem editItem =
                                 mode.getMenu().findItem(MENU_EDIT);
@@ -299,7 +214,7 @@ public class V2RayProfileListFragment extends Fragment
                                 Menu.NONE,
                                 MENU_EDIT,
                                 0,
-                                getString(R.string.edit_profile)
+                                "Edit"
                         ).setShowAsAction(
                                 MenuItem.SHOW_AS_ACTION_IF_ROOM
                         );
@@ -308,7 +223,7 @@ public class V2RayProfileListFragment extends Fragment
                                 Menu.NONE,
                                 MENU_COPY,
                                 1,
-                                getString(R.string.copy_profile)
+                                "Copy"
                         ).setShowAsAction(
                                 MenuItem.SHOW_AS_ACTION_IF_ROOM
                         );
@@ -317,7 +232,7 @@ public class V2RayProfileListFragment extends Fragment
                                 Menu.NONE,
                                 MENU_DELETE,
                                 2,
-                                getString(R.string.delete_profile)
+                                "Delete"
                         ).setShowAsAction(
                                 MenuItem.SHOW_AS_ACTION_IF_ROOM
                         );
@@ -489,15 +404,14 @@ public class V2RayProfileListFragment extends Fragment
                             final int deleteCount = selectedLinks.size();
 
                             new AlertDialog.Builder(requireActivity())
-                                    .setTitle(R.string.delete_profile)
+                                    .setTitle("Delete profiles")
                                     .setMessage(
-                                            getString(R.string.delete_profile)
-                                                    + " ("
+                                            "Delete "
                                                     + deleteCount
-                                                    + ")?"
+                                                    + " selected profile(s)?"
                                     )
                                     .setPositiveButton(
-                                            R.string.v2ray_delete,
+                                            "Delete",
                                             (dialog, which) ->
                                             {
                                                 // Stop VPN if its profile
@@ -616,22 +530,19 @@ public class V2RayProfileListFragment extends Fragment
     private void confirmDelete(final String link)
     {
         new AlertDialog.Builder(requireActivity())
-                .setTitle(V2RayConfigBuilder.name(link))
-                .setMessage(getString(R.string.delete_profile) + "?")
+                .setMessage(
+                        "Delete " + V2RayConfigBuilder.name(link) + "?"
+                )
                 .setPositiveButton(
-                        R.string.v2ray_delete,
+                        android.R.string.ok,
                         (dialog, which) ->
                         {
-                            if (link.equals(SingBoxVpnService.getLink()) && SingBoxVpnService.isRunning())
-                            {
-                                SingBoxVpnService.stop(requireContext());
-                            }
                             links.remove(link);
                             store.save(links);
                             adapter.notifyDataSetChanged();
                         }
                 )
-                .setNegativeButton(R.string.v2ray_cancel, null)
+                .setNegativeButton(android.R.string.cancel, null)
                 .show();
     }
     public void deleteNoPingWithConfirm()

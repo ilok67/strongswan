@@ -16,7 +16,6 @@ import androidx.appcompat.app.AlertDialog;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.strongswan.android.R;
 
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
@@ -371,13 +370,13 @@ public final class V2RayProfileEditor
         scroll.addView(form.layout);
 
         String title = copyMode
-                ? context.getString(R.string.copy_profile)
-                : context.getString(R.string.v2ray_edit_profile);
+                ? "Copy profile"
+                : "Edit profile";
 
         new AlertDialog.Builder(context)
                 .setTitle(title)
                 .setView(scroll)
-                .setPositiveButton(R.string.v2ray_save, (dialog, which) ->
+                .setPositiveButton("Save", (dialog, which) ->
                 {
                     try
                     {
@@ -404,7 +403,7 @@ public final class V2RayProfileEditor
                         ).show();
                     }
                 })
-                .setNegativeButton(R.string.v2ray_cancel, null)
+                .setNegativeButton("Cancel", null)
                 .show();
     }
 
