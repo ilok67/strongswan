@@ -198,8 +198,15 @@ showTab(start);
 	@Override
 public boolean onCreateOptionsMenu(Menu menu)
 {
+    if (menu instanceof androidx.appcompat.view.menu.MenuBuilder)
+    {
+        ((androidx.appcompat.view.menu.MenuBuilder) menu).setOptionalIconsVisible(true);
+    }
+    androidx.core.view.MenuCompat.setGroupDividerEnabled(menu, true);
+
     MenuItem ping = menu.add(Menu.NONE, 9999, 0, R.string.menu_ping);
     ping.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+    ping.setIcon(R.drawable.ic_ping);
 
     return super.onCreateOptionsMenu(menu);
 }
