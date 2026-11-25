@@ -13,6 +13,7 @@ import org.strongswan.android.data.VpnType;
 import org.strongswan.android.security.LocalCertificateStore;
 import org.strongswan.android.utils.Constants;
 import org.strongswan.android.v2ray.V2RayProfileStore;
+import org.strongswan.android.awg.AwgProfileStore;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -78,15 +79,24 @@ public final class ProfileBackup
 					links.put(link);
 				}
 			}
+			JSONArray awg = new JSONArray();
+			for (JSONObject p : new AwgProfileStore(context).load())
+			{
+				if (p != null)
+				{
+					awg.put(p);
+				}
+			}
 			JSONObject root = new JSONObject();
-			root.put("version", 2);
+			root.put("version", 3);
 			root.put("profiles", arr);
 			root.put("links", links);
+			root.put("awg", awg);
 			try (OutputStream out = context.getContentResolver().openOutputStream(uri))
 			{
 				out.write(root.toString().getBytes(StandardCharsets.UTF_8));
 			}
-			return all.size() + links.length();
+			return all.size() + links.length() + awg.length();
 		}
 		finally
 		{
@@ -111,7 +121,51 @@ public final class ProfileBackup
 		JSONObject root = new JSONObject(json);
 		int ike = restoreIke(context, root.optJSONArray("profiles"));
 		int box = restoreLinks(context, root.optJSONArray("links"));
-		return ike + box;
+		int awg = restoreAwg(context, root.optJSONArray("awg"));
+		return ike + box + awg;
+	}
+
+	private static int restoreAwg(Context context, JSONArray arr)
+	{
+		if (arr == null || arr.length() == 0)
+		{
+			return 0;
+		}
+		AwgProfileStore store = new AwgProfileStore(context);
+		List<JSONObject> existing = new ArrayList<>(store.load());
+		HashSet<String> ids = new HashSet<>();
+		for (JSONObject p : existing)
+		{
+			ids.add(p.optString("id"));
+		}
+		int added = 0;
+		for (int i = 0; i < arr.length(); i++)
+		{
+			try
+			{
+				JSONObject p = arr.getJSONObject(i);
+				String id = p.optString("id", "");
+				if (id.isEmpty())
+				{
+					id = UUID.randomUUID().toString();
+					p.put("id", id);
+				}
+				if (!ids.contains(id))
+				{
+					existing.add(p);
+					ids.add(id);
+					added++;
+				}
+			}
+			catch (Exception ignored)
+			{
+			}
+		}
+		if (added > 0)
+		{
+			store.save(existing);
+		}
+		return added;
 	}
 
 	private static int restoreIke(Context context, JSONArray arr)
