@@ -51,6 +51,8 @@ public class AwgVpnService extends VpnService
 	private static volatile boolean running;
 	private static volatile String sId;
 	private static volatile String sName = "";
+	private static volatile String sLastProfile;
+	private static volatile AwgVpnService sInstance;
 
 	private final Object lock = new Object();
 	private final Object stateLock = new Object();
@@ -60,6 +62,7 @@ public class AwgVpnService extends VpnService
 	private int handle = -1;
 	private long connectedAt;
 	private volatile int generation;
+	private volatile boolean foreground;
 
 	private final ServiceConnection stateConnection = new ServiceConnection()
 	{
@@ -124,6 +127,33 @@ public class AwgVpnService extends VpnService
 		ContextCompat.startForegroundService(context, i);
 	}
 
+	public static String getLastProfile()
+	{
+		return sLastProfile;
+	}
+
+	public static void stopBlocking(Context context)
+	{
+		stopBlocking(context, false);
+	}
+
+	public static void stopBlocking(Context context, boolean updateState)
+	{
+		AwgVpnService instance = sInstance;
+		sId = null;
+		if (instance != null)
+		{
+			try
+			{
+				instance.shutdown(updateState);
+			}
+			catch (Throwable t)
+			{
+				Log.e(TAG, "stopBlocking failed", t);
+			}
+		}
+	}
+
 	public static void stop(Context context)
 	{
 		if (!running && sId == null)
@@ -140,6 +170,7 @@ public class AwgVpnService extends VpnService
 	public void onCreate()
 	{
 		super.onCreate();
+		sInstance = this;
 		handler = new Handler(Looper.getMainLooper());
 		createNotificationChannel();
 		bindService(new Intent(this, VpnStateService.class), stateConnection, Service.BIND_AUTO_CREATE);
@@ -152,12 +183,13 @@ public class AwgVpnService extends VpnService
 		if (ACTION_STOP.equals(action))
 		{
 			sId = null;
-			shutdown();
+			shutdown(true);
 			return START_NOT_STICKY;
 		}
 		if (ACTION_START.equals(action))
 		{
 			final String json = intent.getStringExtra(EXTRA_PROFILE);
+			sLastProfile = json;
 			try
 			{
 				JSONObject p = new JSONObject(json);
@@ -190,12 +222,16 @@ public class AwgVpnService extends VpnService
 	public void onRevoke()
 	{
 		sId = null;
-		shutdown();
+		shutdown(!SingBoxVpnService.hasSession());
 	}
 
 	@Override
 	public void onDestroy()
 	{
+		if (sInstance == this)
+		{
+			sInstance = null;
+		}
 		synchronized (lock)
 		{
 			closeTunnel();
@@ -211,17 +247,39 @@ public class AwgVpnService extends VpnService
 		super.onDestroy();
 	}
 
-	private void shutdown()
+	private void shutdown(boolean updateState)
 	{
 		generation++;
 		synchronized (lock)
 		{
 			closeTunnel();
 		}
-		setState(State.DISABLED);
+		if (updateState)
+		{
+			setState(State.DISABLED);
+		}
 		broadcastState(false, null);
-		stopForeground(true);
+		removeNotification();
 		stopSelf();
+	}
+
+	private void removeNotification()
+	{
+		foreground = false;
+		try
+		{
+			stopForeground(true);
+		}
+		catch (Throwable ignored)
+		{
+		}
+		try
+		{
+			((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).cancel(NOTIFICATION_ID);
+		}
+		catch (Throwable ignored)
+		{
+		}
 	}
 
 	private void startTunnel(String json, int gen)
@@ -229,12 +287,14 @@ public class AwgVpnService extends VpnService
 		try
 		{
 			awaitStateService();
-			SingBoxVpnService.stop(this);
-			for (int i = 0; i < 60 && SingBoxVpnService.isRunning(); i++)
+			if (SingBoxVpnService.hasSession() || SingBoxVpnService.isRunning())
 			{
-				Thread.sleep(50);
+				SingBoxVpnService.stopBlocking(this);
 			}
-			dropIkev2();
+			else
+			{
+				dropIkev2();
+			}
 			JSONObject p = new JSONObject(json);
 			String name = p.optString("name", "AmneziaWG");
 			InetAddress endpoint = InetAddress.getByName(p.getString("host"));
@@ -308,7 +368,7 @@ public class AwgVpnService extends VpnService
 			sId = null;
 			setError(ErrorState.GENERIC_ERROR);
 			broadcastState(false, t.getMessage());
-			stopForeground(true);
+			removeNotification();
 			stopSelf();
 		}
 	}
@@ -513,6 +573,7 @@ public class AwgVpnService extends VpnService
 
 	private void goForeground()
 	{
+		foreground = true;
 		Notification n = buildNotification();
 		if (Build.VERSION.SDK_INT >= 34)
 		{
@@ -526,6 +587,10 @@ public class AwgVpnService extends VpnService
 
 	private void updateNotification()
 	{
+		if (!foreground)
+		{
+			return;
+		}
 		NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 		nm.notify(NOTIFICATION_ID, buildNotification());
 	}

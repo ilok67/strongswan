@@ -114,8 +114,34 @@ public class AwgConfig
 		}
 		p.put("dns1", root.optString("dns1", "").trim());
 		p.put("dns2", root.optString("dns2", "").trim());
+		String country = findCountry(root, last, awg);
+		if (!country.isEmpty())
+		{
+			AwgGeo.applyCountry(p, country, 1);
+		}
 		validate(p);
 		return p;
+	}
+
+	private static String findCountry(JSONObject root, JSONObject last, JSONObject awg)
+	{
+		JSONObject api = root.optJSONObject("api_config");
+		String[] candidates = {
+			api != null ? api.optString("server_country_code", "") : "",
+			api != null ? api.optString("country_code", "") : "",
+			root.optString("server_country_code", ""),
+			root.optString("country_code", ""),
+			last.optString("server_country_code", ""),
+			awg.optString("server_country_code", "")
+		};
+		for (String c : candidates)
+		{
+			if (c != null && c.trim().length() == 2)
+			{
+				return c.trim().toUpperCase(java.util.Locale.US);
+			}
+		}
+		return "";
 	}
 
 	public static JSONObject fromConf(String text) throws Exception
