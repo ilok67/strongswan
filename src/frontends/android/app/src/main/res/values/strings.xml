@@ -65,7 +65,6 @@
     <string name="ping_servers">Ping</string>
     <string name="ping_running">Pinging…</string>
     <string name="ping_timeout">timeout</string>
-    <string name="remove_dead_profiles">Remove timed-out profiles</string>
     <string name="check_update">Update</string>
 <string name="about">About</string>
 <string name="about_text">\n\nBardia VPN(Narouie)\nVersion %1$s\n\nA free and open-source VPN client.\nUse at your own responsibility.\n\nContact me on Telegram:\nhttps://t.me/falconer1367</string>
