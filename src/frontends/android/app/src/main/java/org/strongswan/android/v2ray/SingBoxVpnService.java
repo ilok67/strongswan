@@ -239,11 +239,21 @@ public class SingBoxVpnService extends VpnService implements PlatformInterface
 		try
 		{
 			awaitStateService();
+			// Fully stop other VPN cores before opening a new TUN (avoids crash & double notification)
 			AwgVpnService.stop(this);
-			for (int i = 0; i < 60 && AwgVpnService.isRunning(); i++)
+			for (int i = 0; i < 100 && AwgVpnService.isRunning(); i++)
 			{
 				Thread.sleep(50);
 			}
+			try
+			{
+				NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+				if (nm != null)
+				{
+					nm.cancel(7202); // AmneziaWG notification id
+				}
+			}
+			catch (Exception ignored) {}
 			dropIkev2();
 			synchronized (lock)
 			{

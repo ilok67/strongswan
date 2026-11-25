@@ -18,15 +18,28 @@ import java.util.Map;
 
 public class V2RayProfileAdapter extends ArrayAdapter<String>
 {
+	public interface ActionListener
+	{
+		void onEdit(String link);
+		void onShare(String link);
+		void onDelete(String link);
+	}
+
 	private final List<String> items;
 	private final Map<String, String> pings = new HashMap<String, String>();
 	private ColorStateList nameColors;
+	private ActionListener actionListener;
 
 	public V2RayProfileAdapter(Context context, List<String> items)
 	{
 		super(context, R.layout.profile_list_item, items);
 		this.items = items;
 		sortItems();
+	}
+
+	public void setActionListener(ActionListener listener)
+	{
+		this.actionListener = listener;
 	}
 
 	public void setPing(String link, String value)
@@ -73,7 +86,7 @@ public class V2RayProfileAdapter extends ArrayAdapter<String>
 			view = LayoutInflater.from(getContext()).inflate(R.layout.profile_list_item, parent, false);
 		}
 
-		String link = getItem(position);
+		final String link = getItem(position);
 		V2RayConfigBuilder.Info info = V2RayConfigBuilder.info(link);
 		boolean active = link.equals(SingBoxVpnService.getLink()) && SingBoxVpnService.isRunning();
 
@@ -99,41 +112,72 @@ public class V2RayProfileAdapter extends ArrayAdapter<String>
 		TextView gateway = view.findViewById(R.id.profile_item_gateway);
 		gateway.setText(info.port > 0 ? info.host + ":" + info.port : info.host);
 
-	TextView pingView = view.findViewById(R.id.profile_item_ping);
-if (pingView != null)
-{
-    String ping = pings.get(link);
-    String running = getContext().getString(R.string.ping_running);
-    String timeout = getContext().getString(R.string.ping_timeout);
+		TextView pingView = view.findViewById(R.id.profile_item_ping);
+		if (pingView != null)
+		{
+			String ping = pings.get(link);
+			String running = getContext().getString(R.string.ping_running);
+			String timeout = getContext().getString(R.string.ping_timeout);
 
-    if (ping == null)
-    {
-        pingView.setText("\u2014");
-        pingView.setTextColor(0x99FFFFFF);
-    }
-    else if (running.equals(ping))
-    {
-        pingView.setText(ping);
-        pingView.setTextColor(0xFFFFA000);
-    }
-    else if (ping.endsWith("ms"))
-    {
-        pingView.setText(ping);
-        pingView.setTextColor(0xFF4ADE80);
-    }
-    else if (timeout.equals(ping))
-    {
-        pingView.setText(ping);
-        pingView.setTextColor(0xFFEF4444);
-    }
-    else
-    {
-        pingView.setText(ping);
-        pingView.setTextColor(0x99FFFFFF);
-    }
-}
+			if (ping == null)
+			{
+				pingView.setText("\u2014");
+				pingView.setTextColor(0x99FFFFFF);
+			}
+			else if (running.equals(ping))
+			{
+				pingView.setText(ping);
+				pingView.setTextColor(0xFFFFA000);
+			}
+			else if (ping.endsWith("ms"))
+			{
+				pingView.setText(ping);
+				pingView.setTextColor(0xFF4ADE80);
+			}
+			else if (timeout.equals(ping))
+			{
+				pingView.setText(ping);
+				pingView.setTextColor(0xFFEF4444);
+			}
+			else
+			{
+				pingView.setText(ping);
+				pingView.setTextColor(0x99FFFFFF);
+			}
+		}
 		view.findViewById(R.id.profile_item_username).setVisibility(View.GONE);
 		view.findViewById(R.id.profile_item_certificate).setVisibility(View.GONE);
+
+		View edit = view.findViewById(R.id.profile_action_edit);
+		View share = view.findViewById(R.id.profile_action_share);
+		View delete = view.findViewById(R.id.profile_action_delete);
+		if (edit != null)
+		{
+			edit.setOnClickListener(v -> {
+				if (actionListener != null)
+				{
+					actionListener.onEdit(link);
+				}
+			});
+		}
+		if (share != null)
+		{
+			share.setOnClickListener(v -> {
+				if (actionListener != null)
+				{
+					actionListener.onShare(link);
+				}
+			});
+		}
+		if (delete != null)
+		{
+			delete.setOnClickListener(v -> {
+				if (actionListener != null)
+				{
+					actionListener.onDelete(link);
+				}
+			});
+		}
 		return view;
 	}
 
@@ -172,7 +216,7 @@ if (pingView != null)
 		{
 			try
 			{
-				return Integer.parseInt(ping.replace(" ms", "").trim());
+				return Integer.parseInt(ping.replace(" ms", "").replace("ms", "").trim());
 			}
 			catch (NumberFormatException e)
 			{
