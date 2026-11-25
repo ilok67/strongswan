@@ -16,9 +16,17 @@ import java.util.List;
 
 public class VpnProfileAdapter extends ArrayAdapter<VpnProfile>
 {
+	public interface ActionListener
+	{
+		void onEdit(VpnProfile profile);
+		void onShare(VpnProfile profile);
+		void onDelete(VpnProfile profile);
+	}
+
 	private final int resource;
 	private final List<VpnProfile> items;
-    private final java.util.Map<String, String> pings = new java.util.HashMap<>();
+	private final java.util.Map<String, String> pings = new java.util.HashMap<>();
+	private ActionListener actionListener;
 
 	public VpnProfileAdapter(Context context, int resource, List<VpnProfile> items)
 	{
@@ -28,17 +36,23 @@ public class VpnProfileAdapter extends ArrayAdapter<VpnProfile>
 		sortItems();
 	}
 
-    public void setPing(String uuid, String value)
-    {
-	     pings.put(uuid, value);
-	     notifyDataSetChanged();
-    }
+	public void setActionListener(ActionListener listener)
+	{
+		this.actionListener = listener;
+	}
 
-   public void clearPings()
-   {
-    	pings.clear();
-    	notifyDataSetChanged();
-    }
+	public void setPing(String uuid, String value)
+	{
+		pings.put(uuid, value);
+		notifyDataSetChanged();
+	}
+
+	public void clearPings()
+	{
+		pings.clear();
+		notifyDataSetChanged();
+	}
+
 	public boolean hasMsPing(String key)
 	{
 		String ping = pings.get(key);
@@ -76,7 +90,7 @@ public class VpnProfileAdapter extends ArrayAdapter<VpnProfile>
 			vpnProfileView = inflater.inflate(resource, parent, false);
 		}
 
-		VpnProfile profile = getItem(position);
+		final VpnProfile profile = getItem(position);
 
 		TextView tv = vpnProfileView.findViewById(R.id.profile_item_name);
 		tv.setText(profile.getName());
@@ -92,31 +106,66 @@ public class VpnProfileAdapter extends ArrayAdapter<VpnProfile>
 			endpoint = endpoint + ":" + port;
 		}
 		tv.setText(endpoint);
-         TextView pingView = vpnProfileView.findViewById(R.id.profile_item_ping);
-if (pingView != null)
-{
-	String ping = pings.get(profile.getUUID().toString());
-	if (ping == null)
-	{
-		pingView.setText("—");
-		pingView.setTextColor(0x99FFFFFF);
-	}
-	else if (ping.endsWith("ms"))
-	{
-		pingView.setText(ping);
-		pingView.setTextColor(0xFF4ADE80);
-	}
-	else
-	{
-		pingView.setText(ping);
-		pingView.setTextColor(0xFFEF4444);
-	}
-}
+
+		TextView pingView = vpnProfileView.findViewById(R.id.profile_item_ping);
+		if (pingView != null)
+		{
+			String ping = pings.get(profile.getUUID().toString());
+			if (ping == null)
+			{
+				pingView.setText("—");
+				pingView.setTextColor(0x99FFFFFF);
+			}
+			else if (ping.endsWith("ms"))
+			{
+				pingView.setText(ping);
+				pingView.setTextColor(0xFF4ADE80);
+			}
+			else
+			{
+				pingView.setText(ping);
+				pingView.setTextColor(0xFFEF4444);
+			}
+		}
 		tv = vpnProfileView.findViewById(R.id.profile_item_username);
 		tv.setVisibility(View.GONE);
 
 		tv = vpnProfileView.findViewById(R.id.profile_item_certificate);
 		tv.setVisibility(View.GONE);
+
+		View edit = vpnProfileView.findViewById(R.id.profile_action_edit);
+		View share = vpnProfileView.findViewById(R.id.profile_action_share);
+		View delete = vpnProfileView.findViewById(R.id.profile_action_delete);
+		if (edit != null)
+		{
+			edit.setOnClickListener(v -> {
+				if (actionListener != null)
+				{
+					actionListener.onEdit(profile);
+				}
+			});
+			// Hide edit for managed/read-only profiles
+			edit.setVisibility(profile.isReadOnly() ? View.GONE : View.VISIBLE);
+		}
+		if (share != null)
+		{
+			share.setOnClickListener(v -> {
+				if (actionListener != null)
+				{
+					actionListener.onShare(profile);
+				}
+			});
+		}
+		if (delete != null)
+		{
+			delete.setOnClickListener(v -> {
+				if (actionListener != null)
+				{
+					actionListener.onDelete(profile);
+				}
+			});
+			delete.setVisibility(profile.isReadOnly() ? View.GONE : View.VISIBLE);
+		}
 
 		return vpnProfileView;
 	}
@@ -129,40 +178,40 @@ if (pingView != null)
 	}
 
 	private void sortItems()
-{
-	Collections.sort(this.items, new Comparator<VpnProfile>()
 	{
-		@Override
-		public int compare(VpnProfile lhs, VpnProfile rhs)
+		Collections.sort(this.items, new Comparator<VpnProfile>()
 		{
-			int c = Integer.compare(pingScore(lhs), pingScore(rhs));
-			if (c != 0)
+			@Override
+			public int compare(VpnProfile lhs, VpnProfile rhs)
 			{
-				return c;
+				int c = Integer.compare(pingScore(lhs), pingScore(rhs));
+				if (c != 0)
+				{
+					return c;
+				}
+				return lhs.getName().compareToIgnoreCase(rhs.getName());
 			}
-			return lhs.getName().compareToIgnoreCase(rhs.getName());
-		}
-	});
-}
+		});
+	}
 
-private int pingScore(VpnProfile profile)
-{
-	String ping = pings.get(profile.getUUID().toString());
-	if (ping == null)
+	private int pingScore(VpnProfile profile)
 	{
-		return Integer.MAX_VALUE - 1;
-	}
-	if (ping.endsWith("ms"))
-	{
-		try
+		String ping = pings.get(profile.getUUID().toString());
+		if (ping == null)
 		{
-			return Integer.parseInt(ping.replace(" ms", "").trim());
+			return Integer.MAX_VALUE - 1;
 		}
-		catch (NumberFormatException e)
+		if (ping.endsWith("ms"))
 		{
-			return Integer.MAX_VALUE;
+			try
+			{
+				return Integer.parseInt(ping.replace(" ms", "").replace("ms", "").trim());
+			}
+			catch (NumberFormatException e)
+			{
+				return Integer.MAX_VALUE;
+			}
 		}
+		return Integer.MAX_VALUE;
 	}
-	return Integer.MAX_VALUE;
-}
 }
