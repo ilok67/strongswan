@@ -39,7 +39,7 @@ import android.text.format.Formatter;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
-import android.annotation.SuppressLint;
+
 import org.strongswan.android.R;
 import org.strongswan.android.data.ManagedConfiguration;
 import org.strongswan.android.data.ManagedConfigurationService;
@@ -93,6 +93,8 @@ public class MainActivity extends AppCompatActivity implements OnVpnProfileSelec
 
 		ActionBar bar = getSupportActionBar();
 		bar.setDisplayShowHomeEnabled(true);
+		bar.setDisplayHomeAsUpEnabled(true);
+		bar.setHomeAsUpIndicator(R.drawable.ic_menu);
 		bar.setDisplayShowTitleEnabled(false);
 		bar.setIcon(R.mipmap.ic_launcher);
 		/* load CA certificates in a background thread */
@@ -142,6 +144,26 @@ showTab(start);
 		{
 			checkStartupPermissions();
 		}
+	}
+
+	private Menu mOptionsMenu;
+	private final java.util.List<MenuItem> mPanelItems = new java.util.ArrayList<MenuItem>();
+
+	private void showMenuPanel()
+	{
+		if (mOptionsMenu == null || mPanelItems.isEmpty())
+		{
+			return;
+		}
+		int statusBar = 0;
+		int resId = getResources().getIdentifier("status_bar_height", "dimen", "android");
+		if (resId > 0)
+		{
+			statusBar = getResources().getDimensionPixelSize(resId);
+		}
+		ActionBar bar = getSupportActionBar();
+		int barHeight = bar != null ? bar.getHeight() : 0;
+		org.strongswan.android.ui.widget.MenuPanel.show(this, mOptionsMenu, new java.util.ArrayList<MenuItem>(mPanelItems), statusBar + barHeight);
 	}
 
 	private final ActivityResultLauncher<String> mNotificationPermission = registerForActivityResult(
@@ -196,26 +218,30 @@ showTab(start);
 	}
 
 	@Override
-@SuppressLint("RestrictedApi")
 public boolean onCreateOptionsMenu(Menu menu)
 {
-    if (menu instanceof androidx.appcompat.view.menu.MenuBuilder)
-    {
-        ((androidx.appcompat.view.menu.MenuBuilder) menu).setOptionalIconsVisible(true);
-    }
-    androidx.core.view.MenuCompat.setGroupDividerEnabled(menu, true);
-
     MenuItem ping = menu.add(Menu.NONE, 9999, 0, R.string.menu_ping);
-    ping.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
-    ping.setIcon(R.drawable.ic_ping);
+    ping.setIcon(R.drawable.ic_speed);
+    ping.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 
     return super.onCreateOptionsMenu(menu);
 }
 
-
 	@Override
 	public boolean onPrepareOptionsMenu(Menu menu)
 	{
+		mOptionsMenu = menu;
+		mPanelItems.clear();
+		for (int i = 0; i < menu.size(); i++)
+		{
+			MenuItem entry = menu.getItem(i);
+			if (entry.getItemId() == 9999)
+			{
+				continue;
+			}
+			mPanelItems.add(entry);
+			entry.setVisible(false);
+		}
 		final MenuItem importProfile = menu.findItem(R.id.menu_import_profile);
 		if (importProfile != null)
 		{
@@ -229,6 +255,11 @@ public boolean onCreateOptionsMenu(Menu menu)
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item)
 	{
+		if (item.getItemId() == android.R.id.home)
+		{
+			showMenuPanel();
+			return true;
+		}
     if (item.getItemId() == 9999)
     {
         if (mTab == 2)
