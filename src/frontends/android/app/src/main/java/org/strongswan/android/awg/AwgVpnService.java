@@ -4,16 +4,12 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.app.Service;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.content.pm.ServiceInfo;
 import android.net.VpnService;
 import android.os.Build;
 import android.os.Handler;
-import android.os.IBinder;
 import android.os.Looper;
 import android.os.ParcelFileDescriptor;
 import android.os.PowerManager;
@@ -24,10 +20,6 @@ import androidx.core.content.ContextCompat;
 import org.amnezia.awg.GoBackend;
 import org.json.JSONObject;
 import org.strongswan.android.R;
-import org.strongswan.android.data.VpnProfile;
-import org.strongswan.android.logic.VpnStateService;
-import org.strongswan.android.logic.VpnStateService.ErrorState;
-import org.strongswan.android.logic.VpnStateService.State;
 import org.strongswan.android.ui.MainActivity;
 import org.strongswan.android.utils.TrafficMonitor;
 import org.strongswan.android.v2ray.SingBoxVpnService;
@@ -39,58 +31,35 @@ public class AwgVpnService extends VpnService
 {
 	public static final String ACTION_START = "org.strongswan.android.AWG_START";
 	public static final String ACTION_STOP = "org.strongswan.android.AWG_STOP";
+	public static final String ACTION_QUERY = "org.strongswan.android.AWG_QUERY";
 	public static final String ACTION_STATE = "org.strongswan.android.AWG_STATE";
+	public static final String ACTION_INTERNAL = "org.strongswan.android.AWG_INTERNAL";
 	public static final String EXTRA_PROFILE = "profile";
 	public static final String EXTRA_RUNNING = "running";
 	public static final String EXTRA_ERROR = "error";
+	public static final String EXTRA_PHASE = "phase";
+	public static final String EXTRA_ID = "id";
+	public static final String EXTRA_NAME = "name";
+	public static final String EXTRA_UPDATE_STATE = "update_state";
 
 	private static final String TAG = "AwgVpnService";
 	private static final String CHANNEL_ID = "awg_vpn";
 	private static final int NOTIFICATION_ID = 7202;
 
-	private static volatile boolean running;
-	private static volatile String sId;
-	private static volatile String sName = "";
-	private static volatile String sLastProfile;
-	private static volatile AwgVpnService sInstance;
-
 	private final Object lock = new Object();
-	private final Object stateLock = new Object();
 	private final TrafficMonitor traffic = new TrafficMonitor();
 	private Handler handler;
-	private VpnStateService stateService;
 	private int handle = -1;
 	private long connectedAt;
 	private volatile int generation;
 	private volatile boolean foreground;
-
-	private final ServiceConnection stateConnection = new ServiceConnection()
-	{
-		@Override
-		public void onServiceConnected(ComponentName name, IBinder binder)
-		{
-			synchronized (stateLock)
-			{
-				stateService = ((VpnStateService.LocalBinder) binder).getService();
-			}
-		}
-
-		@Override
-		public void onServiceDisconnected(ComponentName name)
-		{
-			synchronized (stateLock)
-			{
-				stateService = null;
-			}
-		}
-	};
 
 	private final Runnable tick = new Runnable()
 	{
 		@Override
 		public void run()
 		{
-			if (!running)
+			if (!AwgState.running)
 			{
 				return;
 			}
@@ -106,74 +75,137 @@ public class AwgVpnService extends VpnService
 
 	public static boolean isRunning()
 	{
-		return running;
+		return AwgState.running;
 	}
 
 	public static boolean isActive()
 	{
-		return sId != null;
+		return AwgState.id != null;
 	}
 
 	public static boolean isActive(String id)
 	{
-		return sId != null && sId.equals(id);
-	}
-
-	public static void start(Context context, JSONObject profile)
-	{
-		Intent i = new Intent(context, AwgVpnService.class);
-		i.setAction(ACTION_START);
-		i.putExtra(EXTRA_PROFILE, profile.toString());
-		ContextCompat.startForegroundService(context, i);
+		return AwgState.id != null && AwgState.id.equals(id);
 	}
 
 	public static String getLastProfile()
 	{
-		return sLastProfile;
+		return AwgState.lastProfile;
 	}
 
-	public static void stopBlocking(Context context)
+	public static void start(final Context context, final JSONObject profile)
 	{
-		stopBlocking(context, false);
-	}
-
-	public static void stopBlocking(Context context, boolean updateState)
-	{
-		AwgVpnService instance = sInstance;
-		sId = null;
-		if (instance != null)
+		final Context app = context.getApplicationContext();
+		AwgState.lastProfile = profile.toString();
+		AwgState.id = profile.optString("id", "awg");
+		AwgState.name = profile.optString("name", "AmneziaWG");
+		new Thread(new Runnable()
 		{
-			try
+			@Override
+			public void run()
 			{
-				instance.shutdown(updateState);
+				try
+				{
+					if (SingBoxVpnService.hasSession() || SingBoxVpnService.isRunning())
+					{
+						SingBoxVpnService.stopBlocking(app);
+					}
+					else
+					{
+						AwgBridge.dropIkev2();
+					}
+				}
+				catch (Throwable t)
+				{
+					Log.e(TAG, "handover failed", t);
+				}
+				Intent i = new Intent(app, AwgVpnService.class);
+				i.setAction(ACTION_START);
+				i.putExtra(EXTRA_PROFILE, profile.toString());
+				try
+				{
+					ContextCompat.startForegroundService(app, i);
+				}
+				catch (Throwable t)
+				{
+					Log.e(TAG, "start failed", t);
+					AwgState.id = null;
+				}
 			}
-			catch (Throwable t)
-			{
-				Log.e(TAG, "stopBlocking failed", t);
-			}
-		}
+		}).start();
 	}
 
 	public static void stop(Context context)
 	{
-		if (!running && sId == null)
+		stopBlocking(context, true, false);
+	}
+
+	public static void stopBlocking(Context context)
+	{
+		stopBlocking(context, false, true);
+	}
+
+	public static void stopBlocking(Context context, boolean updateState)
+	{
+		stopBlocking(context, updateState, true);
+	}
+
+	private static void stopBlocking(Context context, boolean updateState, boolean wait)
+	{
+		if (!isActive())
 		{
 			return;
 		}
-		sId = null;
-		Intent i = new Intent(context, AwgVpnService.class);
+		Intent i = new Intent(context.getApplicationContext(), AwgVpnService.class);
 		i.setAction(ACTION_STOP);
-		context.startService(i);
+		i.putExtra(EXTRA_UPDATE_STATE, updateState);
+		try
+		{
+			context.getApplicationContext().startService(i);
+		}
+		catch (Throwable t)
+		{
+			Log.e(TAG, "stop failed", t);
+			AwgState.id = null;
+			AwgState.running = false;
+			return;
+		}
+		if (!wait || Looper.myLooper() == Looper.getMainLooper())
+		{
+			return;
+		}
+		long deadline = System.currentTimeMillis() + 6000;
+		while (isActive() && System.currentTimeMillis() < deadline)
+		{
+			try
+			{
+				Thread.sleep(50);
+			}
+			catch (InterruptedException e)
+			{
+				break;
+			}
+		}
+		if (isActive())
+		{
+			AwgState.id = null;
+			AwgState.running = false;
+		}
+		try
+		{
+			Thread.sleep(150);
+		}
+		catch (InterruptedException ignored)
+		{
+		}
 	}
 
 	@Override
 	public void onCreate()
 	{
 		super.onCreate();
-		sInstance = this;
 		handler = new Handler(Looper.getMainLooper());
 		createNotificationChannel();
-		bindService(new Intent(this, VpnStateService.class), stateConnection, Service.BIND_AUTO_CREATE);
 	}
 
 	@Override
@@ -182,23 +214,39 @@ public class AwgVpnService extends VpnService
 		String action = intent != null ? intent.getAction() : null;
 		if (ACTION_STOP.equals(action))
 		{
-			sId = null;
-			shutdown(true);
+			AwgState.id = null;
+			shutdown(intent.getBooleanExtra(EXTRA_UPDATE_STATE, true));
+			return START_NOT_STICKY;
+		}
+		if (ACTION_QUERY.equals(action))
+		{
+			if (AwgState.running)
+			{
+				sendInternal("connected", false, null);
+			}
+			else if (AwgState.id != null)
+			{
+				sendInternal("connecting", false, null);
+			}
+			else
+			{
+				sendInternal("stopped", false, null);
+				stopSelf();
+			}
 			return START_NOT_STICKY;
 		}
 		if (ACTION_START.equals(action))
 		{
 			final String json = intent.getStringExtra(EXTRA_PROFILE);
-			sLastProfile = json;
 			try
 			{
 				JSONObject p = new JSONObject(json);
-				sId = p.optString("id", "awg");
-				sName = p.optString("name", "AmneziaWG");
+				AwgState.id = p.optString("id", "awg");
+				AwgState.name = p.optString("name", "AmneziaWG");
 			}
 			catch (Exception e)
 			{
-				sId = null;
+				AwgState.id = null;
 				stopSelf();
 				return START_NOT_STICKY;
 			}
@@ -221,28 +269,16 @@ public class AwgVpnService extends VpnService
 	@Override
 	public void onRevoke()
 	{
-		sId = null;
-		shutdown(!SingBoxVpnService.hasSession());
+		AwgState.id = null;
+		shutdown(true);
 	}
 
 	@Override
 	public void onDestroy()
 	{
-		if (sInstance == this)
-		{
-			sInstance = null;
-		}
 		synchronized (lock)
 		{
 			closeTunnel();
-		}
-		try
-		{
-			unbindService(stateConnection);
-		}
-		catch (Exception e)
-		{
-			Log.e(TAG, "unbind failed", e);
 		}
 		super.onDestroy();
 	}
@@ -254,10 +290,8 @@ public class AwgVpnService extends VpnService
 		{
 			closeTunnel();
 		}
-		if (updateState)
-		{
-			setState(State.DISABLED);
-		}
+		AwgState.id = null;
+		sendInternal("stopped", updateState, null);
 		broadcastState(false, null);
 		removeNotification();
 		stopSelf();
@@ -286,17 +320,9 @@ public class AwgVpnService extends VpnService
 	{
 		try
 		{
-			awaitStateService();
-			if (SingBoxVpnService.hasSession() || SingBoxVpnService.isRunning())
-			{
-				SingBoxVpnService.stopBlocking(this);
-			}
-			else
-			{
-				dropIkev2();
-			}
 			JSONObject p = new JSONObject(json);
 			String name = p.optString("name", "AmneziaWG");
+			sendInternal("connecting", false, null);
 			InetAddress endpoint = InetAddress.getByName(p.getString("host"));
 			String endpointIp = endpoint instanceof Inet6Address ? stripScope(endpoint.getHostAddress()) : endpoint.getHostAddress();
 			String uapi = AwgConfig.toUapi(p, endpointIp);
@@ -307,7 +333,6 @@ public class AwgVpnService extends VpnService
 					return;
 				}
 				closeTunnel();
-				startConnection(name);
 				Builder builder = new Builder();
 				configureBuilder(builder, p, name);
 				ParcelFileDescriptor pfd = builder.establish();
@@ -345,13 +370,13 @@ public class AwgVpnService extends VpnService
 			{
 				throw new IllegalStateException("no handshake from server");
 			}
-			running = true;
+			AwgState.running = true;
 			connectedAt = System.currentTimeMillis();
 			traffic.reset();
 			traffic.update();
-			setState(State.CONNECTED);
 			updateNotification();
 			handler.post(tick);
+			sendInternal("connected", false, null);
 			broadcastState(true, null);
 		}
 		catch (Throwable t)
@@ -365,8 +390,8 @@ public class AwgVpnService extends VpnService
 			{
 				closeTunnel();
 			}
-			sId = null;
-			setError(ErrorState.GENERIC_ERROR);
+			AwgState.id = null;
+			sendInternal("error", false, t.getMessage());
 			broadcastState(false, t.getMessage());
 			removeNotification();
 			stopSelf();
@@ -456,82 +481,9 @@ public class AwgVpnService extends VpnService
 		return new String[]{v, v.contains(":") ? "128" : "32"};
 	}
 
-	private void awaitStateService() throws InterruptedException
-	{
-		for (int i = 0; i < 40; i++)
-		{
-			synchronized (stateLock)
-			{
-				if (stateService != null)
-				{
-					return;
-				}
-			}
-			Thread.sleep(50);
-		}
-	}
-
-	private void dropIkev2() throws InterruptedException
-	{
-		synchronized (stateLock)
-		{
-			if (stateService == null || running || stateService.getState() == State.DISABLED)
-			{
-				return;
-			}
-			stateService.disconnect();
-		}
-		for (int i = 0; i < 100; i++)
-		{
-			synchronized (stateLock)
-			{
-				if (stateService == null || stateService.getState() == State.DISABLED)
-				{
-					return;
-				}
-			}
-			Thread.sleep(50);
-		}
-	}
-
-	private void startConnection(String name)
-	{
-		synchronized (stateLock)
-		{
-			if (stateService != null)
-			{
-				VpnProfile profile = new VpnProfile();
-				profile.setName(name);
-				stateService.startConnection(profile);
-			}
-		}
-	}
-
-	private void setState(State state)
-	{
-		synchronized (stateLock)
-		{
-			if (stateService != null)
-			{
-				stateService.setState(state);
-			}
-		}
-	}
-
-	private void setError(ErrorState error)
-	{
-		synchronized (stateLock)
-		{
-			if (stateService != null)
-			{
-				stateService.setError(error);
-			}
-		}
-	}
-
 	private void closeTunnel()
 	{
-		running = false;
+		AwgState.running = false;
 		handler.removeCallbacks(tick);
 		if (handle != -1)
 		{
@@ -546,6 +498,21 @@ public class AwgVpnService extends VpnService
 				Log.e(TAG, "turn off failed", t);
 			}
 		}
+	}
+
+	private void sendInternal(String phase, boolean updateState, String error)
+	{
+		Intent i = new Intent(ACTION_INTERNAL);
+		i.setPackage(getPackageName());
+		i.putExtra(EXTRA_PHASE, phase);
+		i.putExtra(EXTRA_ID, AwgState.id);
+		i.putExtra(EXTRA_NAME, AwgState.name);
+		i.putExtra(EXTRA_UPDATE_STATE, updateState);
+		if (error != null)
+		{
+			i.putExtra(EXTRA_ERROR, error);
+		}
+		sendBroadcast(i);
 	}
 
 	private void broadcastState(boolean isRunning, String error)
@@ -598,7 +565,7 @@ public class AwgVpnService extends VpnService
 	private Notification buildNotification()
 	{
 		int piFlags = PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= 23 ? PendingIntent.FLAG_IMMUTABLE : 0);
-		Intent stop = new Intent(this, AwgVpnService.class).setAction(ACTION_STOP);
+		Intent stop = new Intent(this, AwgVpnService.class).setAction(ACTION_STOP).putExtra(EXTRA_UPDATE_STATE, true);
 		PendingIntent stopIntent = PendingIntent.getService(this, 0, stop, piFlags);
 		PendingIntent openIntent = PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class), piFlags);
 
@@ -609,11 +576,11 @@ public class AwgVpnService extends VpnService
 		b.setOnlyAlertOnce(true);
 		b.setContentIntent(openIntent);
 		b.addAction(R.drawable.ic_notification_disconnect, getString(R.string.disconnect), stopIntent);
-		if (running)
+		if (AwgState.running)
 		{
 			b.setContentTitle(getString(R.string.state_connected));
 			b.setContentText(traffic.getLine());
-			b.setSubText(sName);
+			b.setSubText(AwgState.name);
 			b.setColor(ContextCompat.getColor(this, R.color.success_text));
 			b.setUsesChronometer(true);
 			if (connectedAt > 0)
@@ -624,7 +591,7 @@ public class AwgVpnService extends VpnService
 		else
 		{
 			b.setContentTitle(getString(R.string.state_connecting));
-			b.setContentText(sName);
+			b.setContentText(AwgState.name);
 			b.setColor(ContextCompat.getColor(this, R.color.warning_text));
 		}
 		return b.build();
