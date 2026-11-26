@@ -22,6 +22,7 @@ import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import org.strongswan.android.logic.VpnStateService;
 import org.strongswan.android.R;
 import org.strongswan.android.data.ManagedConfiguration;
 import org.strongswan.android.data.ManagedConfigurationService;
@@ -301,6 +302,80 @@ private final androidx.activity.result.ActivityResultLauncher<String[]> mImportL
 		{
 			outState.putIntegerArrayList(SELECTED_KEY, new ArrayList<>(mSelected));
 		}
+	}
+
+	private VpnStateService mStateService;
+	private final VpnStateService.VpnStateListener mStateListener = new VpnStateService.VpnStateListener()
+	{
+		@Override
+		public void stateChanged()
+		{
+			updateActiveProfile();
+		}
+	};
+	private final android.content.ServiceConnection mStateConnection = new android.content.ServiceConnection()
+	{
+		@Override
+		public void onServiceConnected(android.content.ComponentName name, android.os.IBinder service)
+		{
+			mStateService = ((VpnStateService.LocalBinder) service).getService();
+			mStateService.registerListener(mStateListener);
+			updateActiveProfile();
+		}
+
+		@Override
+		public void onServiceDisconnected(android.content.ComponentName name)
+		{
+			mStateService = null;
+		}
+	};
+
+	private void updateActiveProfile()
+	{
+		final android.app.Activity activity = getActivity();
+		if (activity == null)
+		{
+			return;
+		}
+		activity.runOnUiThread(() -> {
+			if (mListAdapter == null)
+			{
+				return;
+			}
+			String uuid = null;
+			VpnStateService service = mStateService;
+			if (service != null && service.getState() == VpnStateService.State.CONNECTED && service.getProfile() != null)
+			{
+				uuid = service.getProfile().getUUID().toString();
+			}
+			mListAdapter.setActiveUuid(uuid);
+		});
+	}
+
+	@Override
+	public void onStart()
+	{
+		super.onStart();
+		requireContext().getApplicationContext().bindService(
+			new Intent(requireContext(), VpnStateService.class), mStateConnection, android.app.Service.BIND_AUTO_CREATE);
+	}
+
+	@Override
+	public void onStop()
+	{
+		if (mStateService != null)
+		{
+			mStateService.unregisterListener(mStateListener);
+			mStateService = null;
+		}
+		try
+		{
+			requireContext().getApplicationContext().unbindService(mStateConnection);
+		}
+		catch (Exception ignored)
+		{
+		}
+		super.onStop();
 	}
 
 	@Override
