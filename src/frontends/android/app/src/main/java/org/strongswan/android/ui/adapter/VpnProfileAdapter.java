@@ -26,6 +26,18 @@ public class VpnProfileAdapter extends ArrayAdapter<VpnProfile>
 	}
 
 	private ActionListener actionListener;
+	private String activeUuid;
+	private android.content.res.ColorStateList nameColors;
+
+	public void setActiveUuid(String uuid)
+	{
+		if (uuid == null ? activeUuid == null : uuid.equals(activeUuid))
+		{
+			return;
+		}
+		activeUuid = uuid;
+		notifyDataSetChanged();
+	}
 
 	public void setActionListener(ActionListener listener)
 	{
@@ -95,7 +107,20 @@ public class VpnProfileAdapter extends ArrayAdapter<VpnProfile>
 		VpnProfile profile = getItem(position);
 
 		TextView tv = vpnProfileView.findViewById(R.id.profile_item_name);
-		tv.setText(profile.getName());
+		if (nameColors == null)
+		{
+			nameColors = tv.getTextColors();
+		}
+		boolean active = activeUuid != null && activeUuid.equals(profile.getUUID().toString());
+		tv.setText(active ? "\u25CF " + profile.getName() : profile.getName());
+		if (active)
+		{
+			tv.setTextColor(0xFF4ADE80);
+		}
+		else
+		{
+			tv.setTextColor(nameColors);
+		}
 
 		tv = vpnProfileView.findViewById(R.id.profile_item_managed);
 		tv.setVisibility(profile.isReadOnly() ? View.VISIBLE : View.GONE);
