@@ -39,7 +39,7 @@ import android.text.format.Formatter;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
-
+import android.annotation.SuppressLint;
 import org.strongswan.android.R;
 import org.strongswan.android.data.ManagedConfiguration;
 import org.strongswan.android.data.ManagedConfigurationService;
