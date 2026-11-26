@@ -80,6 +80,12 @@ public class StrongSwanApplication extends Application
 		StrongSwanApplication.mContext = getApplicationContext();
 		StrongSwanApplication.mInstance = this;
 
+		if (!org.strongswan.android.awg.AwgBridge.isMainProcess(this))
+		{
+			return;
+		}
+		org.strongswan.android.awg.AwgBridge.init(this);
+
 		mDatabaseHelper = new DatabaseHelper(mContext);
 
 		mManagedConfigurationService = new ManagedConfigurationService(mContext);
