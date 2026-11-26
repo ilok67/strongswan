@@ -322,17 +322,24 @@ public boolean onCreateOptionsMenu(Menu menu)
 	@Override
 	public void onVpnProfileSelected(VpnProfile profile)
 	{
-		if (SingBoxVpnService.hasSession())
-		{
-			SingBoxVpnService.stopBlocking(this, true);
-		}
-		if (AwgVpnService.isActive())
-		{
-			AwgVpnService.stopBlocking(this, true);
-		}
-		Intent intent = new Intent(this, VpnProfileControlActivity.class);
+		final Intent intent = new Intent(this, VpnProfileControlActivity.class);
 		intent.setAction(VpnProfileControlActivity.START_PROFILE);
 		intent.putExtra(VpnProfileControlActivity.EXTRA_VPN_PROFILE_UUID, profile.getUUID().toString());
+		if (SingBoxVpnService.hasSession() || AwgVpnService.isActive())
+		{
+			new Thread(() -> {
+				if (SingBoxVpnService.hasSession())
+				{
+					SingBoxVpnService.stopBlocking(this, true);
+				}
+				if (AwgVpnService.isActive())
+				{
+					AwgVpnService.stopBlocking(this, true);
+				}
+				runOnUiThread(() -> startActivity(intent));
+			}).start();
+			return;
+		}
 		startActivity(intent);
 	}
 
