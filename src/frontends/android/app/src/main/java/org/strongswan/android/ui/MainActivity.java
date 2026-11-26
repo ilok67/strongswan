@@ -196,6 +196,7 @@ showTab(start);
 	}
 
 	@Override
+@SuppressLint("RestrictedApi")
 public boolean onCreateOptionsMenu(Menu menu)
 {
     if (menu instanceof androidx.appcompat.view.menu.MenuBuilder)
@@ -210,6 +211,7 @@ public boolean onCreateOptionsMenu(Menu menu)
 
     return super.onCreateOptionsMenu(menu);
 }
+
 
 	@Override
 	public boolean onPrepareOptionsMenu(Menu menu)
