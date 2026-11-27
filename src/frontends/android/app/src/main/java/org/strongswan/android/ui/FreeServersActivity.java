@@ -225,9 +225,16 @@ public class FreeServersActivity extends AppCompatActivity
 		{
 			return importV2RayProfiles(this);
 		}
-		return saveProfiles(SPECIAL_CODE.equals(location)
+		return importIkev2Profiles(this, location);
+	}
+
+	/** Fetch IKEv2 free servers for a location code without UI. */
+	public static int importIkev2Profiles(android.content.Context context, String location) throws Exception
+	{
+		List<VpnProfile> profiles = "special".equals(location)
 			? fetchSecondaryProfiles()
-			: fetchPrimaryProfiles(location));
+			: fetchPrimaryProfiles(location);
+		return saveProfiles(context, profiles);
 	}
 
 	public static int importV2RayProfiles(android.content.Context context) throws Exception
@@ -263,9 +270,9 @@ public class FreeServersActivity extends AppCompatActivity
 		return added;
 	}
 
-	private int saveProfiles(List<VpnProfile> profiles)
+	private static int saveProfiles(android.content.Context context, List<VpnProfile> profiles)
 	{
-		VpnProfileDataSource dataSource = new VpnProfileSource(this);
+		VpnProfileDataSource dataSource = new VpnProfileSource(context);
 		dataSource.open();
 
 		ArrayList<String> uuids = new ArrayList<>();
@@ -295,7 +302,7 @@ public class FreeServersActivity extends AppCompatActivity
 		{
 			Intent intent = new Intent(Constants.VPN_PROFILES_CHANGED);
 			intent.putExtra(Constants.VPN_PROFILES_MULTIPLE, uuids.toArray(new String[0]));
-			LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+			LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
 		}
 		return uuids.size();
 	}

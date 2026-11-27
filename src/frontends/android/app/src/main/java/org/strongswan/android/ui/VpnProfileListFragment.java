@@ -1057,10 +1057,7 @@ private void pingAll()
 			}
 			final String location = codes.get(pos);
 			dialog.dismiss();
-			android.content.Intent intent = new android.content.Intent(getActivity(), FreeServersActivity.class);
-			intent.putExtra("location", location);
-			intent.putExtra("auto_fetch", true);
-			startActivity(intent);
+			fetchIkev2InBackground(location);
 		});
 		dialog.show();
 		if (dialog.getWindow() != null)
@@ -1069,6 +1066,32 @@ private void pingAll()
 			lp.width = (int) (getResources().getDisplayMetrics().widthPixels * 0.88);
 			dialog.getWindow().setAttributes(lp);
 		}
+	}
+
+
+	private void fetchIkev2InBackground(final String location)
+	{
+		final android.app.Activity activity = getActivity();
+		if (activity == null)
+		{
+			return;
+		}
+		Toast.makeText(activity, R.string.fetch_servers_loading, Toast.LENGTH_SHORT).show();
+		final android.content.Context appCtx = activity.getApplicationContext();
+		java.util.concurrent.Executors.newSingleThreadExecutor().execute(() -> {
+			try
+			{
+				final int count = FreeServersActivity.importIkev2Profiles(appCtx, location);
+				activity.runOnUiThread(() ->
+					Toast.makeText(activity, getString(R.string.fetch_servers_done, count), Toast.LENGTH_LONG).show());
+			}
+			catch (Exception e)
+			{
+				final String msg = e.getMessage() != null ? e.getMessage() : e.toString();
+				activity.runOnUiThread(() ->
+					Toast.makeText(activity, getString(R.string.fetch_servers_failed, msg), Toast.LENGTH_LONG).show());
+			}
+		});
 	}
 
 }
