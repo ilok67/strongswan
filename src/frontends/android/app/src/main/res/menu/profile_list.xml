@@ -1,46 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
       xmlns:app="http://schemas.android.com/apk/res-auto">
-
-    <group android:id="@+id/group_main">
-        <item
-            android:id="@+id/fetch_servers"
-            android:icon="@drawable/ic_fetch_servers"
-            android:title="@string/fetch_servers"
-            app:showAsAction="never" />
-
-        <item
-            android:id="@+id/app_filter"
-            android:icon="@drawable/ic_app_filter"
-            android:title="@string/app_filter"
-            app:showAsAction="never" />
-
-        <item
-            android:id="@+id/delete_no_ping"
-            android:icon="@drawable/ic_delete_no_ping"
-            android:title="@string/delete_no_ping"
-            app:showAsAction="never" />
-    </group>
-
-    <group android:id="@+id/group_second">
-        <item
-            android:id="@+id/backup_profiles"
-            android:icon="@drawable/ic_backup"
-            android:title="@string/backup_title"
-            app:showAsAction="never" />
-
-        <item
-            android:id="@+id/check_update"
-            android:icon="@drawable/ic_check_update"
-            android:title="@string/check_update"
-            app:showAsAction="never" />
-    </group>
-
-    <group android:id="@+id/group_last">
-        <item
-            android:id="@+id/about"
-            android:icon="@drawable/ic_about"
-            android:title="@string/about"
-            app:showAsAction="never" />
-    </group>
+     
+    <item
+        android:id="@+id/fetch_servers"
+        android:title="@string/fetch_servers"
+        app:showAsAction="never" />
+    
+    <item
+        android:id="@+id/app_filter"
+        android:title="@string/app_filter"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/delete_no_ping"
+        android:title="@string/delete_no_ping"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/backup_profiles"
+        android:title="@string/backup_title"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/check_update"
+        android:title="@string/check_update"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/help"
+        android:title="@string/help"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/help"
+        android:title="@string/help_title"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/about"
+        android:title="@string/about"
+        app:showAsAction="never" />
 </menu>
