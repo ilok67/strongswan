@@ -96,9 +96,7 @@
             android:name=".ui.LogActivity"
             android:label="@string/log_title" />
 
-        <activity
-            android:name=".ui.HelpActivity"
-            android:label="@string/help" />
+        
 
         <activity
             android:name=".ui.HelpActivity"
