@@ -212,9 +212,37 @@ private final androidx.activity.result.ActivityResultLauncher<String[]> mImportL
        }
        if (emptyBtn != null)
        {
-        emptyBtn.setOnClickListener(v ->
-        startActivity(new Intent(getActivity(), FreeServersActivity.class)));
+        emptyBtn.setOnClickListener(v -> showFetchDialog());
          }
+
+		// FAB for get server when list is not empty
+		try {
+			android.view.ViewGroup root = (android.view.ViewGroup) view;
+			android.content.Context fabContext = new android.view.ContextThemeWrapper(
+				requireContext(), com.google.android.material.R.style.Theme_MaterialComponents_DayNight);
+			com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton fab =
+				new com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton(fabContext);
+			fab.setText(R.string.awg_get_server);
+			fab.setIconResource(R.drawable.ic_add);
+			fab.setIconTint(android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#04210F")));
+			fab.setTextColor(android.graphics.Color.parseColor("#04210F"));
+			fab.setBackgroundTintList(android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#4ADE80")));
+			fab.setOnClickListener(v -> showFetchDialog());
+			android.widget.FrameLayout.LayoutParams flp = new android.widget.FrameLayout.LayoutParams(
+				android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
+				android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+			flp.gravity = android.view.Gravity.BOTTOM | android.view.Gravity.END;
+			int m = (int) (16 * getResources().getDisplayMetrics().density);
+			flp.setMargins(m, m, m, m);
+			root.addView(fab, flp);
+			mListView.setPadding(0, 0, 0, (int) (88 * getResources().getDisplayMetrics().density));
+			// hide FAB when empty (empty view shows the button)
+			mListView.getViewTreeObserver().addOnGlobalLayoutListener(() -> {
+				boolean empty = mListAdapter == null || mListAdapter.getCount() == 0;
+				fab.setVisibility(empty ? android.view.View.GONE : android.view.View.VISIBLE);
+			});
+		} catch (Exception ignored) {}
+
 		Utils.applyWindowInsetsAsPaddingForLists(mListView);
 
 		if (!mReadOnly)
@@ -406,18 +434,11 @@ private final androidx.activity.result.ActivityResultLauncher<String[]> mImportL
 	@Override
 	public void onPrepareMenu(@NonNull Menu menu)
 	{
-		
 	}
 
 @Override
 public boolean onMenuItemSelected(@NonNull MenuItem menuItem)
 {
-    if (menuItem.getItemId() == R.id.fetch_servers)
-    {
-        startActivity(new Intent(getActivity(), FreeServersActivity.class));
-        return true;
-    }
-	
 	if (menuItem.getItemId() == R.id.check_update)
        {
 	checkUpdate();
