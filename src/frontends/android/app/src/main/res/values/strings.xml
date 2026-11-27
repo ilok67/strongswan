@@ -65,7 +65,7 @@
     <string name="pref_default_vpn_profile">Default VPN profile</string>
     <string name="pref_default_vpn_profile_mru">Connect to most recently used profile</string>
     <string name="pref_power_whitelist_title">Ignore battery optimizations</string>
-    <string name="pref_power_whitelist_summary">Don\'t show a warning if the app is not on the device\'s power whitelist</string>
+    <string name="pref_power_whitelist_summary">Don't show a warning if the app is not on the device's power whitelist</string>
 
     <!-- Log view -->
     <string name="log_title">Log</string>
@@ -115,7 +115,7 @@
     <string name="profile_remote_id_hint_gateway">Defaults to \"%1$s\". Custom values are explicitly sent to the server and enforced during authentication</string>
     <string name="profile_local_id_label">Client identity</string>
     <string name="profile_local_id_hint_user">Defaults to the configured username. Custom values may be used if expected/required by the server</string>
-    <string name="profile_local_id_hint_cert">Defaults to the certificate\'s subject identity. Custom values may be used if expected/required by the server. Note that these usually must be confirmed by the certificate (auto-completion is provided for the certificate\'s alternative identities, if any)</string>
+    <string name="profile_local_id_hint_cert">Defaults to the certificate's subject identity. Custom values may be used if expected/required by the server. Note that these usually must be confirmed by the certificate (auto-completion is provided for the certificate's alternative identities, if any)</string>
     <string name="profile_dns_servers_label">DNS servers</string>
     <string name="profile_dns_servers_hint">Custom DNS servers to use when connected to the VPN (separated by spaces, e.g. \"8.8.8.8 2001:4860:4860::8888\"), defaults to those received from the VPN server</string>
     <string name="profile_mtu_label">MTU of the VPN tunnel device</string>
@@ -125,11 +125,11 @@
     <string name="profile_nat_keepalive_label">NAT-T keepalive interval</string>
     <string name="profile_nat_keepalive_hint">Small packets are sent to keep mappings on NAT routers alive if there is no other traffic. In order to save energy the default interval is 45 seconds. Behind NAT routers that remove mappings early this might be too high, try 20 seconds or less in that case.</string>
     <string name="profile_cert_req_label">Send certificate requests</string>
-    <string name="profile_cert_req_hint">Certificate requests are sent for all available or selected CA certificates. To reduce the size of the IKE_AUTH message this can be disabled. However, this only works if the server sends its certificate even if it didn\'t receive any certificate requests.</string>
+    <string name="profile_cert_req_hint">Certificate requests are sent for all available or selected CA certificates. To reduce the size of the IKE_AUTH message this can be disabled. However, this only works if the server sends its certificate even if it didn't receive any certificate requests.</string>
     <string name="profile_use_ocsp_label">Use OCSP to check certificate</string>
     <string name="profile_use_ocsp_hint">Use the Online Certificate Status Protocol (OCSP), if available, to check that the server certificate has not been revoked.</string>
     <string name="profile_use_crl_label">Use CRLs to check certificate</string>
-    <string name="profile_use_crl_hint">Use Certificate Revocation Lists (CRL), if available, to check that the server certificate has not been revoked. CRLs are only used if OCSP doesn\'t yield a result.</string>
+    <string name="profile_use_crl_hint">Use Certificate Revocation Lists (CRL), if available, to check that the server certificate has not been revoked. CRLs are only used if OCSP doesn't yield a result.</string>
     <string name="profile_strict_revocation_label">Use strict revocation checking</string>
     <string name="profile_strict_revocation_hint">In strict mode the authentication will fail not only if the server certificate has been revoked but also if its status is unknown (e.g. because OCSP failed and no valid CRL was available).</string>
     <string name="profile_rsa_pss_label">Use RSA/PSS signatures</string>
@@ -185,10 +185,10 @@
     <string name="alert_text_no_subnets">Please enter valid subnets and/or IP addresses, separated by spaces</string>
     <string name="alert_text_no_ips">Please enter valid IP addresses, separated by spaces</string>
     <string name="alert_text_no_proposal">Please enter a valid list of algorithms, separated by hyphens</string>
-    <string name="alert_text_vpn_profile_read_only">This VPN profile is managed by your administrator and can\'t be modified. You can only change the password or user certificate</string>
+    <string name="alert_text_vpn_profile_read_only">This VPN profile is managed by your administrator and can't be modified. You can only change the password or user certificate</string>
     <string name="tnc_notice_title">EAP-TNC may affect your privacy</string>
     <string name="tnc_notice_subtitle">Device data is sent to the server operator</string>
-    <string name="tnc_notice_details"><![CDATA[<p>Trusted Network Connect (TNC) allows server operators to assess the health of a client device.</p><p>For that purpose the server operator may request data such as a unique identifier, a list of installed packages, system settings, or cryptographic checksums of files.</p><b>Any data will be sent only after verifying the server\'s identity.</b>]]></string>
+    <string name="tnc_notice_details"><![CDATA[<p>Trusted Network Connect (TNC) allows server operators to assess the health of a client device.</p><p>For that purpose the server operator may request data such as a unique identifier, a list of installed packages, system settings, or cryptographic checksums of files.</p><b>Any data will be sent only after verifying the server's identity.</b>]]></string>
 
     <!-- Trusted certificate selection -->
     <string name="trusted_certs_title">CA certificates</string>
@@ -260,7 +260,7 @@
     </plurals>
     <string name="cancel_retry">Cancel retry</string>
     <string name="power_whitelist_title">Disable battery optimizations</string>
-    <string name="power_whitelist_text">Please confirm the next dialog to add the app to the device\'s power whitelist so it can ignore battery optimizations and schedule NAT keep-alives and rekeyings accurately in order to constantly keep reachable while the VPN is established.</string>
+    <string name="power_whitelist_text">Please confirm the next dialog to add the app to the device's power whitelist so it can ignore battery optimizations and schedule NAT keep-alives and rekeyings accurately in order to constantly keep reachable while the VPN is established.</string>
     <string name="certificate_required_title">User certificate required</string>
     <string name="certificate_required_text">Please edit the VPN profile to select one.</string>
 
