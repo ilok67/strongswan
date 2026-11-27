@@ -17,12 +17,18 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
+import android.graphics.Color;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
+import org.strongswan.android.ui.widget.UiStyle;
+import org.strongswan.android.utils.Str;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -55,6 +61,11 @@ public class V2RayProfileListFragment extends Fragment
     private ListView profileList;
     private ActionMode actionMode;
     private volatile boolean pinging;
+    private volatile boolean fetching;
+    private Button getFreeBtn;
+    private ExtendedFloatingActionButton fab;
+    private View emptyViewRef;
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     private final ActivityResultLauncher<Intent> vpnPermission =
             registerForActivityResult(
@@ -94,6 +105,7 @@ public class V2RayProfileListFragment extends Fragment
             links.clear();
             links.addAll(store.load());
             adapter.notifyDataSetChanged();
+            updateEmptyVisibility();
         }
     };
     @Override
@@ -154,17 +166,16 @@ public class V2RayProfileListFragment extends Fragment
         hint.setGravity(android.view.Gravity.CENTER);
         emptyView.addView(hint);
 
-        Button getFree = new Button(context);
-        getFree.setText(R.string.get_free_servers);
-        org.strongswan.android.ui.widget.UiStyle.fetchButton(getFree);
-        getFree.setOnClickListener(v -> {
-            startActivity(new Intent(requireContext(), FreeServersActivity.class));
-        });
+        getFreeBtn = new Button(context);
+        getFreeBtn.setText(R.string.awg_get_server);
+        UiStyle.fetchButton(getFreeBtn);
+        getFreeBtn.setOnClickListener(v -> fetchFree());
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT);
         lp.topMargin = pad;
-        emptyView.addView(getFree, lp);
+        emptyView.addView(getFreeBtn, lp);
+        emptyViewRef = emptyView;
 
         profileList.setEmptyView(emptyView);
 
@@ -492,13 +503,101 @@ public class V2RayProfileListFragment extends Fragment
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 0,
                 1f);
+        FrameLayout frame = new FrameLayout(context);
+        LinearLayout.LayoutParams fillMatch = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT);
+        frame.addView(root, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT));
+
         root.addView(emptyView, fill);
         root.addView(profileList, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 0,
                 1f));
 
-        return root;
+        Context fabContext = new android.view.ContextThemeWrapper(
+                context, com.google.android.material.R.style.Theme_MaterialComponents_DayNight);
+        fab = new ExtendedFloatingActionButton(fabContext);
+        fab.setText(R.string.awg_get_server);
+        fab.setIconResource(R.drawable.ic_add);
+        fab.setIconTint(android.content.res.ColorStateList.valueOf(Color.parseColor("#04210F")));
+        fab.setTextColor(Color.parseColor("#04210F"));
+        fab.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.parseColor("#4ADE80")));
+        fab.setOnClickListener(v -> fetchFree());
+        FrameLayout.LayoutParams flp = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+        flp.gravity = android.view.Gravity.BOTTOM | android.view.Gravity.END;
+        int m = UiStyle.dp(context, 16);
+        flp.setMargins(m, m, m, m);
+        frame.addView(fab, flp);
+
+        profileList.setClipToPadding(false);
+        profileList.setPadding(0, 0, 0, UiStyle.dp(context, 88));
+        updateEmptyVisibility();
+
+        return frame;
+    }
+
+    private void updateEmptyVisibility()
+    {
+        boolean isEmpty = links.isEmpty();
+        if (emptyViewRef != null)
+        {
+            emptyViewRef.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
+        }
+        if (profileList != null)
+        {
+            profileList.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
+        }
+        if (fab != null)
+        {
+            fab.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
+        }
+    }
+
+    private void fetchFree()
+    {
+        if (fetching)
+        {
+            return;
+        }
+        fetching = true;
+        if (getFreeBtn != null) getFreeBtn.setEnabled(false);
+        if (fab != null) fab.setEnabled(false);
+        Toast.makeText(requireContext(), R.string.fetch_servers_loading, Toast.LENGTH_SHORT).show();
+        executor.execute(() -> {
+            try
+            {
+                final int added = FreeServersActivity.importV2RayProfiles(requireContext().getApplicationContext());
+                final Activity a = getActivity();
+                if (a == null) return;
+                a.runOnUiThread(() -> {
+                    fetching = false;
+                    if (getFreeBtn != null) getFreeBtn.setEnabled(true);
+                    if (fab != null) fab.setEnabled(true);
+                    links.clear();
+                    links.addAll(store.load());
+                    if (adapter != null) adapter.notifyDataSetChanged();
+                    updateEmptyVisibility();
+                    Toast.makeText(a, getString(R.string.fetch_servers_done, added), Toast.LENGTH_LONG).show();
+                });
+            }
+            catch (Exception e)
+            {
+                final Activity a = getActivity();
+                if (a == null) return;
+                a.runOnUiThread(() -> {
+                    fetching = false;
+                    if (getFreeBtn != null) getFreeBtn.setEnabled(true);
+                    if (fab != null) fab.setEnabled(true);
+                    String msg = e.getMessage() != null ? e.getMessage() : e.toString();
+                    Toast.makeText(a, getString(R.string.fetch_servers_failed, msg), Toast.LENGTH_LONG).show();
+                });
+            }
+        });
     }
 
 
@@ -548,7 +647,12 @@ public class V2RayProfileListFragment extends Fragment
          super.onStop();
     }
 
-
+    @Override
+    public void onDestroy()
+    {
+        executor.shutdownNow();
+        super.onDestroy();
+    }
 
     private void editLink(final String selectedLink)
     {
