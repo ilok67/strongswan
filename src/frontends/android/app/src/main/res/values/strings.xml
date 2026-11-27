@@ -1,21 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-    Copyright (C) 2012-2020 Tobias Brunner
-    Copyright (C) 2012 Giuliano Grassi
-    Copyright (C) 2012 Ralf Sager
-
-    Copyright (C) secunet Security Networks AG
-
-    This program is free software; you can redistribute it and/or modify it
-    under the terms of the GNU General Public License as published by the
-    Free Software Foundation; either version 2 of the License, or (at your
-    option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
-
-    This program is distributed in the hope that it will be useful, but
-    WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-    or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-    for more details.
--->
 <resources>
 
     <!-- Application -->
@@ -386,7 +369,7 @@
     <string name="help_s2_title">The three protocols</string>
     <string name="help_s2_body">• IKEv2: a fast, stable classic VPN that works well on most networks.\n• sing-box: a flexible engine that supports links such as VLESS, VMess, Trojan and Shadowsocks, with options like TLS, Reality and different transports. A good choice on filtered networks.\n• AmneziaWG: WireGuard with traffic obfuscation, very fast and light. Useful where plain WireGuard is blocked.</string>
     <string name="help_s3_title">Getting servers</string>
-    <string name="help_s3_body">• IKEv2 and sing-box: open the menu and choose Get free servers.\n• AmneziaWG: on its tab tap Get server. If a captcha appears, type the characters from the image and confirm.\n• A flag and the country name are added next to each AmneziaWG server automatically. This needs an internet connection once.\n• You can also edit a profile by hand later with the edit button on its card.</string>
+    <string name="help_s3_body">• IKEv2 and sing-box: open the menu and tap "Get Free Server." Note that only the servers with a flag next to their name are unfiltered; IKEv2 and sing-box servers are filtered. So use the ones with flags (such as the Germany flag) to get a server and connect, or turn on another auxiliary VPN first, and then you can get a server from the first two.\n• AmneziaWG: in its own tab, tap the "Get Server" button. Note that this server may also be filtered for you when you get it, so you must be connected to a VPN to get a server from this protocol. This server gives you a config based on your location—for example, it gives one server for Iran, a different one for India, and another for Germany. So if you got one and couldn't connect, be sure to try getting a server from several different locations. The ping value of this protocol doesn't matter; it just needs to be green, meaning it's active. If a captcha appears, type the letters from the image and confirm.\n• Next to each AmneziaWG server, the flag and country name are added automatically. This requires an internet connection once.\n• Later, you can also manually change the profile using the edit button on the card.</string>
     <string name="help_s4_title">Ping and cleanup</string>
     <string name="help_s4_body">• The ping button at the top tests every server in the current tab. The fastest ones move to the top.\n• Disconnect before pinging, otherwise the result is not reliable.\n• Menu, Delete servers without ping removes the servers that did not answer. You can choose IKEv2, sing-box or AmneziaWG. Run a ping first.\n• AmneziaWG uses a normal ICMP ping. A few servers block it but still work, so check before deleting them.</string>
     <string name="help_s5_title">Card buttons</string>
