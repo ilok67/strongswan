@@ -1,4 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    Copyright (C) 2012-2020 Tobias Brunner
+    Copyright (C) 2012 Giuliano Grassi
+    Copyright (C) 2012 Ralf Sager
+
+    Copyright (C) secunet Security Networks AG
+
+    This program is free software; you can redistribute it and/or modify it
+    under the terms of the GNU General Public License as published by the
+    Free Software Foundation; either version 2 of the License, or (at your
+    option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+
+    This program is distributed in the hope that it will be useful, but
+    WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+    or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+    for more details.
+-->
 <resources>
 
     <!-- Application -->
@@ -11,7 +28,8 @@
     <string name="vpn_not_supported_during_lockdown">VPN connections are not supported if a built-in VPN has the always-on feature enabled.</string>
     <string name="vpn_not_supported_no_permission">Unable to get permission to create VPN connections. Either because it was denied by the user, or because a different VPN app has the always-on feature enabled.</string>
     <string name="loading">Loading&#8230;</string>
-  <string name="strongswan_shortcut">Bardia shortcut</string>
+    <string name="profile_not_found">Profile not found</string>
+    <string name="strongswan_shortcut">Bardia shortcut</string>
     <string name="permanent_notification_name">VPN connection state</string>
     <string name="permanent_notification_description">Provides information about the VPN connection state and serves as permanent notification to keep the VPN service running in the background.</string>
     <string name="vpn_stats_line">Time %1$s\nDown %2$s  ·  %3$s\nUp %4$s  ·  %5$s</string>
@@ -65,7 +83,7 @@
     <string name="pref_default_vpn_profile">Default VPN profile</string>
     <string name="pref_default_vpn_profile_mru">Connect to most recently used profile</string>
     <string name="pref_power_whitelist_title">Ignore battery optimizations</string>
-    <string name="pref_power_whitelist_summary">Don't show a warning if the app is not on the device's power whitelist</string>
+    <string name="pref_power_whitelist_summary">Don\'t show a warning if the app is not on the device\'s power whitelist</string>
 
     <!-- Log view -->
     <string name="log_title">Log</string>
@@ -115,7 +133,7 @@
     <string name="profile_remote_id_hint_gateway">Defaults to \"%1$s\". Custom values are explicitly sent to the server and enforced during authentication</string>
     <string name="profile_local_id_label">Client identity</string>
     <string name="profile_local_id_hint_user">Defaults to the configured username. Custom values may be used if expected/required by the server</string>
-    <string name="profile_local_id_hint_cert">Defaults to the certificate's subject identity. Custom values may be used if expected/required by the server. Note that these usually must be confirmed by the certificate (auto-completion is provided for the certificate's alternative identities, if any)</string>
+    <string name="profile_local_id_hint_cert">Defaults to the certificate\'s subject identity. Custom values may be used if expected/required by the server. Note that these usually must be confirmed by the certificate (auto-completion is provided for the certificate\'s alternative identities, if any)</string>
     <string name="profile_dns_servers_label">DNS servers</string>
     <string name="profile_dns_servers_hint">Custom DNS servers to use when connected to the VPN (separated by spaces, e.g. \"8.8.8.8 2001:4860:4860::8888\"), defaults to those received from the VPN server</string>
     <string name="profile_mtu_label">MTU of the VPN tunnel device</string>
@@ -125,11 +143,11 @@
     <string name="profile_nat_keepalive_label">NAT-T keepalive interval</string>
     <string name="profile_nat_keepalive_hint">Small packets are sent to keep mappings on NAT routers alive if there is no other traffic. In order to save energy the default interval is 45 seconds. Behind NAT routers that remove mappings early this might be too high, try 20 seconds or less in that case.</string>
     <string name="profile_cert_req_label">Send certificate requests</string>
-    <string name="profile_cert_req_hint">Certificate requests are sent for all available or selected CA certificates. To reduce the size of the IKE_AUTH message this can be disabled. However, this only works if the server sends its certificate even if it didn't receive any certificate requests.</string>
+    <string name="profile_cert_req_hint">Certificate requests are sent for all available or selected CA certificates. To reduce the size of the IKE_AUTH message this can be disabled. However, this only works if the server sends its certificate even if it didn\'t receive any certificate requests.</string>
     <string name="profile_use_ocsp_label">Use OCSP to check certificate</string>
     <string name="profile_use_ocsp_hint">Use the Online Certificate Status Protocol (OCSP), if available, to check that the server certificate has not been revoked.</string>
     <string name="profile_use_crl_label">Use CRLs to check certificate</string>
-    <string name="profile_use_crl_hint">Use Certificate Revocation Lists (CRL), if available, to check that the server certificate has not been revoked. CRLs are only used if OCSP doesn't yield a result.</string>
+    <string name="profile_use_crl_hint">Use Certificate Revocation Lists (CRL), if available, to check that the server certificate has not been revoked. CRLs are only used if OCSP doesn\'t yield a result.</string>
     <string name="profile_strict_revocation_label">Use strict revocation checking</string>
     <string name="profile_strict_revocation_hint">In strict mode the authentication will fail not only if the server certificate has been revoked but also if its status is unknown (e.g. because OCSP failed and no valid CRL was available).</string>
     <string name="profile_rsa_pss_label">Use RSA/PSS signatures</string>
@@ -185,10 +203,10 @@
     <string name="alert_text_no_subnets">Please enter valid subnets and/or IP addresses, separated by spaces</string>
     <string name="alert_text_no_ips">Please enter valid IP addresses, separated by spaces</string>
     <string name="alert_text_no_proposal">Please enter a valid list of algorithms, separated by hyphens</string>
-    <string name="alert_text_vpn_profile_read_only">This VPN profile is managed by your administrator and can't be modified. You can only change the password or user certificate</string>
+    <string name="alert_text_vpn_profile_read_only">This VPN profile is managed by your administrator and can\'t be modified. You can only change the password or user certificate</string>
     <string name="tnc_notice_title">EAP-TNC may affect your privacy</string>
     <string name="tnc_notice_subtitle">Device data is sent to the server operator</string>
-    <string name="tnc_notice_details"><![CDATA[<p>Trusted Network Connect (TNC) allows server operators to assess the health of a client device.</p><p>For that purpose the server operator may request data such as a unique identifier, a list of installed packages, system settings, or cryptographic checksums of files.</p><b>Any data will be sent only after verifying the server's identity.</b>]]></string>
+    <string name="tnc_notice_details"><![CDATA[<p>Trusted Network Connect (TNC) allows server operators to assess the health of a client device.</p><p>For that purpose the server operator may request data such as a unique identifier, a list of installed packages, system settings, or cryptographic checksums of files.</p><b>Any data will be sent only after verifying the server\'s identity.</b>]]></string>
 
     <!-- Trusted certificate selection -->
     <string name="trusted_certs_title">CA certificates</string>
@@ -260,7 +278,7 @@
     </plurals>
     <string name="cancel_retry">Cancel retry</string>
     <string name="power_whitelist_title">Disable battery optimizations</string>
-    <string name="power_whitelist_text">Please confirm the next dialog to add the app to the device's power whitelist so it can ignore battery optimizations and schedule NAT keep-alives and rekeyings accurately in order to constantly keep reachable while the VPN is established.</string>
+    <string name="power_whitelist_text">Please confirm the next dialog to add the app to the device\'s power whitelist so it can ignore battery optimizations and schedule NAT keep-alives and rekeyings accurately in order to constantly keep reachable while the VPN is established.</string>
     <string name="certificate_required_title">User certificate required</string>
     <string name="certificate_required_text">Please edit the VPN profile to select one.</string>
 
@@ -368,7 +386,7 @@
     <string name="help_s2_title">The three protocols</string>
     <string name="help_s2_body">• IKEv2: a fast, stable classic VPN that works well on most networks.\n• sing-box: a flexible engine that supports links such as VLESS, VMess, Trojan and Shadowsocks, with options like TLS, Reality and different transports. A good choice on filtered networks.\n• AmneziaWG: WireGuard with traffic obfuscation, very fast and light. Useful where plain WireGuard is blocked.</string>
     <string name="help_s3_title">Getting servers</string>
-<string name="help_s3_body">• IKEv2 and sing-box: open the menu and tap Get Free Server. Note that only the servers with a flag next to their name are unfiltered; IKEv2 and sing-box servers are filtered. So use the ones with flags (such as the Germany flag) to get a server and connect, or turn on another auxiliary VPN first, and then you can get a server from the first two.\n• AmneziaWG: in its own tab, tap the Get Server button. Note that this server may also be filtered for you when you get it, so you must be connected to a VPN to get a server from this protocol. This server gives you a config based on your location—for example, it gives one server for Iran, a different one for India, and another for Germany. So if you got one and couldn't connect, be sure to try getting a server from several different locations. The ping value of this protocol doesn't matter; it just needs to be green, meaning it's active. If a captcha appears, type the letters from the image and confirm.\n• Next to each AmneziaWG server, the flag and country name are added automatically. This requires an internet connection once.\n• Later, you can also manually change the profile using the edit button on the card.</string>
+    <string name="help_s3_body">• IKEv2 and sing-box: open the menu and choose Get free servers.\n• AmneziaWG: on its tab tap Get server. If a captcha appears, type the characters from the image and confirm.\n• A flag and the country name are added next to each AmneziaWG server automatically. This needs an internet connection once.\n• You can also edit a profile by hand later with the edit button on its card.</string>
     <string name="help_s4_title">Ping and cleanup</string>
     <string name="help_s4_body">• The ping button at the top tests every server in the current tab. The fastest ones move to the top.\n• Disconnect before pinging, otherwise the result is not reliable.\n• Menu, Delete servers without ping removes the servers that did not answer. You can choose IKEv2, sing-box or AmneziaWG. Run a ping first.\n• AmneziaWG uses a normal ICMP ping. A few servers block it but still work, so check before deleting them.</string>
     <string name="help_s5_title">Card buttons</string>
