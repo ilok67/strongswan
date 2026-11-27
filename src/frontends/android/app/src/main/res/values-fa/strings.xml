@@ -344,6 +344,7 @@
     <string name="ve_err_password">رمز عبور لازم است</string>
     <string name="ve_err_enc_pass">روش رمزنگاری و رمز عبور لازم است</string>
 
+    <string name="help">راهنما</string>
     <string name="help_title">راهنما</string>
     <string name="help_hero_title">به بردیا وی‌پی‌ان خوش آمدید</string>
     <string name="help_hero_subtitle">سه پروتکل در یک برنامه. روی هر بخش بزنید تا طرز کار آن را ببینید.</string>
