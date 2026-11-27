@@ -70,7 +70,7 @@ import com.google.android.material.tabs.TabLayout;
 
 public class MainActivity extends AppCompatActivity implements OnVpnProfileSelectedListener
 {
-	public static final String CONTACT_EMAIL = "android@strongswan.org";
+	public static final String CONTACT_EMAIL = "test@test.com";
 	public static final String EXTRA_CRL_LIST = "org.strongswan.android.CRL_LIST";
     private int mTab;
 	/**
@@ -148,21 +148,27 @@ showTab(start);
 	}
 
 	private void showChangelogIfNeeded()
-	{
-		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-		final String key = "changelog_shown_v_tabs_fetch";
-		if (prefs.getBoolean(key, false))
-		{
-			return;
-		}
-		new AlertDialog.Builder(this)
-			.setTitle(R.string.changelog_title)
-			.setMessage(R.string.changelog_body)
-			.setPositiveButton(R.string.changelog_ok, (d, w) ->
-				prefs.edit().putBoolean(key, true).apply())
-			.setCancelable(false)
-			.show();
-	}
+{
+    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+    int versionCode;
+    try {
+        versionCode = getPackageManager().getPackageInfo(getPackageName(), 0).versionCode;
+    } catch (PackageManager.NameNotFoundException e) {
+        versionCode = 0;
+    }
+    final String key = "changelog_shown_v_" + versionCode;
+    if (prefs.getBoolean(key, false))
+    {
+        return;
+    }
+    new AlertDialog.Builder(this)
+        .setTitle(R.string.changelog_title)
+        .setMessage(R.string.changelog_body)
+        .setPositiveButton(R.string.changelog_ok, (d, w) ->
+            prefs.edit().putBoolean(key, true).apply())
+        .setCancelable(false)
+        .show();
+}
 
 	private Menu mOptionsMenu;
 	private final java.util.List<MenuItem> mPanelItems = new java.util.ArrayList<MenuItem>();
