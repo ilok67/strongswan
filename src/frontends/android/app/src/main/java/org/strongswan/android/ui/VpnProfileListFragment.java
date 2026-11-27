@@ -487,6 +487,16 @@ if (menuItem.getItemId() == R.id.delete_no_ping)
 	showDeleteNoPingDialog();
 	return true;
 }
+if (menuItem.getItemId() == R.id.help)
+{
+	startActivity(new Intent(getActivity(), HelpActivity.class));
+	return true;
+}
+if (menuItem.getItemId() == R.id.help)
+{
+	startActivity(new android.content.Intent(getActivity(), org.strongswan.android.ui.HelpActivity.class));
+	return true;
+}
 if (menuItem.getItemId() == R.id.about)
 {
 	startActivity(new android.content.Intent(getActivity(), org.strongswan.android.ui.AboutActivity.class));
