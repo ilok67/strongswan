@@ -83,7 +83,7 @@ android:animateLayoutChanges="true">
         <TextView
             android:layout_width="82dp"
             android:layout_height="wrap_content"
-            android:text="@string/label_status"
+            android:text="@string/state_label"
             android:textColor="#94A3B8"
             android:textSize="13sp" />
 
