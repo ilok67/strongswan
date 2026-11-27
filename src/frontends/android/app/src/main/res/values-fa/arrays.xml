@@ -14,8 +14,8 @@
         <item>فقط برنامه‌های انتخاب‌شده از وی‌پی‌ان استفاده کنند</item>
     </string-array>
     <string-array name="vpn_location_codes">
-    <item>v2ray</item>
-    <item>special</item>
+
+    
     <item>nl</item>
     <item>de</item>
     <item>fr</item>
@@ -29,10 +29,11 @@
     <item>es</item>
     <item>it</item>
     <item>cz</item>
+     <item>special</item>
 </string-array>
 <string-array name="vpn_location_names">
-    <item>v2ray-singbox</item>
-    <item>ikev-خودکار</item>
+
+    
     <item>🇳🇱 هلند</item>
     <item>🇩🇪 آلمان</item>
     <item>🇫🇷 فرانسه</item>
@@ -46,5 +47,6 @@
     <item>🇪🇸 اسپانیا</item>
     <item>🇮🇹 ایتالیا</item>
     <item>🇨🇿 جمهوری چک</item>
+    <item>ikev-متفرقه</item>
 </string-array>
 </resources>
