@@ -11,8 +11,7 @@
     <string name="vpn_not_supported_during_lockdown">VPN connections are not supported if a built-in VPN has the always-on feature enabled.</string>
     <string name="vpn_not_supported_no_permission">Unable to get permission to create VPN connections. Either because it was denied by the user, or because a different VPN app has the always-on feature enabled.</string>
     <string name="loading">Loading&#8230;</string>
-    <string name="profile_not_found">Profile not found</string>
-    <string name="strongswan_shortcut">Bardia shortcut</string>
+  <string name="strongswan_shortcut">Bardia shortcut</string>
     <string name="permanent_notification_name">VPN connection state</string>
     <string name="permanent_notification_description">Provides information about the VPN connection state and serves as permanent notification to keep the VPN service running in the background.</string>
     <string name="vpn_stats_line">Time %1$s\nDown %2$s  ·  %3$s\nUp %4$s  ·  %5$s</string>
