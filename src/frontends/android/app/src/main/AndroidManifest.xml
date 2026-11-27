@@ -97,6 +97,14 @@
             android:label="@string/log_title" />
 
         <activity
+            android:name=".ui.HelpActivity"
+            android:label="@string/help" />
+
+        <activity
+            android:name=".ui.HelpActivity"
+            android:label="@string/help_title" />
+
+        <activity
             android:name=".ui.AboutActivity"
             android:label="@string/about" />
 
