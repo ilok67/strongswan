@@ -25,8 +25,8 @@
     </string-array>
 
    <string-array name="vpn_location_codes">
-    <item>v2ray</item>
-     <item>special</item>
+    
+     
     <item>nl</item>
     <item>de</item>
     <item>fr</item>
@@ -40,10 +40,11 @@
     <item>es</item>
     <item>it</item>
     <item>cz</item>
+     <item>special</item>
 </string-array>
 <string-array name="vpn_location_names">
-    <item>v2ray-singbox</item>
-    <item>ikev2-auto</item>
+    
+    
     <item>🇳🇱 Netherlands</item>
     <item>🇩🇪 Germany</item>
     <item>🇫🇷 France</item>
@@ -57,6 +58,7 @@
     <item>🇪🇸 Spain</item>
     <item>🇮🇹 Italy</item>
     <item>🇨🇿 Czech Republic</item>
+    <item>ikev2-auto(filtred)</item>
 </string-array>
     <string-array name="managed_config_vpn_type_values" translatable="false">
         <item>ikev2-eap</item>
