@@ -361,6 +361,7 @@
     <string name="ve_err_password">Password is required</string>
     <string name="ve_err_enc_pass">Encryption method and password are required</string>
 
+    <string name="help">Help</string>
     <string name="help_title">Help</string>
     <string name="help_hero_title">Welcome to Bardia VPN</string>
     <string name="help_hero_subtitle">Three protocols, one app. Tap a section below to learn how everything works.</string>
