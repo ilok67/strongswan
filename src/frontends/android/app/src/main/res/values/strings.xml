@@ -315,6 +315,7 @@
     <string name="awg_delete_confirm">Delete “%1$s”?</string>
     <string name="profile_deleted">Profile deleted</string>
     <string name="profile_updated">Profile updated</string>
+    <string name="profile_not_found">Profile not found</string>
     <string name="profile_exists">This profile already exists</string>
     <string name="share_title">Share profile</string>
     <string name="awg_share_key">Amnezia key (vpn://)</string>
@@ -376,4 +377,27 @@
     <string name="ve_err_uuid">UUID is required</string>
     <string name="ve_err_password">Password is required</string>
     <string name="ve_err_enc_pass">Encryption method and password are required</string>
+
+    <string name="help_title">Help</string>
+    <string name="help_hero_title">Welcome to Bardia VPN</string>
+    <string name="help_hero_subtitle">Three protocols, one app. Tap a section below to learn how everything works.</string>
+    <string name="help_s1_title">Quick start</string>
+    <string name="help_s1_body">• Open the tab you want: IKEv2, sing-box or AmneziaWG.\n• Add a server: use Get free servers in the menu, or the Get server button on the AmneziaWG tab.\n• Tap a profile card to connect. A green dot and green name show the active connection.\n• Tap the same card again, or the disconnect button at the top, to stop.\n• Only one connection can be active at a time. Starting another one disconnects the previous one automatically.</string>
+    <string name="help_s2_title">The three protocols</string>
+    <string name="help_s2_body">• IKEv2: a fast, stable classic VPN that works well on most networks.\n• sing-box: a flexible engine that supports links such as VLESS, VMess, Trojan and Shadowsocks, with options like TLS, Reality and different transports. A good choice on filtered networks.\n• AmneziaWG: WireGuard with traffic obfuscation, very fast and light. Useful where plain WireGuard is blocked.</string>
+    <string name="help_s3_title">Getting servers</string>
+    <string name="help_s3_body">• IKEv2 and sing-box: open the menu and choose Get free servers.\n• AmneziaWG: on its tab tap Get server. If a captcha appears, type the characters from the image and confirm.\n• A flag and the country name are added next to each AmneziaWG server automatically. This needs an internet connection once.\n• You can also edit a profile by hand later with the edit button on its card.</string>
+    <string name="help_s4_title">Ping and cleanup</string>
+    <string name="help_s4_body">• The ping button at the top tests every server in the current tab. The fastest ones move to the top.\n• Disconnect before pinging, otherwise the result is not reliable.\n• Menu, Delete servers without ping removes the servers that did not answer. You can choose IKEv2, sing-box or AmneziaWG. Run a ping first.\n• AmneziaWG uses a normal ICMP ping. A few servers block it but still work, so check before deleting them.</string>
+    <string name="help_s5_title">Card buttons</string>
+    <string name="help_s5_body">• Share: sends the profile as text. IKEv2 gives a profile file text, sing-box gives its link, AmneziaWG lets you pick an Amnezia key (vpn://) or a .conf config.\n• Edit: change the name, server, keys and other settings.\n• Delete: removes the profile after you confirm.\n• Press and hold a card to select several profiles and copy or delete them together.</string>
+    <string name="help_s6_title">Backup and restore</string>
+    <string name="help_s6_body">• Menu, Backup saves the profiles of all three protocols into one file.\n• Restoring adds the profiles from a file and skips the ones you already have.\n• Keep the backup somewhere safe, it contains your server keys and passwords.</string>
+    <string name="help_s7_title">Battery and notifications</string>
+    <string name="help_s7_body">• On first launch the app asks for notification permission and to ignore battery optimization. Please allow both so the connection is not killed in the background.\n• While connected, the notification shows the state, the speed and a disconnect button.\n• If the connection drops when the screen is off, open the phone settings and set the battery mode of this app to unrestricted.</string>
+    <string name="help_s8_title">Troubleshooting</string>
+    <string name="help_s8_body">• Connected but no internet: try another server or another protocol.\n• AmneziaWG stays on connecting: the server may be down or blocked. Run a ping and pick another server.\n• Wrong captcha: request the server again to get a new image.\n• No flag next to a server: connect to the internet and reopen the AmneziaWG tab.\n• If the app crashes, the next launch shows a report. Press Copy and send it to the developer.</string>
+    <string name="help_s9_title">Useful tips</string>
+    <string name="help_s9_body">• Pick the server with the lowest ping and the best stability, not only the lowest number.\n• If one protocol is blocked on your network, switch to another one.\n• Keep the app updated from the menu, Check for updates.\n• Free servers can get crowded. Having several saved servers gives you a backup plan.</string>
+    <string name="help_version">Version %1$s</string>
 </resources>
