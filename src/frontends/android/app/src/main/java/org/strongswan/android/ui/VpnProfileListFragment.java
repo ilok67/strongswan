@@ -970,4 +970,105 @@ private void pingAll()
 			mode.invalidate();
 		}
 	};
+
+	private void showFetchDialog()
+	{
+		Context context = requireContext();
+		int pad = (int) (20 * getResources().getDisplayMetrics().density);
+
+		android.widget.LinearLayout box = new android.widget.LinearLayout(context);
+		box.setOrientation(android.widget.LinearLayout.VERTICAL);
+		box.setPadding(pad, pad, pad, pad / 2);
+
+		android.widget.TextView title = new android.widget.TextView(context);
+		title.setText(R.string.fetch_servers);
+		title.setTextSize(18);
+		title.setTypeface(android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.BOLD));
+		title.setPadding(0, 0, 0, pad / 2);
+		box.addView(title);
+
+		android.widget.TextView hint = new android.widget.TextView(context);
+		hint.setText(R.string.fetch_servers_dialog_hint);
+		hint.setTextColor(android.graphics.Color.parseColor("#94A3B8"));
+		hint.setTextSize(13);
+		hint.setPadding(0, 0, 0, pad);
+		box.addView(hint);
+
+		final android.widget.Spinner spinner = new android.widget.Spinner(context);
+		String[] allNames = getResources().getStringArray(R.array.vpn_location_names);
+		String[] allCodes = getResources().getStringArray(R.array.vpn_location_codes);
+		java.util.ArrayList<String> names = new java.util.ArrayList<>();
+		final java.util.ArrayList<String> codes = new java.util.ArrayList<>();
+		for (int i = 0; i < allCodes.length; i++)
+		{
+			String c = allCodes[i];
+			if ("v2ray".equals(c))
+			{
+				continue;
+			}
+			names.add(allNames[i]);
+			codes.add(c);
+		}
+		android.widget.ArrayAdapter<String> adapter = new android.widget.ArrayAdapter<>(
+			context, android.R.layout.simple_spinner_dropdown_item, names);
+		spinner.setAdapter(adapter);
+		box.addView(spinner);
+
+		android.widget.LinearLayout buttons = new android.widget.LinearLayout(context);
+		buttons.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+		buttons.setGravity(android.view.Gravity.END);
+		android.widget.LinearLayout.LayoutParams blp = new android.widget.LinearLayout.LayoutParams(
+			android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+			android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+		blp.topMargin = pad;
+		box.addView(buttons, blp);
+
+		android.widget.Button cancel = new android.widget.Button(context);
+		cancel.setText(android.R.string.cancel);
+		cancel.setAllCaps(false);
+		cancel.setTextColor(android.graphics.Color.parseColor("#94A3B8"));
+		cancel.setBackgroundResource(android.R.color.transparent);
+
+		android.widget.Button getBtn = new android.widget.Button(context);
+		getBtn.setText(R.string.fetch_servers);
+		org.strongswan.android.ui.widget.UiStyle.fetchButton(getBtn);
+
+		android.widget.LinearLayout.LayoutParams clp = new android.widget.LinearLayout.LayoutParams(
+			android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
+			android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+		clp.setMarginEnd(pad / 2);
+		buttons.addView(cancel, clp);
+		buttons.addView(getBtn);
+
+		final androidx.appcompat.app.AlertDialog dialog = new androidx.appcompat.app.AlertDialog.Builder(context)
+			.setView(box)
+			.setCancelable(true)
+			.create();
+		if (dialog.getWindow() != null)
+		{
+			dialog.getWindow().setBackgroundDrawableResource(R.drawable.state_card);
+		}
+		cancel.setOnClickListener(v -> dialog.dismiss());
+		getBtn.setOnClickListener(v -> {
+			int pos = spinner.getSelectedItemPosition();
+			if (pos < 0 || pos >= codes.size())
+			{
+				return;
+			}
+			final String location = codes.get(pos);
+			dialog.dismiss();
+			android.content.Intent intent = new android.content.Intent(getActivity(), FreeServersActivity.class);
+			intent.putExtra("location", location);
+			intent.putExtra("auto_fetch", true);
+			startActivity(intent);
+		});
+		dialog.show();
+		if (dialog.getWindow() != null)
+		{
+			android.view.WindowManager.LayoutParams lp = dialog.getWindow().getAttributes();
+			lp.width = (int) (getResources().getDisplayMetrics().widthPixels * 0.88);
+			dialog.getWindow().setAttributes(lp);
+		}
+	}
+
 }
