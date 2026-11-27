@@ -166,7 +166,21 @@ public class FreeServersActivity extends AppCompatActivity
 
 		String[] codes = getResources().getStringArray(R.array.vpn_location_codes);
 
-		button.setOnClickListener(v -> {
+		// Preselect location if provided
+		String preLocation = getIntent().getStringExtra("location");
+		if (preLocation != null)
+		{
+			for (int i = 0; i < codes.length; i++)
+			{
+				if (preLocation.equals(codes[i]))
+				{
+					spinner.setSelection(i);
+					break;
+				}
+			}
+		}
+
+		Runnable doFetch = () -> {
 			String location = codes[spinner.getSelectedItemPosition()];
 			button.setEnabled(false);
 			spinner.setEnabled(false);
@@ -195,21 +209,28 @@ public class FreeServersActivity extends AppCompatActivity
 					});
 				}
 			});
-		});
+		};
+
+		button.setOnClickListener(v -> doFetch.run());
+
+		if (getIntent().getBooleanExtra("auto_fetch", false))
+		{
+			doFetch.run();
+		}
 	}
 
 	private int importProfiles(String location) throws Exception
 	{
 		if (V2RAY_CODE.equals(location))
 		{
-			return importV2RayProfiles();
+			return importV2RayProfiles(this);
 		}
 		return saveProfiles(SPECIAL_CODE.equals(location)
 			? fetchSecondaryProfiles()
 			: fetchPrimaryProfiles(location));
 	}
 
-	private int importV2RayProfiles() throws Exception
+	public static int importV2RayProfiles(android.content.Context context) throws Exception
 	{
 		List<String> links = V2RaySecondaryBuilder.buildLinks(
 			fetchServerList(), SECONDARY_MAX_PROFILES, "all");
@@ -218,7 +239,7 @@ public class FreeServersActivity extends AppCompatActivity
 			throw new Exception("no v2ray servers found try again");
 		}
 
-		V2RayProfileStore store = new V2RayProfileStore(this);
+		V2RayProfileStore store = new V2RayProfileStore(context);
 		List<String> existing = store.load();
 		HashSet<String> known = new HashSet<>(existing);
 
@@ -236,8 +257,8 @@ public class FreeServersActivity extends AppCompatActivity
 		{
 			store.save(existing);
 			Intent intent = new Intent("org.strongswan.android.V2RAY_PROFILES_CHANGED");
-			intent.setPackage(getPackageName());
-			LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+			intent.setPackage(context.getPackageName());
+			LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
 		}
 		return added;
 	}

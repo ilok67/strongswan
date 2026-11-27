@@ -143,7 +143,25 @@ showTab(start);
 		if (savedInstanceState == null)
 		{
 			checkStartupPermissions();
+			showChangelogIfNeeded();
 		}
+	}
+
+	private void showChangelogIfNeeded()
+	{
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+		final String key = "changelog_shown_v_tabs_fetch";
+		if (prefs.getBoolean(key, false))
+		{
+			return;
+		}
+		new AlertDialog.Builder(this)
+			.setTitle(R.string.changelog_title)
+			.setMessage(R.string.changelog_body)
+			.setPositiveButton(R.string.changelog_ok, (d, w) ->
+				prefs.edit().putBoolean(key, true).apply())
+			.setCancelable(false)
+			.show();
 	}
 
 	private Menu mOptionsMenu;
