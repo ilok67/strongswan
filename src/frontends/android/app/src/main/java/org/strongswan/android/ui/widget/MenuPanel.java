@@ -52,6 +52,14 @@ public final class MenuPanel
 		{
 			return R.drawable.ic_refresh;
 		}
+		if (id == R.id.help)
+		{
+			return R.drawable.ic_help;
+		}
+		if (id == R.id.help)
+		{
+			return R.drawable.ic_help;
+		}
 		if (id == R.id.about)
 		{
 			return R.drawable.ic_info;
