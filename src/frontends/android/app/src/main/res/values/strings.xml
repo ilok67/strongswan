@@ -43,10 +43,7 @@
 <string name="app_filter_saved">Saved. Reconnect to apply</string>
     <string name="fetch_servers">Get free servers</string>
     <string name="fetch_servers_dialog_hint">Choose a country, then tap Get.</string>
-    <string name="changelog_title">What\'s new</string>
-    <string name="changelog_body">• Get server is now on every tab (IKEv2, sing-box, AmneziaWG).\n• IKEv2 opens a small floating country picker instead of a full page.\n• sing-box fetches directly (fixed API, no spinner).\n• The Get free servers item was removed from the menu.</string>
-    <string name="changelog_ok">Got it</string>
-    <string name="fetch_servers_loading">Fetching servers…</string>
+        <string name="fetch_servers_loading">Fetching servers…</string>
     <string name="fetch_servers_done">Added %d profiles</string>
     <string name="fetch_servers_failed">Failed: %s</string>
     <string name="ping_servers">Ping</string>
@@ -374,7 +371,7 @@
     <string name="help_s2_title">The three protocols</string>
     <string name="help_s2_body">• IKEv2: a fast, stable classic VPN that works well on most networks.\n• sing-box: a flexible engine that supports links such as VLESS, VMess, Trojan and Shadowsocks, with options like TLS, Reality and different transports. A good choice on filtered networks.\n• AmneziaWG: WireGuard with traffic obfuscation, very fast and light. Useful where plain WireGuard is blocked.</string>
     <string name="help_s3_title">Getting servers</string>
-    <string name="help_s3_body">• IKEv2: on its tab tap Get server. A small floating window opens to pick a country, then Get or Cancel.\n• sing-box: on its tab tap Get server. The fixed API is used directly, no country spinner.\n• AmneziaWG: on its tab tap Get server. If a captcha appears, type the characters from the image and confirm.\n• A flag and the country name are added next to each AmneziaWG server automatically. This needs an internet connection once.\n• You can also edit a profile by hand later with the edit button on its card.</string>
+    <string name="help_s3_body">• IKEv2: on its tab tap Get server. A small floating window opens to pick a country, then Get or Cancel , Note: Get api may be filtered.\n• sing-box: on its tab tap Get server. The fixed API is used directly, Turn On a Vpn to Get.\n• AmneziaWG: on its tab tap Get server. If a captcha appears, type the characters from the image and confirm, need a vpn to get server\n• A flag and the country name are added next to each AmneziaWG server automatically. this Api give you one server as your ip, so use difrent ips for more configs.\n• You can also edit a profile by hand later with the edit button on its card.</string>
     <string name="help_s4_title">Ping and cleanup</string>
     <string name="help_s4_body">• The ping button at the top tests every server in the current tab. The fastest ones move to the top.\n• Disconnect before pinging, otherwise the result is not reliable.\n• Menu, Delete servers without ping removes the servers that did not answer. You can choose IKEv2, sing-box or AmneziaWG. Run a ping first.\n• AmneziaWG uses a normal ICMP ping. A few servers block it but still work, so check before deleting them.</string>
     <string name="help_s5_title">Card buttons</string>
@@ -388,4 +385,12 @@
     <string name="help_s9_title">Useful tips</string>
     <string name="help_s9_body">• Pick the server with the lowest ping and the best stability, not only the lowest number.\n• If one protocol is blocked on your network, switch to another one.\n• Keep the app updated from the menu, Check for updates.\n• Free servers can get crowded. Having several saved servers gives you a backup plan.</string>
     <string name="help_version">Version %1$s</string>
+
+
+    <string name="changelog_title">What\'s new</string>
+    <string name="changelog_body">• Check Help menu.</string>
+    <string name="changelog_ok">Got it</string>
+
+
+
 </resources>
