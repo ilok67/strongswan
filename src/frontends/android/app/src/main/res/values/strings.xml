@@ -386,6 +386,21 @@
     <string name="help_s9_body">• Pick the server with the lowest ping and the best stability, not only the lowest number.\n• If one protocol is blocked on your network, switch to another one.\n• Keep the app updated from the menu, Check for updates.\n• Free servers can get crowded. Having several saved servers gives you a backup plan.</string>
     <string name="help_version">Version %1$s</string>
 
+    <string name="about_tagline">A free and open-source VPN client</string>
+    <string name="about_section_app">About the app</string>
+    <string name="about_app_body">Bardia VPN brings IKEv2, sing-box and AmneziaWG together in one simple app, so you can switch to another protocol when one of them is blocked.</string>
+    <string name="about_section_built">Built with</string>
+    <string name="about_built_strongswan">IKEv2 VPN engine</string>
+    <string name="about_built_singbox">Universal proxy platform for VLESS, VMess, Trojan and more</string>
+    <string name="about_built_awg">WireGuard with traffic obfuscation</string>
+    <string name="about_section_contact">Contact and source</string>
+    <string name="about_telegram">Telegram</string>
+    <string name="about_telegram_sub">Contact the developer</string>
+    <string name="about_github">GitHub</string>
+    <string name="about_github_sub">Source code and new releases</string>
+    <string name="about_notice_title">Use at your own responsibility</string>
+    <string name="about_notice_body">This free software is provided as it is, without any warranty.</string>
+    <string name="about_footer">Open source · GNU GPL</string>
 
     <string name="changelog_title">What\'s new</string>
     <string name="changelog_body">• Check Help menu.</string>
