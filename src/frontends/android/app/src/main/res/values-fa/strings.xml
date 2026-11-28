@@ -377,7 +377,21 @@
     <string name="help_s9_body">• سروری را انتخاب کنید که هم پینگ کم و هم پایداری خوب دارد، نه فقط عدد کمتر.\n• اگر پروتکلی روی شبکه‌ی شما مسدود است، به پروتکل دیگر بروید.\n• برنامه را از منو، بررسی به‌روزرسانی، به‌روز نگه دارید.\n• سرورهای رایگان شلوغ می‌شوند. داشتن چند سرور ذخیره‌شده راه جایگزین می‌دهد.</string>
     <string name="help_version">نسخه %1$s</string>
 
-
+    <string name="about_tagline">یک کلاینت وی‌پی‌ان رایگان و متن‌باز</string>
+    <string name="about_section_app">درباره‌ی برنامه</string>
+    <string name="about_app_body">بردیا وی‌پی‌ان سه پروتکل IKEv2، sing-box و AmneziaWG را در یک برنامه‌ی ساده کنار هم می‌گذارد تا وقتی یکی مسدود شد، به پروتکل دیگری بروید.</string>
+    <string name="about_section_built">ساخته‌شده با</string>
+    <string name="about_built_strongswan">موتور وی‌پی‌ان IKEv2</string>
+    <string name="about_built_singbox">پلتفرم پروکسی همه‌کاره برای VLESS، VMess، Trojan و بیشتر</string>
+    <string name="about_built_awg">وایرگارد همراه با مبهم‌سازی ترافیک</string>
+    <string name="about_section_contact">ارتباط و سورس</string>
+    <string name="about_telegram">تلگرام</string>
+    <string name="about_telegram_sub">ارتباط با سازنده</string>
+    <string name="about_github">گیت‌هاب</string>
+    <string name="about_github_sub">سورس و نسخه‌های جدید</string>
+    <string name="about_notice_title">استفاده با مسئولیت خودتان</string>
+    <string name="about_notice_body">این نرم‌افزار رایگان به همین شکل و بدون هیچ ضمانتی ارائه می‌شود.</string>
+    <string name="about_footer">متن‌باز · GNU GPL</string>
 
     <string name="changelog_title">تغییرات جدید</string>
     <string name="changelog_body">• از منو قسمت راهنمایی خصوصا گرفتن سرور رو خوب مطالعه کن</string>
