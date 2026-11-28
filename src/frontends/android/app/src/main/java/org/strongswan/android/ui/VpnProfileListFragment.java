@@ -1104,7 +1104,7 @@ private void pingAll()
 
     
     android.widget.TextView title = new android.widget.TextView(context);
-    title.setText(R.string.menu_about);
+    title.setText(R.string.about);
     title.setTextSize(18);
     title.setTypeface(android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.BOLD));
     title.setPadding(0, 0, 0, pad / 2);
