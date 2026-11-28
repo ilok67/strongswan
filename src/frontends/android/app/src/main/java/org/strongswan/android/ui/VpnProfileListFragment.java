@@ -513,15 +513,11 @@ if (menuItem.getItemId() == R.id.help)
 	startActivity(new Intent(getActivity(), HelpActivity.class));
 	return true;
 }
-if (menuItem.getItemId() == R.id.help)
-{
-	startActivity(new android.content.Intent(getActivity(), org.strongswan.android.ui.HelpActivity.class));
-	return true;
-}
+
 if (menuItem.getItemId() == R.id.about)
 {
-	startActivity(new android.content.Intent(getActivity(), org.strongswan.android.ui.AboutActivity.class));
-	return true;
+    showAboutDialog();
+    return true;
 }
     return false;
 }
@@ -1092,6 +1088,86 @@ private void pingAll()
 					Toast.makeText(activity, getString(R.string.fetch_servers_failed, msg), Toast.LENGTH_LONG).show());
 			}
 		});
+	}
+
+	private void showAboutDialog()
+{
+    android.content.Context context = requireContext();
+    int pad = (int) (20 * getResources().getDisplayMetrics().density);
+
+    android.widget.LinearLayout box = new android.widget.LinearLayout(context);
+    box.setOrientation(android.widget.LinearLayout.VERTICAL);
+    box.setPadding(pad, pad, pad, pad / 2);
+
+ 
+    box.setLayoutDirection(android.view.View.LAYOUT_DIRECTION_LOCALE);
+
+    
+    android.widget.TextView title = new android.widget.TextView(context);
+    title.setText(R.string.menu_about);
+    title.setTextSize(18);
+    title.setTypeface(android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.BOLD));
+    title.setPadding(0, 0, 0, pad / 2);
+    
+    title.setGravity(android.view.Gravity.START);
+    box.addView(title);
+
+    
+    String version = "?";
+    try
+    {
+        version = context.getPackageManager()
+            .getPackageInfo(context.getPackageName(), 0).versionName;
+    }
+    catch (android.content.pm.PackageManager.NameNotFoundException ignored) {}
+
+    
+    android.widget.TextView text = new android.widget.TextView(context);
+    text.setText(context.getString(R.string.about_text, version));
+    text.setTextSize(14);
+    text.setTextColor(android.graphics.Color.WHITE);
+    text.setLineSpacing(0, 1.2f);
+    
+    text.setGravity(android.view.Gravity.START);
+    text.setMovementMethod(android.text.method.LinkMovementMethod.getInstance());
+    text.setPadding(0, 0, 0, pad);
+    box.addView(text);
+
+    
+    android.widget.LinearLayout buttons = new android.widget.LinearLayout(context);
+    buttons.setOrientation(android.widget.LinearLayout.HORIZONTAL); 
+    buttons.setGravity(android.view.Gravity.END);
+    android.widget.LinearLayout.LayoutParams blp = new android.widget.LinearLayout.LayoutParams(
+        android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+        android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+    blp.topMargin = pad;
+    box.addView(buttons, blp);
+
+    android.widget.Button close = new android.widget.Button(context);
+    close.setText(android.R.string.ok);
+    close.setAllCaps(false);
+    org.strongswan.android.ui.widget.UiStyle.fetchButton(close);
+    buttons.addView(close);
+
+    
+    final androidx.appcompat.app.AlertDialog dialog = new androidx.appcompat.app.AlertDialog.Builder(context)
+        .setView(box)
+        .setCancelable(true)
+        .create();
+    if (dialog.getWindow() != null)
+    {
+        dialog.getWindow().setBackgroundDrawableResource(R.drawable.state_card);
+    }
+
+    close.setOnClickListener(v -> dialog.dismiss());
+
+    dialog.show();
+    if (dialog.getWindow() != null)
+    {
+        android.view.WindowManager.LayoutParams lp = dialog.getWindow().getAttributes();
+        lp.width = (int) (getResources().getDisplayMetrics().widthPixels * 0.88);
+        dialog.getWindow().setAttributes(lp);
+    }
 	}
 
 }
