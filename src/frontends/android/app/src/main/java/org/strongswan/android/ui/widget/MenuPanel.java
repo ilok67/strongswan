@@ -32,10 +32,7 @@ public final class MenuPanel
 
 	private static int iconFor(int id)
 	{
-		if (id == R.id.fetch_servers)
-		{
-			return R.drawable.ic_cloud_download;
-		}
+		
 		if (id == R.id.app_filter)
 		{
 			return R.drawable.ic_apps;
@@ -56,10 +53,7 @@ public final class MenuPanel
 		{
 			return R.drawable.ic_help;
 		}
-		if (id == R.id.help)
-		{
-			return R.drawable.ic_help;
-		}
+		
 		if (id == R.id.about)
 		{
 			return R.drawable.ic_info;
